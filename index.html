@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>⚽ World Cup 26 — Match Day Map</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,6 +16,7 @@
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   html,body{height:100%; overflow:hidden;}
+  @supports (height:100dvh){ html,body{height:100dvh;} }
   body{font-family:'Outfit',system-ui,sans-serif; background:var(--bg); color:var(--ink);}
   #map{position:absolute; inset:0; background:#0b1120;}
   .leaflet-container{font:inherit;}
@@ -319,10 +320,76 @@
 
   #confetti{position:absolute; inset:0; z-index:1500; pointer-events:none;}
 
-  @media (max-width: 860px){
-    #panel{display:none;}
-    #follow{top:auto; bottom:108px; right:14px;}
-    #drawer{top:14px;}
+  #sheetBar{display:none;}
+  #fab{display:none;}
+
+  @media (max-width: 760px){
+    /* compact header */
+    #hdr{top:8px; left:8px; right:8px; width:auto; max-width:none; padding:10px 14px 9px; border-radius:14px;}
+    #hdr h1{font-size:14.5px; gap:6px;}
+    #hdr h1 .ball{font-size:16px;}
+    #hdr .sub{display:none;}
+    #dayTitle{font-size:18px; margin-top:6px;}
+    #dayMeta{margin-top:6px; gap:4px;}
+    .chip{font-size:10px; padding:2px 8px;}
+    #liveStrip{font-size:10.5px; padding:6px 9px; margin-top:8px;}
+    #journey .jhead{font-size:11.5px;}
+    .jstop{font-size:9.5px;}
+    .jmiles{font-size:9.5px;}
+    #roadBtn{font-size:10px; padding:5px;}
+
+    /* follow picker lives inside the bottom sheet (moved there by JS) */
+    #follow{position:static; background:none; border:none; box-shadow:none; padding:0; backdrop-filter:none;}
+    #follow label{display:none;}
+    #follow select{max-width:132px; font-size:12px; padding:5px 6px;}
+
+    /* match list becomes a swipe-up bottom sheet */
+    #panel{
+      left:8px; right:8px; width:auto; top:auto !important;
+      bottom:calc(72px + env(safe-area-inset-bottom));
+      max-height:46vh; z-index:1050; pointer-events:auto;
+      background:var(--panel); border:1px solid var(--panel-border); border-radius:16px;
+      backdrop-filter:blur(14px); box-shadow:0 -8px 32px rgba(0,0,0,.5);
+      padding:14px 10px 10px;
+      transform:translateY(calc(100% + 140px));
+      transition:transform .32s cubic-bezier(.4,1.2,.6,1);
+    }
+    #panel.open{transform:none;}
+    #panel::before{
+      content:''; position:absolute; top:6px; left:50%; transform:translateX(-50%);
+      width:36px; height:4px; border-radius:2px; background:rgba(255,255,255,.25);
+    }
+    #sheetBar{display:flex; align-items:center; gap:8px; padding:0 4px 7px;}
+    #sheetTitle{flex:1; font-size:12.5px; font-weight:800;}
+    #panelInner{mask-image:none; padding-right:2px;}
+
+    #fab{
+      display:flex; align-items:center; gap:6px; position:absolute;
+      right:10px; bottom:calc(78px + env(safe-area-inset-bottom)); z-index:1049;
+      border:none; border-radius:999px; padding:10px 16px; cursor:pointer;
+      background:linear-gradient(135deg,var(--pitch),var(--pitch-deep)); color:#04150c;
+      font:900 13px 'Outfit',sans-serif; box-shadow:0 6px 20px rgba(34,224,124,.45);
+    }
+
+    /* compact timeline */
+    #tl{left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom)); padding:8px; gap:7px; border-radius:14px;}
+    .tlBtn{width:36px; height:36px; font-size:14px;}
+    .tlBtn.small{width:28px; height:28px; font-size:11px;}
+    .day{width:46px;}
+    .day .dn{font-size:15px;}
+
+    #clockChip{bottom:calc(80px + env(safe-area-inset-bottom)); font-size:10.5px; padding:6px 12px; gap:8px; max-width:calc(100vw - 20px);}
+
+    /* group drawer rises from the bottom */
+    #drawer{
+      left:8px; right:8px; width:auto; top:auto; bottom:0; max-height:62vh;
+      border-radius:18px 18px 0 0;
+      transform:translateY(110%); transition:transform .3s cubic-bezier(.4,1.2,.6,1);
+    }
+    #drawer.open{transform:none; right:8px;}
+
+    .leaflet-control-zoom{display:none;}
+    .stadion .lbl{font-size:9px;}
   }
 </style>
 </head>
@@ -345,7 +412,11 @@
   <select id="teamSel"><option value="">— pick a team —</option></select>
 </div>
 
-<div id="panel"><div id="panelInner"></div></div>
+<div id="panel">
+  <div id="sheetBar"><div id="sheetTitle"></div></div>
+  <div id="panelInner"></div>
+</div>
+<button id="fab">📋</button>
 <div id="drawer"><div id="drawerInner"></div></div>
 <div id="clockChip"></div>
 
@@ -513,9 +584,18 @@ DAYS.forEach((d, i) => {
 });
 
 // ── core render ──────────────────────────────────────────────────────────
+const mqMobile = matchMedia('(max-width: 760px)');
 function layoutPanel() {
-  $id('panel').style.top = (14 + $id('hdr').offsetHeight + 10) + 'px';
+  const p = $id('panel');
+  if (mqMobile.matches) { p.style.top = ''; return; }   // bottom sheet anchors itself
+  p.style.top = (14 + $id('hdr').offsetHeight + 10) + 'px';
 }
+function applyFormFactor() {
+  if (mqMobile.matches) $id('sheetBar').appendChild($id('follow'));
+  else document.body.appendChild($id('follow'));
+  layoutPanel();
+}
+mqMobile.addEventListener('change', applyFormFactor);
 
 function setDay(i, fly) {
   dayIdx = (i + DAYS.length) % DAYS.length;
@@ -533,6 +613,9 @@ function setDay(i, fly) {
 
   document.querySelectorAll('.day').forEach((el, j) => el.classList.toggle('active', j === dayIdx));
   $id('dd' + dayIdx).scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+
+  $id('sheetTitle').textContent = `${DOW[dt.getDay()]}, ${MONTHS[dt.getMonth()]} ${dt.getDate()} — ${dayMatches.length} match${dayMatches.length !== 1 ? 'es' : ''}`;
+  $id('fab').innerHTML = `📋 ${dayMatches.length}`;
 
   updateMarkers(d);
   renderPanel(d, dayMatches, false);
@@ -1075,8 +1158,11 @@ if (TEAMS[_qt]) {
   if (_qr) { roadOn = true; roadPos = _qr === '2' ? '2' : 'W'; }
   sel.onchange();
 }
+$id('fab').onclick = () => $id('panel').classList.toggle('open');
+applyFormFactor();
 setDay(dayIdx);
 renderStrip();
+if (_params.get('sheet') === '1') $id('panel').classList.add('open');
 const _qg = (_params.get('group') || '').toUpperCase();
 if (GROUPS[_qg]) openGroup(_qg);
 if (_params.get('play') === '1') startPlay();
