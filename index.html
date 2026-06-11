@@ -827,6 +827,24 @@ function buildJourney() {
   }
   const inGroups = gm.length && gm[gm.length - 1].r === 'Group Stage';
   renderJourneyCard(stops, road, miles, kmiles, inGroups);
+  fitJourney(merged.map(s => s.v));
+}
+
+// refit the map so the whole drawn path is visible around the UI chrome
+function fitJourney(venueNames) {
+  const pts = [...new Set(venueNames)].map(n => [VENUES[n][2], VENUES[n][3]]);
+  if (!pts.length) return;
+  if (pts.length === 1) { map.flyTo(pts[0], 5.5, {duration: .8}); return; }
+  const mobile = mqMobile.matches;
+  const topPad = mobile ? $id('hdr').offsetHeight + 16 : 30;
+  let bottomPad = mobile ? 130 : 110;
+  if (mobile && $id('panel').classList.contains('open'))
+    bottomPad = $id('panel').offsetHeight + 100;
+  map.flyToBounds(L.latLngBounds(pts).pad(0.06), {
+    paddingTopLeft: [mobile ? 16 : 410, topPad],
+    paddingBottomRight: [16, bottomPad],
+    duration: .9, maxZoom: 6,
+  });
 }
 
 function renderJourneyCard(stops, road, miles, kmiles, inGroups) {
@@ -1177,7 +1195,8 @@ if (TEAMS[_qt]) {
 }
 $id('fab').onclick = () => $id('panel').classList.toggle('open');
 applyFormFactor();
-setDay(dayIdx);
+setDay(dayIdx, TEAMS[_qt] ? false : undefined);  // a team deep link keeps the journey fit
+if (TEAMS[_qt]) buildJourney();                  // re-fit now that layout is final
 renderStrip();
 if (_params.get('sheet') === '1') $id('panel').classList.add('open');
 const _qg = (_params.get('group') || '').toUpperCase();
