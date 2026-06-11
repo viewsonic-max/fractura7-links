@@ -321,7 +321,7 @@
   #confetti{position:absolute; inset:0; z-index:1500; pointer-events:none;}
 
   #sheetBar{display:none;}
-  #fab{display:none;}
+  #fabRow{display:none;}
 
   @media (max-width: 760px){
     /* compact header */
@@ -338,10 +338,8 @@
     .jmiles{font-size:9.5px;}
     #roadBtn{font-size:10px; padding:5px;}
 
-    /* follow picker lives inside the bottom sheet (moved there by JS) */
-    #follow{position:static; background:none; border:none; box-shadow:none; padding:0; backdrop-filter:none;}
-    #follow label{display:none;}
-    #follow select{max-width:132px; font-size:12px; padding:5px 6px;}
+    /* follow picker hides behind the flag button in the FAB row */
+    #follow{display:none;}
 
     /* match list becomes a swipe-up bottom sheet */
     #panel{
@@ -363,13 +361,26 @@
     #sheetTitle{flex:1; font-size:12.5px; font-weight:800;}
     #panelInner{mask-image:none; padding-right:2px;}
 
-    #fab{
-      display:flex; align-items:center; gap:6px; position:absolute;
+    #fabRow{
+      display:flex; align-items:center; gap:8px; position:absolute;
       right:10px; bottom:calc(78px + env(safe-area-inset-bottom)); z-index:1049;
+    }
+    #fab{
+      display:flex; align-items:center; gap:6px;
       border:none; border-radius:999px; padding:10px 16px; cursor:pointer;
       background:linear-gradient(135deg,var(--pitch),var(--pitch-deep)); color:#04150c;
       font:900 13px 'Outfit',sans-serif; box-shadow:0 6px 20px rgba(34,224,124,.45);
     }
+    #teamFab{
+      position:relative; width:48px; height:37px; border-radius:999px;
+      background:var(--panel); border:1.5px solid rgba(255,255,255,.3);
+      display:grid; place-items:center; backdrop-filter:blur(8px);
+      box-shadow:0 6px 20px rgba(0,0,0,.45);
+    }
+    #teamFab.on{border-color:var(--gold); box-shadow:0 0 16px rgba(255,209,102,.55);}
+    #teamFabFace{font-size:16px; line-height:1;}
+    #teamFabFace img{width:27px; height:19px; border-radius:3px; display:block; object-fit:cover;}
+    #teamFab select{position:absolute; inset:0; width:100%; height:100%; opacity:0; font-size:16px;}
 
     /* compact timeline */
     #tl{left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom)); padding:8px; gap:7px; border-radius:14px;}
@@ -416,7 +427,10 @@
   <div id="sheetBar"><div id="sheetTitle"></div></div>
   <div id="panelInner"></div>
 </div>
-<button id="fab">📋</button>
+<div id="fabRow">
+  <button id="fab">📋</button>
+  <div id="teamFab" title="Follow a team"><span id="teamFabFace">⭐</span></div>
+</div>
 <div id="drawer"><div id="drawerInner"></div></div>
 <div id="clockChip"></div>
 
@@ -591,8 +605,9 @@ function layoutPanel() {
   p.style.top = (14 + $id('hdr').offsetHeight + 10) + 'px';
 }
 function applyFormFactor() {
-  if (mqMobile.matches) $id('sheetBar').appendChild($id('follow'));
-  else document.body.appendChild($id('follow'));
+  const s = $id('teamSel');
+  if (mqMobile.matches) $id('teamFab').appendChild(s);   // native picker behind the flag button
+  else $id('follow').appendChild(s);
   layoutPanel();
 }
 mqMobile.addEventListener('change', applyFormFactor);
@@ -846,6 +861,8 @@ sel.onchange = () => {
   const img = $id('followFlag');
   if (follow) { img.src = flagURL(follow); img.style.display = 'block'; }
   else img.style.display = 'none';
+  $id('teamFabFace').innerHTML = follow ? `<img src="${flagURL(follow)}" alt="${TEAMS[follow][0]}">` : '⭐';
+  $id('teamFab').classList.toggle('on', !!follow);
   DAYS.forEach((d, i) => {
     const has = follow && byDay[d].some(m => m.a === follow || m.b === follow);
     document.querySelector(`#dd${i} .fdot`).style.display = has ? 'block' : 'none';
