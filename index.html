@@ -234,6 +234,16 @@
     font-size:7.5px; font-weight:900; letter-spacing:.5px; background:var(--hot); color:#fff;
     padding:1.5px 6px; border-radius:6px; box-shadow:0 2px 8px rgba(255,93,143,.5);
   }
+  /* following a team: non-match days collapse to slivers */
+  #days .day.off{width:15px; opacity:.5;}
+  #days .day.off .dw, #days .day.off .dn, #days .day.off .dm,
+  #days .day.off .cnt, #days .day.off .today, #days .day.off .fdot{display:none;}
+  #days .day.off::after{
+    content:''; display:block; width:4px; height:30px; margin:2px auto;
+    border-radius:2px; background:rgba(255,255,255,.18);
+  }
+  #days .day.off.active{opacity:1;}
+  #days .day.off.active::after{background:var(--pitch);}
 
   /* ── clock chip (playback) ──────────────── */
   #clockChip{
@@ -549,6 +559,8 @@ for (const [name, v] of Object.entries(VENUES)) {
 }
 
 function iconFor(name, dayMatches, now) {
+  if (journeyVenues && !journeyVenues.has(name))
+    return L.divIcon({className:'', html:'', iconSize:[0, 0]});
   const v = VENUES[name];
   const n = dayMatches.length;
   const isFinal = dayMatches.some(m => m.r === 'Final');
@@ -740,6 +752,7 @@ function openVenue(name) {
 
 // ── journey arcs + champion's road ───────────────────────────────────────
 let journeyLayer = null, ballTimer = null;
+let journeyVenues = null;   // while following: the only stadiums shown on the map
 
 function clearJourney() {
   if (journeyLayer) { map.removeLayer(journeyLayer); journeyLayer = null; }
@@ -780,7 +793,13 @@ function roadFrom(code, pos, mine) {
 
 function buildJourney() {
   clearJourney();
-  if (!follow) { $id('journey').style.display = 'none'; layoutPanel(); return; }
+  if (!follow) {
+    journeyVenues = null;
+    $id('journey').style.display = 'none';
+    layoutPanel();
+    updateMarkers(DAYS[dayIdx]);
+    return;
+  }
   const gm = MATCHES.filter(m => m.a === follow || m.b === follow)
     .sort((x, y) => x.d.localeCompare(y.d));
   const stops = gm.map(m => ({
@@ -826,6 +845,8 @@ function buildJourney() {
     ballTimer = setInterval(() => { idx = (idx + 1) % fullPath.length; ball.setLatLng(fullPath[idx]); }, 30);
   }
   const inGroups = gm.length && gm[gm.length - 1].r === 'Group Stage';
+  journeyVenues = new Set(merged.map(s => s.v));
+  updateMarkers(DAYS[dayIdx]);
   renderJourneyCard(stops, road, miles, kmiles, inGroups);
   fitJourney(merged.map(s => s.v));
 }
@@ -884,10 +905,19 @@ sel.onchange = () => {
   DAYS.forEach((d, i) => {
     const has = follow && byDay[d].some(m => m.a === follow || m.b === follow);
     document.querySelector(`#dd${i} .fdot`).style.display = has ? 'block' : 'none';
+    $id('dd' + i).classList.toggle('off', !!follow && !has);
   });
   buildJourney();
-  setDay(dayIdx, false);
+  // snap to the team's nearest match day if the current day isn't one of theirs
+  let target = dayIdx;
+  if (follow && !byDay[DAYS[dayIdx]].some(m => m.a === follow || m.b === follow)) {
+    const idxs = teamDayIdxs();
+    target = idxs.find(i => DAYS[i] >= TODAY) ?? idxs[0] ?? dayIdx;
+  }
+  setDay(target, false);
 };
+const teamDayIdxs = () =>
+  DAYS.map((d, i) => i).filter(i => byDay[DAYS[i]].some(m => m.a === follow || m.b === follow));
 function followTeam(c) {
   sel.value = c; sel.onchange();
   if ($id('drawer').classList.contains('open')) openGroup(groupOf(c));
@@ -1061,17 +1091,32 @@ function playDay(i) {
       playT = setTimeout(beat, 1500);
     } else {
       clockShow(null);
-      playT = setTimeout(() => { if (i >= DAYS.length - 1) stopPlay(); else playDay(i + 1); }, 650);
+      playT = setTimeout(() => {
+        let ni = i + 1;
+        if (follow) { const idxs = teamDayIdxs(); ni = idxs.find(x => x > i); }
+        if (ni == null || ni >= DAYS.length) stopPlay(); else playDay(ni);
+      }, 650);
     }
   };
   playT = setTimeout(beat, 1100);
 }
+// while following a team, prev/next step between THEIR match days
+function stepDay(dir) {
+  if (follow) {
+    const idxs = teamDayIdxs();
+    if (idxs.length) {
+      const next = dir > 0 ? idxs.find(i => i > dayIdx) : [...idxs].reverse().find(i => i < dayIdx);
+      return setDay(next != null ? next : dir > 0 ? idxs[0] : idxs[idxs.length - 1]);
+    }
+  }
+  setDay(dayIdx + dir);
+}
 playBtn.onclick = startPlay;
-$id('prevBtn').onclick = () => { stopPlay(); setDay(dayIdx - 1); };
-$id('nextBtn').onclick = () => { stopPlay(); setDay(dayIdx + 1); };
+$id('prevBtn').onclick = () => { stopPlay(); stepDay(-1); };
+$id('nextBtn').onclick = () => { stopPlay(); stepDay(1); };
 document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowLeft') { stopPlay(); setDay(dayIdx - 1); }
-  if (e.key === 'ArrowRight') { stopPlay(); setDay(dayIdx + 1); }
+  if (e.key === 'ArrowLeft') { stopPlay(); stepDay(-1); }
+  if (e.key === 'ArrowRight') { stopPlay(); stepDay(1); }
   if (e.key === ' ') { e.preventDefault(); startPlay(); }
   if (e.key === 'Escape') closeDrawer();
 });
