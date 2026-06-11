@@ -1,0 +1,2334 @@
+{
+ "matches": [
+  {
+   "section": "A1",
+   "source": "group_A",
+   "matchNum": 1,
+   "date": "2026-06-11",
+   "time": "13:00",
+   "utcOffset": -6,
+   "team1": {
+    "code": "MEX"
+   },
+   "team2": {
+    "code": "RSA"
+   },
+   "stadium": "Estadio Azteca",
+   "town": "Mexico City",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "A"
+  },
+  {
+   "section": "A2",
+   "source": "group_A",
+   "matchNum": 2,
+   "date": "2026-06-11",
+   "time": "20:00",
+   "utcOffset": -6,
+   "team1": {
+    "code": "KOR"
+   },
+   "team2": {
+    "code": "CZE"
+   },
+   "stadium": "Estadio Akron",
+   "town": "Zapopan",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "A"
+  },
+  {
+   "section": "A3",
+   "source": "group_A",
+   "matchNum": 25,
+   "date": "2026-06-18",
+   "time": "12:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "CZE"
+   },
+   "team2": {
+    "code": "RSA"
+   },
+   "stadium": "Mercedes-Benz Stadium",
+   "town": "Atlanta",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "A"
+  },
+  {
+   "section": "A4",
+   "source": "group_A",
+   "matchNum": 28,
+   "date": "2026-06-18",
+   "time": "19:00",
+   "utcOffset": -6,
+   "team1": {
+    "code": "MEX"
+   },
+   "team2": {
+    "code": "KOR"
+   },
+   "stadium": "Estadio Akron",
+   "town": "Zapopan",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "A"
+  },
+  {
+   "section": "A5",
+   "source": "group_A",
+   "matchNum": 53,
+   "date": "2026-06-24",
+   "time": "19:00",
+   "utcOffset": -6,
+   "team1": {
+    "code": "CZE"
+   },
+   "team2": {
+    "code": "MEX"
+   },
+   "stadium": "Estadio Azteca",
+   "town": "Mexico City",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "A"
+  },
+  {
+   "section": "A6",
+   "source": "group_A",
+   "matchNum": 54,
+   "date": "2026-06-24",
+   "time": "19:00",
+   "utcOffset": -6,
+   "team1": {
+    "code": "RSA"
+   },
+   "team2": {
+    "code": "KOR"
+   },
+   "stadium": "Estadio BBVA",
+   "town": "Guadalupe",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "A"
+  },
+  {
+   "section": "B1",
+   "source": "group_B",
+   "matchNum": 3,
+   "date": "2026-06-12",
+   "time": "15:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "CAN"
+   },
+   "team2": {
+    "code": "BIH"
+   },
+   "stadium": "BMO Field",
+   "town": "Toronto",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "B"
+  },
+  {
+   "section": "B2",
+   "source": "group_B",
+   "matchNum": 8,
+   "date": "2026-06-13",
+   "time": "12:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "QAT"
+   },
+   "team2": {
+    "code": "SUI"
+   },
+   "stadium": "Levi's Stadium",
+   "town": "Santa Clara",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "B"
+  },
+  {
+   "section": "B3",
+   "source": "group_B",
+   "matchNum": 26,
+   "date": "2026-06-18",
+   "time": "12:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "SUI"
+   },
+   "team2": {
+    "code": "BIH"
+   },
+   "stadium": "SoFi Stadium",
+   "town": "Inglewood",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "B"
+  },
+  {
+   "section": "B4",
+   "source": "group_B",
+   "matchNum": 27,
+   "date": "2026-06-18",
+   "time": "15:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "CAN"
+   },
+   "team2": {
+    "code": "QAT"
+   },
+   "stadium": "BC Place",
+   "town": "Vancouver",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "B"
+  },
+  {
+   "section": "B5",
+   "source": "group_B",
+   "matchNum": 51,
+   "date": "2026-06-24",
+   "time": "12:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "SUI"
+   },
+   "team2": {
+    "code": "CAN"
+   },
+   "stadium": "BC Place",
+   "town": "Vancouver",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "B"
+  },
+  {
+   "section": "B6",
+   "source": "group_B",
+   "matchNum": 52,
+   "date": "2026-06-24",
+   "time": "12:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "BIH"
+   },
+   "team2": {
+    "code": "QAT"
+   },
+   "stadium": "Lumen Field",
+   "town": "Seattle",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "B"
+  },
+  {
+   "section": "C1",
+   "source": "group_C",
+   "matchNum": 7,
+   "date": "2026-06-13",
+   "time": "18:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "BRA"
+   },
+   "team2": {
+    "code": "MAR"
+   },
+   "stadium": "MetLife Stadium",
+   "town": "East Rutherford",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "C"
+  },
+  {
+   "section": "C2",
+   "source": "group_C",
+   "matchNum": 5,
+   "date": "2026-06-13",
+   "time": "21:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "HAI"
+   },
+   "team2": {
+    "code": "SCO"
+   },
+   "stadium": "Gillette Stadium",
+   "town": "Foxborough",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "C"
+  },
+  {
+   "section": "C3",
+   "source": "group_C",
+   "matchNum": 30,
+   "date": "2026-06-19",
+   "time": "18:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "SCO"
+   },
+   "team2": {
+    "code": "MAR"
+   },
+   "stadium": "Gillette Stadium",
+   "town": "Foxborough",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "C"
+  },
+  {
+   "section": "C4",
+   "source": "group_C",
+   "matchNum": 29,
+   "date": "2026-06-19",
+   "time": "20:30",
+   "utcOffset": -4,
+   "team1": {
+    "code": "BRA"
+   },
+   "team2": {
+    "code": "HAI"
+   },
+   "stadium": "Lincoln Financial Field",
+   "town": "Philadelphia",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "C"
+  },
+  {
+   "section": "C5",
+   "source": "group_C",
+   "matchNum": 49,
+   "date": "2026-06-24",
+   "time": "18:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "SCO"
+   },
+   "team2": {
+    "code": "BRA"
+   },
+   "stadium": "Hard Rock Stadium",
+   "town": "Miami Gardens",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "C"
+  },
+  {
+   "section": "C6",
+   "source": "group_C",
+   "matchNum": 50,
+   "date": "2026-06-24",
+   "time": "18:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "MAR"
+   },
+   "team2": {
+    "code": "HAI"
+   },
+   "stadium": "Mercedes-Benz Stadium",
+   "town": "Atlanta",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "C"
+  },
+  {
+   "section": "D1",
+   "source": "group_D",
+   "matchNum": 4,
+   "date": "2026-06-12",
+   "time": "18:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "USA"
+   },
+   "team2": {
+    "code": "PAR"
+   },
+   "stadium": "SoFi Stadium",
+   "town": "Inglewood",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "D"
+  },
+  {
+   "section": "D2",
+   "source": "group_D",
+   "matchNum": 6,
+   "date": "2026-06-13",
+   "time": "21:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "AUS"
+   },
+   "team2": {
+    "code": "TUR"
+   },
+   "stadium": "BC Place",
+   "town": "Vancouver",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "D"
+  },
+  {
+   "section": "D3",
+   "source": "group_D",
+   "matchNum": 32,
+   "date": "2026-06-19",
+   "time": "12:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "USA"
+   },
+   "team2": {
+    "code": "AUS"
+   },
+   "stadium": "Lumen Field",
+   "town": "Seattle",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "D"
+  },
+  {
+   "section": "D4",
+   "source": "group_D",
+   "matchNum": 31,
+   "date": "2026-06-19",
+   "time": "20:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "TUR"
+   },
+   "team2": {
+    "code": "PAR"
+   },
+   "stadium": "Levi's Stadium",
+   "town": "Santa Clara",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "D"
+  },
+  {
+   "section": "D5",
+   "source": "group_D",
+   "matchNum": 59,
+   "date": "2026-06-25",
+   "time": "19:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "TUR"
+   },
+   "team2": {
+    "code": "USA"
+   },
+   "stadium": "SoFi Stadium",
+   "town": "Inglewood",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "D"
+  },
+  {
+   "section": "D6",
+   "source": "group_D",
+   "matchNum": 60,
+   "date": "2026-06-25",
+   "time": "19:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "PAR"
+   },
+   "team2": {
+    "code": "AUS"
+   },
+   "stadium": "Levi's Stadium",
+   "town": "Santa Clara",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "D"
+  },
+  {
+   "section": "E1",
+   "source": "group_E",
+   "matchNum": 10,
+   "date": "2026-06-14",
+   "time": "12:00",
+   "utcOffset": -5,
+   "team1": {
+    "code": "GER"
+   },
+   "team2": {
+    "code": "CUW"
+   },
+   "stadium": "NRG Stadium",
+   "town": "Houston",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "E"
+  },
+  {
+   "section": "E2",
+   "source": "group_E",
+   "matchNum": 9,
+   "date": "2026-06-14",
+   "time": "19:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "CIV"
+   },
+   "team2": {
+    "code": "ECU"
+   },
+   "stadium": "Lincoln Financial Field",
+   "town": "Philadelphia",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "E"
+  },
+  {
+   "section": "E3",
+   "source": "group_E",
+   "matchNum": 33,
+   "date": "2026-06-20",
+   "time": "16:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "GER"
+   },
+   "team2": {
+    "code": "CIV"
+   },
+   "stadium": "BMO Field",
+   "town": "Toronto",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "E"
+  },
+  {
+   "section": "E4",
+   "source": "group_E",
+   "matchNum": 34,
+   "date": "2026-06-20",
+   "time": "19:00",
+   "utcOffset": -5,
+   "team1": {
+    "code": "ECU"
+   },
+   "team2": {
+    "code": "CUW"
+   },
+   "stadium": "Arrowhead Stadium",
+   "town": "Kansas City",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "E"
+  },
+  {
+   "section": "E5",
+   "source": "group_E",
+   "matchNum": 55,
+   "date": "2026-06-25",
+   "time": "16:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "CUW"
+   },
+   "team2": {
+    "code": "CIV"
+   },
+   "stadium": "Lincoln Financial Field",
+   "town": "Philadelphia",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "E"
+  },
+  {
+   "section": "E6",
+   "source": "group_E",
+   "matchNum": 56,
+   "date": "2026-06-25",
+   "time": "16:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "ECU"
+   },
+   "team2": {
+    "code": "GER"
+   },
+   "stadium": "MetLife Stadium",
+   "town": "East Rutherford",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "E"
+  },
+  {
+   "section": "F1",
+   "source": "group_F",
+   "matchNum": 11,
+   "date": "2026-06-14",
+   "time": "15:00",
+   "utcOffset": -5,
+   "team1": {
+    "code": "NED"
+   },
+   "team2": {
+    "code": "JPN"
+   },
+   "stadium": "AT&T Stadium",
+   "town": "Arlington",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "F"
+  },
+  {
+   "section": "F2",
+   "source": "group_F",
+   "matchNum": 12,
+   "date": "2026-06-14",
+   "time": "20:00",
+   "utcOffset": -6,
+   "team1": {
+    "code": "SWE"
+   },
+   "team2": {
+    "code": "TUN"
+   },
+   "stadium": "Estadio BBVA",
+   "town": "Guadalupe",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "F"
+  },
+  {
+   "section": "F3",
+   "source": "group_F",
+   "matchNum": 35,
+   "date": "2026-06-20",
+   "time": "12:00",
+   "utcOffset": -5,
+   "team1": {
+    "code": "NED"
+   },
+   "team2": {
+    "code": "SWE"
+   },
+   "stadium": "NRG Stadium",
+   "town": "Houston",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "F"
+  },
+  {
+   "section": "F4",
+   "source": "group_F",
+   "matchNum": 36,
+   "date": "2026-06-20",
+   "time": "22:00",
+   "utcOffset": -6,
+   "team1": {
+    "code": "TUN"
+   },
+   "team2": {
+    "code": "JPN"
+   },
+   "stadium": "Estadio BBVA",
+   "town": "Guadalupe",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "F"
+  },
+  {
+   "section": "F5",
+   "source": "group_F",
+   "matchNum": 57,
+   "date": "2026-06-25",
+   "time": "18:00",
+   "utcOffset": -5,
+   "team1": {
+    "code": "JPN"
+   },
+   "team2": {
+    "code": "SWE"
+   },
+   "stadium": "AT&T Stadium",
+   "town": "Arlington",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "F"
+  },
+  {
+   "section": "F6",
+   "source": "group_F",
+   "matchNum": 58,
+   "date": "2026-06-25",
+   "time": "18:00",
+   "utcOffset": -5,
+   "team1": {
+    "code": "TUN"
+   },
+   "team2": {
+    "code": "NED"
+   },
+   "stadium": "Arrowhead Stadium",
+   "town": "Kansas City",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "F"
+  },
+  {
+   "section": "G1",
+   "source": "group_G",
+   "matchNum": 16,
+   "date": "2026-06-15",
+   "time": "12:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "BEL"
+   },
+   "team2": {
+    "code": "EGY"
+   },
+   "stadium": "Lumen Field",
+   "town": "Seattle",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "G"
+  },
+  {
+   "section": "G2",
+   "source": "group_G",
+   "matchNum": 15,
+   "date": "2026-06-15",
+   "time": "18:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "IRN"
+   },
+   "team2": {
+    "code": "NZL"
+   },
+   "stadium": "SoFi Stadium",
+   "town": "Inglewood",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "G"
+  },
+  {
+   "section": "G3",
+   "source": "group_G",
+   "matchNum": 39,
+   "date": "2026-06-21",
+   "time": "12:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "BEL"
+   },
+   "team2": {
+    "code": "IRN"
+   },
+   "stadium": "SoFi Stadium",
+   "town": "Inglewood",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "G"
+  },
+  {
+   "section": "G4",
+   "source": "group_G",
+   "matchNum": 40,
+   "date": "2026-06-21",
+   "time": "18:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "NZL"
+   },
+   "team2": {
+    "code": "EGY"
+   },
+   "stadium": "BC Place",
+   "town": "Vancouver",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "G"
+  },
+  {
+   "section": "G5",
+   "source": "group_G",
+   "matchNum": 63,
+   "date": "2026-06-26",
+   "time": "20:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "EGY"
+   },
+   "team2": {
+    "code": "IRN"
+   },
+   "stadium": "Lumen Field",
+   "town": "Seattle",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "G"
+  },
+  {
+   "section": "G6",
+   "source": "group_G",
+   "matchNum": 64,
+   "date": "2026-06-26",
+   "time": "20:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "NZL"
+   },
+   "team2": {
+    "code": "BEL"
+   },
+   "stadium": "BC Place",
+   "town": "Vancouver",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "G"
+  },
+  {
+   "section": "H1",
+   "source": "group_H",
+   "matchNum": 14,
+   "date": "2026-06-15",
+   "time": "12:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "ESP"
+   },
+   "team2": {
+    "code": "CPV"
+   },
+   "stadium": "Mercedes-Benz Stadium",
+   "town": "Atlanta",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "H"
+  },
+  {
+   "section": "H2",
+   "source": "group_H",
+   "matchNum": 13,
+   "date": "2026-06-15",
+   "time": "18:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "KSA"
+   },
+   "team2": {
+    "code": "URU"
+   },
+   "stadium": "Hard Rock Stadium",
+   "town": "Miami Gardens",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "H"
+  },
+  {
+   "section": "H3",
+   "source": "group_H",
+   "matchNum": 38,
+   "date": "2026-06-21",
+   "time": "12:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "ESP"
+   },
+   "team2": {
+    "code": "KSA"
+   },
+   "stadium": "Mercedes-Benz Stadium",
+   "town": "Atlanta",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "H"
+  },
+  {
+   "section": "H4",
+   "source": "group_H",
+   "matchNum": 37,
+   "date": "2026-06-21",
+   "time": "18:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "URU"
+   },
+   "team2": {
+    "code": "CPV"
+   },
+   "stadium": "Hard Rock Stadium",
+   "town": "Miami Gardens",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "H"
+  },
+  {
+   "section": "H5",
+   "source": "group_H",
+   "matchNum": 65,
+   "date": "2026-06-26",
+   "time": "19:00",
+   "utcOffset": -5,
+   "team1": {
+    "code": "CPV"
+   },
+   "team2": {
+    "code": "KSA"
+   },
+   "stadium": "NRG Stadium",
+   "town": "Houston",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "H"
+  },
+  {
+   "section": "H6",
+   "source": "group_H",
+   "matchNum": 66,
+   "date": "2026-06-26",
+   "time": "18:00",
+   "utcOffset": -6,
+   "team1": {
+    "code": "URU"
+   },
+   "team2": {
+    "code": "ESP"
+   },
+   "stadium": "Estadio Akron",
+   "town": "Zapopan",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "H"
+  },
+  {
+   "section": "I1",
+   "source": "group_I",
+   "matchNum": 17,
+   "date": "2026-06-16",
+   "time": "15:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "FRA"
+   },
+   "team2": {
+    "code": "SEN"
+   },
+   "stadium": "MetLife Stadium",
+   "town": "East Rutherford",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "I"
+  },
+  {
+   "section": "I2",
+   "source": "group_I",
+   "matchNum": 18,
+   "date": "2026-06-16",
+   "time": "18:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "IRQ"
+   },
+   "team2": {
+    "code": "NOR"
+   },
+   "stadium": "Gillette Stadium",
+   "town": "Foxborough",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "I"
+  },
+  {
+   "section": "I3",
+   "source": "group_I",
+   "matchNum": 42,
+   "date": "2026-06-22",
+   "time": "17:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "FRA"
+   },
+   "team2": {
+    "code": "IRQ"
+   },
+   "stadium": "Lincoln Financial Field",
+   "town": "Philadelphia",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "I"
+  },
+  {
+   "section": "I4",
+   "source": "group_I",
+   "matchNum": 41,
+   "date": "2026-06-22",
+   "time": "20:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "NOR"
+   },
+   "team2": {
+    "code": "SEN"
+   },
+   "stadium": "MetLife Stadium",
+   "town": "East Rutherford",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "I"
+  },
+  {
+   "section": "I5",
+   "source": "group_I",
+   "matchNum": 61,
+   "date": "2026-06-26",
+   "time": "15:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "NOR"
+   },
+   "team2": {
+    "code": "FRA"
+   },
+   "stadium": "Gillette Stadium",
+   "town": "Foxborough",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "I"
+  },
+  {
+   "section": "I6",
+   "source": "group_I",
+   "matchNum": 62,
+   "date": "2026-06-26",
+   "time": "15:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "SEN"
+   },
+   "team2": {
+    "code": "IRQ"
+   },
+   "stadium": "BMO Field",
+   "town": "Toronto",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "I"
+  },
+  {
+   "section": "J1",
+   "source": "group_J",
+   "matchNum": 19,
+   "date": "2026-06-16",
+   "time": "20:00",
+   "utcOffset": -5,
+   "team1": {
+    "code": "ARG"
+   },
+   "team2": {
+    "code": "ALG"
+   },
+   "stadium": "Arrowhead Stadium",
+   "town": "Kansas City",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "J"
+  },
+  {
+   "section": "J2",
+   "source": "group_J",
+   "matchNum": 20,
+   "date": "2026-06-16",
+   "time": "21:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "AUT"
+   },
+   "team2": {
+    "code": "JOR"
+   },
+   "stadium": "Levi's Stadium",
+   "town": "Santa Clara",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "J"
+  },
+  {
+   "section": "J3",
+   "source": "group_J",
+   "matchNum": 43,
+   "date": "2026-06-22",
+   "time": "12:00",
+   "utcOffset": -5,
+   "team1": {
+    "code": "ARG"
+   },
+   "team2": {
+    "code": "AUT"
+   },
+   "stadium": "AT&T Stadium",
+   "town": "Arlington",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "J"
+  },
+  {
+   "section": "J4",
+   "source": "group_J",
+   "matchNum": 44,
+   "date": "2026-06-22",
+   "time": "20:00",
+   "utcOffset": -7,
+   "team1": {
+    "code": "JOR"
+   },
+   "team2": {
+    "code": "ALG"
+   },
+   "stadium": "Levi's Stadium",
+   "town": "Santa Clara",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "J"
+  },
+  {
+   "section": "J5",
+   "source": "group_J",
+   "matchNum": 69,
+   "date": "2026-06-27",
+   "time": "21:00",
+   "utcOffset": -5,
+   "team1": {
+    "code": "ALG"
+   },
+   "team2": {
+    "code": "AUT"
+   },
+   "stadium": "Arrowhead Stadium",
+   "town": "Kansas City",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "J"
+  },
+  {
+   "section": "J6",
+   "source": "group_J",
+   "matchNum": 70,
+   "date": "2026-06-27",
+   "time": "21:00",
+   "utcOffset": -5,
+   "team1": {
+    "code": "JOR"
+   },
+   "team2": {
+    "code": "ARG"
+   },
+   "stadium": "AT&T Stadium",
+   "town": "Arlington",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "J"
+  },
+  {
+   "section": "K1",
+   "source": "group_K",
+   "matchNum": 23,
+   "date": "2026-06-17",
+   "time": "12:00",
+   "utcOffset": -5,
+   "team1": {
+    "code": "POR"
+   },
+   "team2": {
+    "code": "COD"
+   },
+   "stadium": "NRG Stadium",
+   "town": "Houston",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "K"
+  },
+  {
+   "section": "K2",
+   "source": "group_K",
+   "matchNum": 24,
+   "date": "2026-06-17",
+   "time": "20:00",
+   "utcOffset": -6,
+   "team1": {
+    "code": "UZB"
+   },
+   "team2": {
+    "code": "COL"
+   },
+   "stadium": "Estadio Azteca",
+   "town": "Mexico City",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "K"
+  },
+  {
+   "section": "K3",
+   "source": "group_K",
+   "matchNum": 47,
+   "date": "2026-06-23",
+   "time": "12:00",
+   "utcOffset": -5,
+   "team1": {
+    "code": "POR"
+   },
+   "team2": {
+    "code": "UZB"
+   },
+   "stadium": "NRG Stadium",
+   "town": "Houston",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "K"
+  },
+  {
+   "section": "K4",
+   "source": "group_K",
+   "matchNum": 48,
+   "date": "2026-06-23",
+   "time": "20:00",
+   "utcOffset": -6,
+   "team1": {
+    "code": "COL"
+   },
+   "team2": {
+    "code": "COD"
+   },
+   "stadium": "Estadio Akron",
+   "town": "Zapopan",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "K"
+  },
+  {
+   "section": "K5",
+   "source": "group_K",
+   "matchNum": 71,
+   "date": "2026-06-27",
+   "time": "19:30",
+   "utcOffset": -4,
+   "team1": {
+    "code": "COL"
+   },
+   "team2": {
+    "code": "POR"
+   },
+   "stadium": "Hard Rock Stadium",
+   "town": "Miami Gardens",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "K"
+  },
+  {
+   "section": "K6",
+   "source": "group_K",
+   "matchNum": 72,
+   "date": "2026-06-27",
+   "time": "19:30",
+   "utcOffset": -4,
+   "team1": {
+    "code": "COD"
+   },
+   "team2": {
+    "code": "UZB"
+   },
+   "stadium": "Mercedes-Benz Stadium",
+   "town": "Atlanta",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "K"
+  },
+  {
+   "section": "L1",
+   "source": "group_L",
+   "matchNum": 22,
+   "date": "2026-06-17",
+   "time": "15:00",
+   "utcOffset": -5,
+   "team1": {
+    "code": "ENG"
+   },
+   "team2": {
+    "code": "CRO"
+   },
+   "stadium": "AT&T Stadium",
+   "town": "Arlington",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "L"
+  },
+  {
+   "section": "L2",
+   "source": "group_L",
+   "matchNum": 21,
+   "date": "2026-06-17",
+   "time": "19:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "GHA"
+   },
+   "team2": {
+    "code": "PAN"
+   },
+   "stadium": "BMO Field",
+   "town": "Toronto",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "L"
+  },
+  {
+   "section": "L3",
+   "source": "group_L",
+   "matchNum": 45,
+   "date": "2026-06-23",
+   "time": "16:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "ENG"
+   },
+   "team2": {
+    "code": "GHA"
+   },
+   "stadium": "Gillette Stadium",
+   "town": "Foxborough",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "L"
+  },
+  {
+   "section": "L4",
+   "source": "group_L",
+   "matchNum": 46,
+   "date": "2026-06-23",
+   "time": "19:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "PAN"
+   },
+   "team2": {
+    "code": "CRO"
+   },
+   "stadium": "BMO Field",
+   "town": "Toronto",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "L"
+  },
+  {
+   "section": "L5",
+   "source": "group_L",
+   "matchNum": 67,
+   "date": "2026-06-27",
+   "time": "17:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "PAN"
+   },
+   "team2": {
+    "code": "ENG"
+   },
+   "stadium": "MetLife Stadium",
+   "town": "East Rutherford",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "L"
+  },
+  {
+   "section": "L6",
+   "source": "group_L",
+   "matchNum": 68,
+   "date": "2026-06-27",
+   "time": "17:00",
+   "utcOffset": -4,
+   "team1": {
+    "code": "CRO"
+   },
+   "team2": {
+    "code": "GHA"
+   },
+   "stadium": "Lincoln Financial Field",
+   "town": "Philadelphia",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Group Stage",
+   "group": "L"
+  },
+  {
+   "section": "R32-1",
+   "source": "knockout",
+   "matchNum": 73,
+   "date": "2026-06-28",
+   "time": "12:00",
+   "utcOffset": -7,
+   "team1": {
+    "placeholder": "Runner-up Group A"
+   },
+   "team2": {
+    "placeholder": "Runner-up Group B"
+   },
+   "stadium": "SoFi Stadium",
+   "town": "Inglewood",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 32"
+  },
+  {
+   "section": "R32-2",
+   "source": "knockout",
+   "matchNum": 76,
+   "date": "2026-06-29",
+   "time": "12:00",
+   "utcOffset": -5,
+   "team1": {
+    "placeholder": "Winner Group C"
+   },
+   "team2": {
+    "placeholder": "Runner-up Group F"
+   },
+   "stadium": "NRG Stadium",
+   "town": "Houston",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 32"
+  },
+  {
+   "section": "R32-3",
+   "source": "knockout",
+   "matchNum": 74,
+   "date": "2026-06-29",
+   "time": "16:30",
+   "utcOffset": -4,
+   "team1": {
+    "placeholder": "Winner Group E"
+   },
+   "team2": {
+    "placeholder": "3rd Group A/B/C/D/F"
+   },
+   "stadium": "Gillette Stadium",
+   "town": "Foxborough",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 32"
+  },
+  {
+   "section": "R32-4",
+   "source": "knockout",
+   "matchNum": 75,
+   "date": "2026-06-29",
+   "time": "19:00",
+   "utcOffset": -6,
+   "team1": {
+    "placeholder": "Winner Group F"
+   },
+   "team2": {
+    "placeholder": "Runner-up Group C"
+   },
+   "stadium": "Estadio BBVA",
+   "town": "Guadalupe",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 32"
+  },
+  {
+   "section": "R32-5",
+   "source": "knockout",
+   "matchNum": 78,
+   "date": "2026-06-30",
+   "time": "12:00",
+   "utcOffset": -5,
+   "team1": {
+    "placeholder": "Runner-up Group E"
+   },
+   "team2": {
+    "placeholder": "Runner-up Group I"
+   },
+   "stadium": "AT&T Stadium",
+   "town": "Arlington",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 32"
+  },
+  {
+   "section": "R32-6",
+   "source": "knockout",
+   "matchNum": 77,
+   "date": "2026-06-30",
+   "time": "17:00",
+   "utcOffset": -4,
+   "team1": {
+    "placeholder": "Winner Group I"
+   },
+   "team2": {
+    "placeholder": "3rd Group C/D/F/G/H"
+   },
+   "stadium": "MetLife Stadium",
+   "town": "East Rutherford",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 32"
+  },
+  {
+   "section": "R32-7",
+   "source": "knockout",
+   "matchNum": 79,
+   "date": "2026-06-30",
+   "time": "19:00",
+   "utcOffset": -6,
+   "team1": {
+    "placeholder": "Winner Group A"
+   },
+   "team2": {
+    "placeholder": "3rd Group C/E/F/H/I"
+   },
+   "stadium": "Estadio Azteca",
+   "town": "Mexico City",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 32"
+  },
+  {
+   "section": "R32-8",
+   "source": "knockout",
+   "matchNum": 80,
+   "date": "2026-07-01",
+   "time": "12:00",
+   "utcOffset": -4,
+   "team1": {
+    "placeholder": "Winner Group L"
+   },
+   "team2": {
+    "placeholder": "3rd Group E/H/I/J/K"
+   },
+   "stadium": "Mercedes-Benz Stadium",
+   "town": "Atlanta",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 32"
+  },
+  {
+   "section": "R32-9",
+   "source": "knockout",
+   "matchNum": 82,
+   "date": "2026-07-01",
+   "time": "13:00",
+   "utcOffset": -7,
+   "team1": {
+    "placeholder": "Winner Group G"
+   },
+   "team2": {
+    "placeholder": "3rd Group A/E/H/I/J"
+   },
+   "stadium": "Lumen Field",
+   "town": "Seattle",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 32"
+  },
+  {
+   "section": "R32-10",
+   "source": "knockout",
+   "matchNum": 81,
+   "date": "2026-07-01",
+   "time": "17:00",
+   "utcOffset": -7,
+   "team1": {
+    "placeholder": "Winner Group D"
+   },
+   "team2": {
+    "placeholder": "3rd Group B/E/F/I/J"
+   },
+   "stadium": "Levi's Stadium",
+   "town": "Santa Clara",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 32"
+  },
+  {
+   "section": "R32-11",
+   "source": "knockout",
+   "matchNum": 84,
+   "date": "2026-07-02",
+   "time": "12:00",
+   "utcOffset": -7,
+   "team1": {
+    "placeholder": "Winner Group H"
+   },
+   "team2": {
+    "placeholder": "Runner-up Group J"
+   },
+   "stadium": "SoFi Stadium",
+   "town": "Inglewood",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 32"
+  },
+  {
+   "section": "R32-12",
+   "source": "knockout",
+   "matchNum": 83,
+   "date": "2026-07-02",
+   "time": "19:00",
+   "utcOffset": -4,
+   "team1": {
+    "placeholder": "Runner-up Group K"
+   },
+   "team2": {
+    "placeholder": "Runner-up Group L"
+   },
+   "stadium": "BMO Field",
+   "town": "Toronto",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 32"
+  },
+  {
+   "section": "R32-13",
+   "source": "knockout",
+   "matchNum": 85,
+   "date": "2026-07-02",
+   "time": "20:00",
+   "utcOffset": -7,
+   "team1": {
+    "placeholder": "Winner Group B"
+   },
+   "team2": {
+    "placeholder": "3rd Group E/F/G/I/J"
+   },
+   "stadium": "BC Place",
+   "town": "Vancouver",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 32"
+  },
+  {
+   "section": "R32-14",
+   "source": "knockout",
+   "matchNum": 88,
+   "date": "2026-07-03",
+   "time": "13:00",
+   "utcOffset": -5,
+   "team1": {
+    "placeholder": "Runner-up Group D"
+   },
+   "team2": {
+    "placeholder": "Runner-up Group G"
+   },
+   "stadium": "AT&T Stadium",
+   "town": "Arlington",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 32"
+  },
+  {
+   "section": "R32-15",
+   "source": "knockout",
+   "matchNum": 86,
+   "date": "2026-07-03",
+   "time": "18:00",
+   "utcOffset": -4,
+   "team1": {
+    "placeholder": "Winner Group J"
+   },
+   "team2": {
+    "placeholder": "Runner-up Group H"
+   },
+   "stadium": "Hard Rock Stadium",
+   "town": "Miami Gardens",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 32"
+  },
+  {
+   "section": "R32-16",
+   "source": "knockout",
+   "matchNum": 87,
+   "date": "2026-07-03",
+   "time": "20:30",
+   "utcOffset": -5,
+   "team1": {
+    "placeholder": "Winner Group K"
+   },
+   "team2": {
+    "placeholder": "3rd Group D/E/I/J/L"
+   },
+   "stadium": "Arrowhead Stadium",
+   "town": "Kansas City",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 32"
+  },
+  {
+   "section": "R16-1",
+   "source": "knockout",
+   "matchNum": 90,
+   "date": "2026-07-04",
+   "time": "12:00",
+   "utcOffset": -5,
+   "team1": {
+    "placeholder": "Winner Match 73"
+   },
+   "team2": {
+    "placeholder": "Winner Match 75"
+   },
+   "stadium": "NRG Stadium",
+   "town": "Houston",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 16"
+  },
+  {
+   "section": "R16-2",
+   "source": "knockout",
+   "matchNum": 89,
+   "date": "2026-07-04",
+   "time": "17:00",
+   "utcOffset": -4,
+   "team1": {
+    "placeholder": "Winner Match 74"
+   },
+   "team2": {
+    "placeholder": "Winner Match 77"
+   },
+   "stadium": "Lincoln Financial Field",
+   "town": "Philadelphia",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 16"
+  },
+  {
+   "section": "R16-3",
+   "source": "knockout",
+   "matchNum": 91,
+   "date": "2026-07-05",
+   "time": "16:00",
+   "utcOffset": -4,
+   "team1": {
+    "placeholder": "Winner Match 76"
+   },
+   "team2": {
+    "placeholder": "Winner Match 78"
+   },
+   "stadium": "MetLife Stadium",
+   "town": "East Rutherford",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 16"
+  },
+  {
+   "section": "R16-4",
+   "source": "knockout",
+   "matchNum": 92,
+   "date": "2026-07-05",
+   "time": "18:00",
+   "utcOffset": -6,
+   "team1": {
+    "placeholder": "Winner Match 79"
+   },
+   "team2": {
+    "placeholder": "Winner Match 80"
+   },
+   "stadium": "Estadio Azteca",
+   "town": "Mexico City",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 16"
+  },
+  {
+   "section": "R16-5",
+   "source": "knockout",
+   "matchNum": 93,
+   "date": "2026-07-06",
+   "time": "14:00",
+   "utcOffset": -5,
+   "team1": {
+    "placeholder": "Winner Match 83"
+   },
+   "team2": {
+    "placeholder": "Winner Match 84"
+   },
+   "stadium": "AT&T Stadium",
+   "town": "Arlington",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 16"
+  },
+  {
+   "section": "R16-6",
+   "source": "knockout",
+   "matchNum": 94,
+   "date": "2026-07-06",
+   "time": "17:00",
+   "utcOffset": -7,
+   "team1": {
+    "placeholder": "Winner Match 81"
+   },
+   "team2": {
+    "placeholder": "Winner Match 82"
+   },
+   "stadium": "Lumen Field",
+   "town": "Seattle",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 16"
+  },
+  {
+   "section": "R16-7",
+   "source": "knockout",
+   "matchNum": 95,
+   "date": "2026-07-07",
+   "time": "12:00",
+   "utcOffset": -4,
+   "team1": {
+    "placeholder": "Winner Match 86"
+   },
+   "team2": {
+    "placeholder": "Winner Match 88"
+   },
+   "stadium": "Mercedes-Benz Stadium",
+   "town": "Atlanta",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 16"
+  },
+  {
+   "section": "R16-8",
+   "source": "knockout",
+   "matchNum": 96,
+   "date": "2026-07-07",
+   "time": "13:00",
+   "utcOffset": -7,
+   "team1": {
+    "placeholder": "Winner Match 85"
+   },
+   "team2": {
+    "placeholder": "Winner Match 87"
+   },
+   "stadium": "BC Place",
+   "town": "Vancouver",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Round of 16"
+  },
+  {
+   "section": "QF1",
+   "source": "knockout",
+   "matchNum": 97,
+   "date": "2026-07-09",
+   "time": "16:00",
+   "utcOffset": -4,
+   "team1": {
+    "placeholder": "Winner Match 89"
+   },
+   "team2": {
+    "placeholder": "Winner Match 90"
+   },
+   "stadium": "Gillette Stadium",
+   "town": "Foxborough",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Quarterfinal"
+  },
+  {
+   "section": "QF2",
+   "source": "knockout",
+   "matchNum": 98,
+   "date": "2026-07-10",
+   "time": "12:00",
+   "utcOffset": -7,
+   "team1": {
+    "placeholder": "Winner Match 93"
+   },
+   "team2": {
+    "placeholder": "Winner Match 94"
+   },
+   "stadium": "SoFi Stadium",
+   "town": "Inglewood",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Quarterfinal"
+  },
+  {
+   "section": "QF3",
+   "source": "knockout",
+   "matchNum": 99,
+   "date": "2026-07-11",
+   "time": "17:00",
+   "utcOffset": -4,
+   "team1": {
+    "placeholder": "Winner Match 91"
+   },
+   "team2": {
+    "placeholder": "Winner Match 92"
+   },
+   "stadium": "Hard Rock Stadium",
+   "town": "Miami Gardens",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Quarterfinal"
+  },
+  {
+   "section": "QF4",
+   "source": "knockout",
+   "matchNum": 100,
+   "date": "2026-07-11",
+   "time": "20:00",
+   "utcOffset": -5,
+   "team1": {
+    "placeholder": "Winner Match 95"
+   },
+   "team2": {
+    "placeholder": "Winner Match 96"
+   },
+   "stadium": "Arrowhead Stadium",
+   "town": "Kansas City",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Quarterfinal"
+  },
+  {
+   "section": "SF1",
+   "source": "knockout",
+   "matchNum": 101,
+   "date": "2026-07-14",
+   "time": "14:00",
+   "utcOffset": -5,
+   "team1": {
+    "placeholder": "Winner Match 97"
+   },
+   "team2": {
+    "placeholder": "Winner Match 98"
+   },
+   "stadium": "AT&T Stadium",
+   "town": "Arlington",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Semifinal"
+  },
+  {
+   "section": "SF2",
+   "source": "knockout",
+   "matchNum": 102,
+   "date": "2026-07-15",
+   "time": "15:00",
+   "utcOffset": -4,
+   "team1": {
+    "placeholder": "Winner Match 99"
+   },
+   "team2": {
+    "placeholder": "Winner Match 100"
+   },
+   "stadium": "Mercedes-Benz Stadium",
+   "town": "Atlanta",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Semifinal"
+  },
+  {
+   "section": "3rd",
+   "source": "knockout",
+   "matchNum": 103,
+   "date": "2026-07-18",
+   "time": "17:00",
+   "utcOffset": -4,
+   "team1": {
+    "placeholder": "Loser Match 101"
+   },
+   "team2": {
+    "placeholder": "Loser Match 102"
+   },
+   "stadium": "Hard Rock Stadium",
+   "town": "Miami Gardens",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Third Place"
+  },
+  {
+   "section": "Final",
+   "source": "final",
+   "matchNum": 104,
+   "date": "2026-07-19",
+   "time": "15:00",
+   "utcOffset": -4,
+   "team1": {
+    "placeholder": "Winner Match 101"
+   },
+   "team2": {
+    "placeholder": "Winner Match 102"
+   },
+   "stadium": "MetLife Stadium",
+   "town": "East Rutherford",
+   "s1": null,
+   "s2": null,
+   "aet": false,
+   "pens": null,
+   "round": "Final"
+  }
+ ],
+ "groups": {
+  "A": [
+   "MEX",
+   "RSA",
+   "KOR",
+   "CZE"
+  ],
+  "B": [
+   "CAN",
+   "BIH",
+   "QAT",
+   "SUI"
+  ],
+  "C": [
+   "BRA",
+   "MAR",
+   "HAI",
+   "SCO"
+  ],
+  "D": [
+   "USA",
+   "PAR",
+   "AUS",
+   "TUR"
+  ],
+  "E": [
+   "GER",
+   "CUW",
+   "CIV",
+   "ECU"
+  ],
+  "F": [
+   "NED",
+   "JPN",
+   "SWE",
+   "TUN"
+  ],
+  "G": [
+   "BEL",
+   "EGY",
+   "IRN",
+   "NZL"
+  ],
+  "H": [
+   "ESP",
+   "CPV",
+   "KSA",
+   "URU"
+  ],
+  "I": [
+   "FRA",
+   "SEN",
+   "IRQ",
+   "NOR"
+  ],
+  "J": [
+   "ARG",
+   "ALG",
+   "AUT",
+   "JOR"
+  ],
+  "K": [
+   "POR",
+   "COD",
+   "UZB",
+   "COL"
+  ],
+  "L": [
+   "ENG",
+   "CRO",
+   "GHA",
+   "PAN"
+  ]
+ }
+}
