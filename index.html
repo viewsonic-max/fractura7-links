@@ -329,6 +329,73 @@
   .leaflet-control-attribution{background:rgba(11,17,32,.7) !important; color:#5a6a8d !important;}
   .leaflet-control-attribution a{color:#7787ab !important;}
 
+  /* ── bracket predictor ──────────────────────────── */
+  #bracket{position:absolute; inset:0; z-index:1600; display:none; background:rgba(7,11,22,.86); backdrop-filter:blur(6px); padding:18px;}
+  #bracket.open{display:flex; justify-content:center; align-items:flex-start;}
+  #bracketInner{
+    width:min(1120px,96vw); max-height:calc(100vh - 36px); position:relative;
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:18px;
+    box-shadow:0 20px 60px rgba(0,0,0,.6); display:flex; flex-direction:column; overflow:hidden;
+  }
+  .brkHead{display:flex; align-items:center; gap:9px; padding:13px 16px; border-bottom:1px solid var(--panel-border); flex-wrap:wrap;}
+  .brkHead h2{font-size:17px; font-weight:900;}
+  .brkHead h2 .pc{background:linear-gradient(92deg,var(--gold),var(--hot)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .brkScore{font-size:12px; font-weight:800; color:var(--ink-dim); background:rgba(255,255,255,.06); padding:4px 11px; border-radius:999px; white-space:nowrap;}
+  .brkScore b{color:var(--pitch);}
+  .brkTabs{display:flex; gap:4px; margin-left:auto;}
+  .brkTabs button{padding:6px 14px; border-radius:999px; border:1px solid var(--panel-border); background:#16203a; color:var(--ink-dim); font:800 12px 'Outfit',sans-serif; cursor:pointer;}
+  .brkTabs button.on{background:linear-gradient(135deg,var(--pitch),var(--pitch-deep)); color:#04150c; border-color:transparent;}
+  .brkAct{display:flex; gap:6px;}
+  .brkAct button{padding:6px 11px; border-radius:9px; border:1px solid var(--panel-border); background:#16203a; color:var(--ink); font:700 12px 'Outfit',sans-serif; cursor:pointer; white-space:nowrap;}
+  .brkAct button:hover{filter:brightness(1.25);}
+  .brkAct .x{font-size:15px; padding:6px 11px;}
+  .brkBody{overflow:auto; padding:14px 16px 20px; scrollbar-width:thin; scrollbar-color:#33415e transparent;}
+  .brkHint{font-size:11.5px; color:var(--ink-dim); margin:0 0 12px; line-height:1.5;}
+  .brkHint b{color:var(--ink);}
+  /* groups */
+  .grpGrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(235px,1fr)); gap:11px;}
+  .grpCard{background:rgba(255,255,255,.03); border:1px solid var(--panel-border); border-radius:14px; padding:10px 11px;}
+  .grpCard h3{font-size:13px; font-weight:900; margin-bottom:7px; display:flex; align-items:center; gap:6px;}
+  .lkTag{font-size:8.5px; font-weight:800; border-radius:6px; padding:1px 6px; margin-left:auto; letter-spacing:.5px;}
+  .lkTag.fin{color:var(--gold); border:1px solid var(--gold);}
+  .lkTag.pick{color:var(--pitch); border:1px solid var(--pitch);}
+  .lkTag.live{color:var(--sky); border:1px solid var(--sky);}
+  .grpRow{display:flex; align-items:center; gap:8px; padding:5px 6px; border-radius:9px; font-size:13px; font-weight:700; background:rgba(255,255,255,.02);}
+  .grpRow + .grpRow{margin-top:3px;}
+  .grpRow .rk{width:14px; font-weight:900; color:var(--ink-dim); font-size:12px; text-align:center;}
+  .grpRow img{width:24px; height:16px; border-radius:3px; object-fit:cover;}
+  .grpRow .gn{flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .grpRow.q{background:rgba(34,224,124,.1);} .grpRow.q .rk{color:var(--pitch);}
+  .grpRow.wc{background:rgba(255,159,67,.1);} .grpRow.wc .rk{color:var(--orange);}
+  .grpRow .vb{font-size:11px; font-weight:900;}
+  .grpRow .vb.ok{color:var(--pitch);} .grpRow .vb.no{color:var(--live);}
+  .grpRow .mv{display:flex; flex-direction:column; gap:2px;}
+  .grpRow .mv button{width:21px; height:13px; line-height:11px; border:none; border-radius:4px; background:#283455; color:var(--ink); font-size:9px; cursor:pointer; padding:0;}
+  .grpRow .mv button:hover:not(:disabled){background:var(--pitch); color:#04150c;}
+  .grpRow .mv button:disabled{opacity:.22; cursor:default;}
+  .grpRow.locked .mv{display:none;}
+  /* knockout columns */
+  .koWrap{display:flex; gap:13px; overflow-x:auto; padding-bottom:8px; align-items:flex-start; scrollbar-width:thin; scrollbar-color:#33415e transparent;}
+  .koCol{flex:0 0 auto; width:172px; display:flex; flex-direction:column; gap:9px;}
+  .koCol h4{font-size:10.5px; font-weight:900; letter-spacing:1px; color:var(--ink-dim); text-transform:uppercase; margin-bottom:1px;}
+  .koMatch{background:rgba(255,255,255,.03); border:1px solid var(--panel-border); border-radius:11px; padding:7px;}
+  .koMatch.decided{opacity:.94;}
+  .koMn{font-size:9px; font-weight:700; color:var(--ink-dim); margin-bottom:5px; display:flex; align-items:center; gap:5px;}
+  .koSc{color:var(--gold); font-weight:900;}
+  .koSlot{display:flex; align-items:center; gap:7px; padding:6px 7px; border-radius:8px; font-size:12.5px; font-weight:800; background:rgba(255,255,255,.04); border:1px solid transparent;}
+  .koSlot + .koSlot{margin-top:4px;}
+  .koSlot img{width:22px; height:15px; border-radius:3px; object-fit:cover;}
+  .koSlot[data-pick]{cursor:pointer;}
+  .koSlot[data-pick]:hover{border-color:var(--pitch); background:rgba(34,224,124,.08);}
+  .koSlot.win{background:linear-gradient(135deg,rgba(34,224,124,.24),rgba(34,224,124,.06)); border-color:var(--pitch);}
+  .koSlot.realwin{background:linear-gradient(135deg,rgba(255,209,102,.26),rgba(255,209,102,.05)); border-color:var(--gold);}
+  .koSlot.third{cursor:pointer;} .koSlot.third:hover{border-color:var(--orange);}
+  .koSlot .ph{color:var(--ink-dim); font-weight:600; font-size:11px;}
+  .koSlot.third .ph{color:var(--orange); font-weight:800;}
+  .vbadge{margin-left:auto; font-weight:900; font-size:12px;}
+  .vbadge.ok{color:var(--pitch);} .vbadge.no{color:var(--live);}
+  .brkToast{position:absolute; bottom:22px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,#ffe9a8,var(--gold)); color:#3a2c00; font:800 12px 'Outfit',sans-serif; padding:9px 16px; border-radius:999px; box-shadow:0 8px 28px rgba(0,0,0,.5); animation:chipin .2s ease;}
+
   #confetti{position:absolute; inset:0; z-index:1500; pointer-events:none;}
 
   #sheetBar{display:none;}
@@ -412,6 +479,15 @@
 
     .leaflet-control-zoom{display:none;}
     .stadion .lbl{font-size:9px;}
+
+    #bracket{padding:0;}
+    #bracketInner{width:100vw; max-height:100vh; height:100%; border-radius:0;}
+    .brkHead{padding:9px 11px; gap:7px;}
+    .brkHead h2{font-size:14px;}
+    .brkScore{font-size:11px; padding:3px 9px;}
+    .brkTabs{order:5; width:100%; margin-top:5px;}
+    .brkTabs button{flex:1;}
+    .grpGrid{grid-template-columns:1fr;}
   }
 </style>
 </head>
@@ -443,6 +519,7 @@
   <div id="teamFab" title="Follow a team"><span id="teamFabFace">⭐</span></div>
 </div>
 <div id="drawer"><div id="drawerInner"></div></div>
+<div id="bracket"><div id="bracketInner"></div></div>
 <div id="clockChip"></div>
 
 <div id="tl">
@@ -450,6 +527,7 @@
   <button class="tlBtn" id="playBtn" title="Play the tournament (space)">▶</button>
   <button class="tlBtn small" id="nextBtn" title="Next day (→)">▶</button>
   <button class="tlBtn small" id="soundBtn" title="Goal sounds">🔇</button>
+  <button class="tlBtn small" id="predBtn" title="Bracket predictor">🔮</button>
   <div id="days"></div>
 </div>
 
@@ -1151,10 +1229,11 @@ function renderSound() {
 soundBtn.onclick = () => { soundOn = !soundOn; if (soundOn) playGoal(); renderSound(); saveState(); };
 renderSound();
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (predOn) return predClose(); return closeDrawer(); }
+  if (predOn) return;   // bracket modal owns the keyboard while open
   if (e.key === 'ArrowLeft') { stopPlay(); stepDay(-1); }
   if (e.key === 'ArrowRight') { stopPlay(); stepDay(1); }
   if (e.key === ' ') { e.preventDefault(); startPlay(); }
-  if (e.key === 'Escape') closeDrawer();
 });
 
 // ── group standings (computed from results) ──────────────────────────────
@@ -1336,6 +1415,209 @@ function confTick() {
 }
 addEventListener('resize', () => { layoutPanel(); if (confOn || bursts.length) sizeCanvas(); });
 
+// ── bracket predictor ─────────────────────────────────────────────────────
+// Resolves the whole knockout tree from the user's group orders + winner picks.
+// Real (FT) results always win and lock; everything else is the prediction.
+const MATCH_BY_N = {}; MATCHES.forEach(m => MATCH_BY_N[m.n] = m);
+const matchByN = n => MATCH_BY_N[n];
+const KO_MATCHES = MATCHES.filter(m => m.src === 'knockout' || m.src === 'final');
+const GROUP_SIZE = 6;   // round-robin matches per 4-team group
+
+const PRED_KEY = 'wcviz.pred.v1';
+const normalizePred = o => ({g:(o&&o.g)||{}, third:(o&&o.third)||{}, win:(o&&o.win)||{}});
+function loadPred() {
+  const q = _params.get('predict');
+  if (q) { try { return normalizePred(JSON.parse(decodeURIComponent(escape(atob(q))))); } catch (e) {} }
+  try { const o = JSON.parse(localStorage.getItem(PRED_KEY)); if (o) return normalizePred(o); } catch (e) {}
+  return {g:{}, third:{}, win:{}};
+}
+let PRED = loadPred();
+let predOn = false, predView = 'knockout';
+function savePred() { try { localStorage.setItem(PRED_KEY, JSON.stringify(PRED)); } catch (e) {} }
+
+const groupDecided = g => { const fx = MATCHES.filter(m => m.g === g); return fx.length === GROUP_SIZE && fx.every(m => m.s1 != null); };
+// committed = what feeds the bracket: real order if the group is done, else the
+// user's predicted order, else null (slot stays a placeholder — blanks are fine)
+function committedOrder(g) {
+  if (groupDecided(g)) return standingsFor(g).map(r => r.c);
+  return PRED.g[g] || null;
+}
+const displayOrder = g => committedOrder(g) || standingsFor(g).map(r => r.c);
+
+function slotTeam(m, side) {
+  const tag = m[side];
+  if (TEAMS[tag]) return tag;                       // reality already resolved this slot
+  const p = tag.slice(1); let mm;
+  if ((mm = p.match(/^W·(\w)$/)))        { const o = committedOrder(mm[1]); return o ? o[0] : null; }
+  if ((mm = p.match(/^2nd·(\w)$/)))      { const o = committedOrder(mm[1]); return o ? o[1] : null; }
+  if (p.startsWith('3rd·'))              { return PRED.third[m.sec] || null; }   // wildcard: user-assigned
+  if ((mm = p.match(/^W Match (\d+)$/))) return winnerCode(+mm[1]);
+  if ((mm = p.match(/^L Match (\d+)$/))) return loserCode(+mm[1]);
+  return null;
+}
+function realWinner(m) {
+  if (m.s1 == null) return null;
+  if (m.pens) { const pp = m.pens.split(/[–—-]/).map(Number); return pp[0] > pp[1] ? slotTeam(m,'a') : slotTeam(m,'b'); }
+  return m.s1 > m.s2 ? slotTeam(m,'a') : m.s2 > m.s1 ? slotTeam(m,'b') : null;
+}
+function winnerCode(n) { const m = matchByN(n); if (!m) return null; return m.s1 != null ? realWinner(m) : (PRED.win[n] || null); }
+function loserCode(n)  { const m = matchByN(n); if (!m) return null; const a = slotTeam(m,'a'), b = slotTeam(m,'b'); const w = m.s1 != null ? realWinner(m) : PRED.win[n]; return !w ? null : w === a ? b : w === b ? a : null; }
+
+function thirdSide(m) { return m.a.startsWith('?3rd·') ? 'a' : m.b.startsWith('?3rd·') ? 'b' : null; }
+function thirdCandidates(m, sec) {
+  const side = thirdSide(m); if (!side) return [];
+  const groups = m[side].slice(5).split('/');
+  const used = new Set(Object.keys(PRED.third).filter(k => k !== sec).map(k => PRED.third[k]));
+  const out = [];
+  for (const g of groups) { const o = committedOrder(g); const t = o && o[2]; if (t && !used.has(t) && out.indexOf(t) < 0) out.push(t); }
+  return out;
+}
+// drop picks that no longer make sense after an upstream change cascades
+function prunePred() {
+  let changed = true, guard = 0;
+  while (changed && guard++ < 12) {
+    changed = false;
+    for (const n of Object.keys(PRED.win)) {
+      const m = matchByN(+n), a = m && slotTeam(m,'a'), b = m && slotTeam(m,'b');
+      if (!m || (PRED.win[n] !== a && PRED.win[n] !== b)) { delete PRED.win[n]; changed = true; }
+    }
+    for (const sec of Object.keys(PRED.third)) {
+      const m = KO_MATCHES.find(x => x.sec === sec);
+      if (!m || thirdCandidates(m, sec).indexOf(PRED.third[sec]) < 0) { delete PRED.third[sec]; changed = true; }
+    }
+  }
+}
+
+// ── prediction actions ──
+function predMove(g, idx, dir) {
+  if (groupDecided(g)) return;
+  if (!PRED.g[g]) PRED.g[g] = standingsFor(g).map(r => r.c);
+  const arr = PRED.g[g], j = idx + dir;
+  if (j < 0 || j >= arr.length) return;
+  const t = arr[idx]; arr[idx] = arr[j]; arr[j] = t;
+  prunePred(); savePred(); renderBracket();
+}
+function predPickWinner(n, code) {
+  if (matchByN(n).s1 != null) return;               // locked to reality
+  if (PRED.win[n] === code) delete PRED.win[n]; else PRED.win[n] = code;
+  prunePred(); savePred(); renderBracket();
+}
+function predCycleThird(sec) {
+  const m = KO_MATCHES.find(x => x.sec === sec);
+  const seq = [null, ...thirdCandidates(m, sec)];
+  let i = seq.indexOf(PRED.third[sec] || null); if (i < 0) i = 0;
+  const next = seq[(i + 1) % seq.length];
+  if (next) PRED.third[sec] = next; else delete PRED.third[sec];
+  prunePred(); savePred(); renderBracket();
+}
+function predAutoFill() { for (const g of Object.keys(GROUPS)) if (!groupDecided(g)) PRED.g[g] = standingsFor(g).map(r => r.c); savePred(); renderBracket(); }
+function predReset() { if (!confirm('Clear your whole bracket?')) return; PRED = {g:{}, third:{}, win:{}}; savePred(); renderBracket(); }
+function predSetView(v) { predView = v; renderBracket(); }
+function predOpen() { predOn = true; $id('bracket').classList.add('open'); $id('predBtn').classList.add('on'); renderBracket(); }
+function predClose() { predOn = false; $id('bracket').classList.remove('open'); $id('predBtn').classList.remove('on'); }
+function predToast(msg) { const t = document.createElement('div'); t.className = 'brkToast'; t.textContent = msg; $id('bracket').appendChild(t); setTimeout(() => t.remove(), 2200); }
+function predShare() {
+  const url = location.origin + location.pathname + '?predict=' + btoa(unescape(encodeURIComponent(JSON.stringify(PRED))));
+  if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => predToast('🔗 Bracket link copied!'), () => predToast('Copy failed'));
+  else predToast('Clipboard unavailable');
+}
+
+// ── prediction scoring vs reality ──
+function predScore() {
+  let c = 0, t = 0;
+  for (const m of KO_MATCHES) { if (m.s1 == null) continue; const pick = PRED.win[m.n]; if (pick) { t++; if (pick === realWinner(m)) c++; } }
+  for (const g of Object.keys(GROUPS)) {
+    if (!groupDecided(g) || !PRED.g[g]) continue;
+    const real = standingsFor(g).map(r => r.c);
+    for (let i = 0; i < 3; i++) { t++; if (PRED.g[g][i] === real[i]) c++; }
+  }
+  return {c, t};
+}
+
+// ── rendering ──
+function renderBracket() {
+  const sc = predScore(), champ = winnerCode(104);
+  const champHTML = champ ? `🏆 <b style="color:var(--gold)">${TEAMS[champ][0]}</b>` : '🏆 Pick a champion';
+  $id('bracketInner').innerHTML = `
+    <div class="brkHead">
+      <h2><span class="pc">🔮 Bracket Predictor</span></h2>
+      <span class="brkScore">${champHTML}</span>
+      ${sc.t ? `<span class="brkScore">✓ <b>${sc.c}</b>/${sc.t} correct</span>` : ''}
+      <div class="brkTabs">
+        <button class="${predView === 'groups' ? 'on' : ''}" onclick="predSetView('groups')">Groups</button>
+        <button class="${predView === 'knockout' ? 'on' : ''}" onclick="predSetView('knockout')">Knockout</button>
+      </div>
+      <div class="brkAct">
+        <button onclick="predAutoFill()" title="Fill undecided groups from current standings">⚡ Auto</button>
+        <button onclick="predShare()">🔗 Share</button>
+        <button onclick="predReset()" title="Clear bracket">↺</button>
+        <button class="x" onclick="predClose()" title="Close (Esc)">✕</button>
+      </div>
+    </div>
+    <div class="brkBody">${predView === 'groups' ? renderGroupsView() : renderKnockoutView()}</div>`;
+}
+function renderGroupsView() {
+  let h = `<p class="brkHint">Use <b>▲▼</b> to set each group's finish. Top 2 advance (<b style="color:var(--pitch)">green</b>); the 3rd (<b style="color:var(--orange)">amber</b>) can grab a wildcard spot — assign those in <b>Knockout</b>. Finished groups lock to the real result.</p><div class="grpGrid">`;
+  for (const g of Object.keys(GROUPS)) {
+    const dec = groupDecided(g), ord = displayOrder(g), committed = !!committedOrder(g);
+    const real = dec ? ord : null;
+    const tag = dec ? '<span class="lkTag fin">FINAL</span>'
+      : committed ? '<span class="lkTag pick">PICKED</span>'
+      : '<span class="lkTag live">LIVE</span>';
+    h += `<div class="grpCard"><h3>Group ${g}${tag}</h3>`;
+    ord.forEach((c, i) => {
+      const cls = i < 2 ? 'q' : i === 2 ? 'wc' : '';
+      let vb = '';
+      if (dec && PRED.g[g] && i < 3) { const ok = PRED.g[g][i] === real[i]; vb = `<span class="vb ${ok ? 'ok' : 'no'}">${ok ? '✓' : '✗'}</span>`; }
+      h += `<div class="grpRow ${cls}${dec ? ' locked' : ''}">
+        <span class="rk">${i + 1}</span>
+        <img src="${flagURL(c)}" alt=""><span class="gn">${TEAMS[c][0]}</span>${vb}
+        <span class="mv">
+          <button onclick="predMove('${g}',${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+          <button onclick="predMove('${g}',${i},1)" ${i === ord.length - 1 ? 'disabled' : ''}>▼</button>
+        </span></div>`;
+    });
+    h += `</div>`;
+  }
+  return h + `</div>`;
+}
+function slotHTML(m, side) {
+  const code = slotTeam(m, side), decided = m.s1 != null, isThird = m[side].startsWith('?3rd·');
+  let cls = 'koSlot', label, attr = '';
+  if (code) {
+    label = `<img src="${flagURL(code)}" alt=""> ${code}`;
+    if (!decided && PRED.win[m.n] === code) cls += ' win';
+    if (decided && realWinner(m) === code) cls += ' realwin';
+    if (!decided) attr = `data-pick onclick="predPickWinner(${m.n},'${code}')"`;
+  } else if (isThird) {
+    cls += ' third'; label = `<span class="ph">🃏 3rd ${m[side].slice(5)} ▾</span>`;
+    if (!decided) attr = `onclick="predCycleThird('${m.sec}')"`;
+  } else {
+    const tm = teamMeta(m[side]); label = `<span class="ph">${tm.label || tm.badge}</span>`;
+  }
+  return `<div class="${cls}" ${attr}>${label}</div>`;
+}
+function koMatchHTML(m) {
+  const decided = m.s1 != null;
+  let badge = '';
+  if (decided && PRED.win[m.n]) { const ok = PRED.win[m.n] === realWinner(m); badge = `<span class="vbadge ${ok ? 'ok' : 'no'}">${ok ? '✓' : '✗'}</span>`; }
+  const sc = decided ? `<span class="koSc">${m.s1}–${m.s2}${m.pens ? ` (${m.pens}p)` : ''}</span>` : '';
+  return `<div class="koMatch${decided ? ' decided' : ''}">
+    <div class="koMn">${ROUND_SHORT[m.r] || m.r} · M${m.n} ${sc}${badge}</div>
+    ${slotHTML(m,'a')}${slotHTML(m,'b')}</div>`;
+}
+function renderKnockoutView() {
+  const rounds = [['Round of 32','Round of 32'],['Round of 16','Round of 16'],['Quarterfinal','Quarterfinals'],['Semifinal','Semifinals'],['Final','Final'],['Third Place','3rd Place']];
+  let h = `<p class="brkHint">Tap a team to send them through — winners flow to the next round. Tap an amber <b style="color:var(--orange)">🃏 3rd ▾</b> slot to cycle eligible wildcards. Blanks stay as placeholders; real results lock and score your picks ✓/✗. Tip: hit <b>⚡ Auto</b> to seed groups, then tweak.</p><div class="koWrap">`;
+  for (const [r, title] of rounds) {
+    const ms = KO_MATCHES.filter(m => m.r === r).sort((a, b) => a.n - b.n);
+    if (!ms.length) continue;
+    h += `<div class="koCol"><h4>${title}</h4>${ms.map(koMatchHTML).join('')}</div>`;
+  }
+  return h + `</div>`;
+}
+$id('predBtn').onclick = () => predOn ? predClose() : predOpen();
+
 // ── go! ──────────────────────────────────────────────────────────────────
 let _initTeam = (_params.get('team') || '').toUpperCase();
 if (!TEAMS[_initTeam] && TEAMS[SAVED.follow]) _initTeam = SAVED.follow;   // restore last followed team
@@ -1355,6 +1637,7 @@ if (_params.get('sheet') === '1') $id('panel').classList.add('open');
 const _qg = (_params.get('group') || '').toUpperCase();
 if (GROUPS[_qg]) openGroup(_qg);
 if (_params.get('play') === '1') startPlay();
+if (_params.get('predict')) predOpen();
 </script>
 </body>
 </html>
