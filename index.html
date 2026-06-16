@@ -211,6 +211,7 @@
   }
   .tlBtn:hover{transform:scale(1.1);}
   .tlBtn.small{width:34px; height:34px; font-size:13px; background:#222e4d; color:var(--ink); box-shadow:none;}
+  .tlBtn.small.on{color:var(--gold); box-shadow:0 0 0 1px var(--gold);}
   #days{display:flex; gap:6px; overflow-x:auto; scroll-behavior:smooth; padding:4px 2px; scrollbar-width:none;}
   #days::-webkit-scrollbar{display:none;}
   .day{
@@ -448,6 +449,7 @@
   <button class="tlBtn small" id="prevBtn" title="Previous day (←)">◀</button>
   <button class="tlBtn" id="playBtn" title="Play the tournament (space)">▶</button>
   <button class="tlBtn small" id="nextBtn" title="Next day (→)">▶</button>
+  <button class="tlBtn small" id="soundBtn" title="Goal sounds">🔇</button>
   <div id="days"></div>
 </div>
 
@@ -587,9 +589,23 @@ function iconFor(name, dayMatches, now) {
 // ── state ────────────────────────────────────────────────────────────────
 const _params = new URLSearchParams(location.search);
 const _qd = _params.get('d');
-let dayIdx = _qd && DAYS.includes(_qd) ? DAYS.indexOf(_qd) : Math.max(0, DAYS.indexOf(TODAY));
+
+// ── persisted state (localStorage) ───────────────────────────────────────
+// URL params always win; otherwise we restore the visitor's last session.
+const LS_KEY = 'wcviz.v1';
+const loadSaved = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch (e) { return {}; } };
+const SAVED = loadSaved();
+function saveState() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify({follow, roadOn, roadPos, day: DAYS[dayIdx], sound: soundOn})); }
+  catch (e) { /* storage unavailable (private mode / quota) — ignore */ }
+}
+
+let dayIdx = _qd && DAYS.includes(_qd) ? DAYS.indexOf(_qd)
+  : SAVED.day && DAYS.includes(SAVED.day) ? DAYS.indexOf(SAVED.day)
+  : Math.max(0, DAYS.indexOf(TODAY));
 let follow = '';
 let roadOn = false, roadPos = 'W';
+let soundOn = SAVED.sound === true;   // goal sounds opt-in; default muted
 
 // ── timeline chips ───────────────────────────────────────────────────────
 const daysEl = $id('days');
@@ -649,6 +665,7 @@ function setDay(i, fly) {
   map.closePopup();
   if (fly !== false) fitDay(dayMatches);
   confettiToggle(rkey === 'Final');
+  if (!playing) saveState();   // don't let playback clobber the visitor's chosen day
   layoutPanel();
 }
 
@@ -793,6 +810,7 @@ function roadFrom(code, pos, mine) {
 
 function buildJourney() {
   clearJourney();
+  saveState();   // follow / road toggles all funnel through here
   if (!follow) {
     journeyVenues = null;
     $id('journey').style.display = 'none';
@@ -987,7 +1005,14 @@ async function pollLiveScores() {
         if (!block) continue;
         const field = f => (block.match(new RegExp('^\\|' + f + '=(.*)$', 'm')) || ['', ''])[1];
         const sm = field('score').match(/(\d+)\s*[–—-]\s*(\d+)/);
-        if (sm && (+sm[1] !== m.s1 || +sm[2] !== m.s2)) { m.s1 = +sm[1]; m.s2 = +sm[2]; changed = true; }
+        if (sm) {
+          const n1 = +sm[1], n2 = +sm[2];
+          if (n1 !== m.s1 || n2 !== m.s2) {
+            // a strictly rising score on a live match is a goal — celebrate it
+            if (stateOf(m, now) === 'live' && ((m.s1 != null && n1 > m.s1) || (m.s2 != null && n2 > m.s2))) goalBurst(m.v);
+            m.s1 = n1; m.s2 = n2; changed = true;
+          }
+        }
         if (/^y/i.test(field('aet')) && !m.aet) { m.aet = 1; changed = true; }
         const pm = field('penaltyscore').match(/(\d+)\s*[–—-]\s*(\d+)/);
         if (pm && !m.pens) { m.pens = `${pm[1]}–${pm[2]}`; changed = true; }
@@ -1027,11 +1052,13 @@ async function pollESPN() {
         && Math.abs(kickoffUTC(x) - evTime) < 3 * 3600000
         && sides.every(c => c.code === x.a || c.code === x.b));
       if (!m) continue;
+      let scored = false;
       for (const c of sides) {
         if (Number.isNaN(c.score)) continue;
-        if (c.code === m.a && m.s1 !== c.score) { m.s1 = c.score; changed = true; }
-        if (c.code === m.b && m.s2 !== c.score) { m.s2 = c.score; changed = true; }
+        if (c.code === m.a && m.s1 !== c.score) { if (m.s1 != null && c.score > m.s1) scored = true; m.s1 = c.score; changed = true; }
+        if (c.code === m.b && m.s2 !== c.score) { if (m.s2 != null && c.score > m.s2) scored = true; m.s2 = c.score; changed = true; }
       }
+      if (scored && stateOf(m, now) === 'live') goalBurst(m.v);   // 🎉 goal!
       const clk = st === 'in' ? (e.status.displayClock || null) : null;
       if (m.clock !== clk) { m.clock = clk; changed = true; }
     }
@@ -1114,6 +1141,15 @@ function stepDay(dir) {
 playBtn.onclick = startPlay;
 $id('prevBtn').onclick = () => { stopPlay(); stepDay(-1); };
 $id('nextBtn').onclick = () => { stopPlay(); stepDay(1); };
+
+const soundBtn = $id('soundBtn');
+function renderSound() {
+  soundBtn.textContent = soundOn ? '🔊' : '🔇';
+  soundBtn.classList.toggle('on', soundOn);
+  soundBtn.title = soundOn ? 'Goal sounds on — tap to mute' : 'Goal sounds off — tap to enable';
+}
+soundBtn.onclick = () => { soundOn = !soundOn; if (soundOn) playGoal(); renderSound(); saveState(); };
+renderSound();
 document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') { stopPlay(); stepDay(-1); }
   if (e.key === 'ArrowRight') { stopPlay(); stepDay(1); }
@@ -1199,49 +1235,121 @@ function openGroup(g) {
 }
 function closeDrawer() { $id('drawer').classList.remove('open'); }
 
-// ── confetti (final day) ─────────────────────────────────────────────────
+// ── goal sound (synthesized via Web Audio — no asset, opt-in) ─────────────
+let audioCtx = null;
+function ensureAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();   // unlock on user gesture
+  } catch (e) { audioCtx = null; }
+  return audioCtx;
+}
+// a short triumphant rising fanfare (G4 → C5 → E5 → G5)
+function playGoal() {
+  if (!soundOn) return;
+  const ac = ensureAudio();
+  if (!ac) return;
+  const t0 = ac.currentTime + 0.02, notes = [392.00, 523.25, 659.25, 783.99];
+  notes.forEach((f, i) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'triangle'; o.frequency.value = f;
+    const t = t0 + i * 0.11, dur = i === notes.length - 1 ? 0.5 : 0.26;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  });
+}
+
+// ── confetti ──────────────────────────────────────────────────────────────
+// One canvas + one rAF loop drives two effects: a steady fall on the Final day
+// (confOn) and short bursts fired from a stadium marker when a goal lands.
 const cv = $id('confetti'), cx = cv.getContext('2d');
-let confOn = false, parts = [];
+const CONF_COLORS = ['#ffd166', '#22e07c', '#ff5d8f', '#4cc9f0', '#ffffff', '#b388ff'];
+let confOn = false, parts = [], bursts = [], rafLive = false;
+
+function sizeCanvas() {
+  if (cv.width !== innerWidth || cv.height !== innerHeight) { cv.width = innerWidth; cv.height = innerHeight; }
+}
+function startLoop() { if (!rafLive) { rafLive = true; requestAnimationFrame(confTick); } }
+
 function confettiToggle(on) {
   if (on === confOn) return;
   confOn = on;
   if (on) {
-    cv.width = innerWidth; cv.height = innerHeight;
+    sizeCanvas();
     parts = Array.from({length: 140}, () => ({
       x: Math.random() * cv.width, y: -Math.random() * cv.height,
       w: 5 + Math.random() * 6, h: 8 + Math.random() * 8,
       vy: 1.4 + Math.random() * 2.4, vx: Math.random() * 1.4 - .7,
       rot: Math.random() * Math.PI, vr: Math.random() * .12 - .06,
-      c: ['#ffd166', '#22e07c', '#ff5d8f', '#4cc9f0', '#ffffff', '#b388ff'][Math.random() * 6 | 0],
+      c: CONF_COLORS[Math.random() * 6 | 0],
     }));
-    requestAnimationFrame(confTick);
+    startLoop();
   }
 }
+
+// erupt a burst from a stadium marker (falls back to mid-screen if off-map)
+function goalBurst(venueName) {
+  playGoal();
+  sizeCanvas();
+  let ox = cv.width / 2, oy = cv.height * 0.55;
+  const V = VENUES[venueName];
+  if (V) { try { const pt = map.latLngToContainerPoint([V[2], V[3]]); ox = pt.x; oy = pt.y; } catch (e) {} }
+  for (let i = 0; i < 110; i++) {
+    const ang = -Math.PI / 2 + (Math.random() - .5) * 2.2;   // mostly upward fan
+    const sp = 5 + Math.random() * 9;
+    bursts.push({
+      x: ox, y: oy, w: 5 + Math.random() * 6, h: 8 + Math.random() * 8,
+      vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
+      rot: Math.random() * Math.PI, vr: Math.random() * .3 - .15,
+      c: CONF_COLORS[Math.random() * 6 | 0], life: 1,
+    });
+  }
+  startLoop();
+}
+
 function confTick() {
-  if (!confOn) { cx.clearRect(0, 0, cv.width, cv.height); return; }
   cx.clearRect(0, 0, cv.width, cv.height);
-  for (const p of parts) {
-    p.y += p.vy; p.x += p.vx + Math.sin(p.y * .02); p.rot += p.vr;
-    if (p.y > cv.height + 20) { p.y = -20; p.x = Math.random() * cv.width; }
-    cx.save(); cx.translate(p.x, p.y); cx.rotate(p.rot);
-    cx.fillStyle = p.c; cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); cx.restore();
+  if (confOn) {
+    for (const p of parts) {
+      p.y += p.vy; p.x += p.vx + Math.sin(p.y * .02); p.rot += p.vr;
+      if (p.y > cv.height + 20) { p.y = -20; p.x = Math.random() * cv.width; }
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.rot);
+      cx.fillStyle = p.c; cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); cx.restore();
+    }
   }
-  requestAnimationFrame(confTick);
+  if (bursts.length) {
+    for (const p of bursts) {
+      p.vy += 0.22; p.vx *= 0.99;                 // gravity + a little drag
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life -= 0.011;
+      cx.save(); cx.globalAlpha = Math.max(0, p.life);
+      cx.translate(p.x, p.y); cx.rotate(p.rot);
+      cx.fillStyle = p.c; cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); cx.restore();
+    }
+    cx.globalAlpha = 1;
+    bursts = bursts.filter(p => p.life > 0 && p.y < cv.height + 40);
+  }
+  if (confOn || bursts.length) requestAnimationFrame(confTick);
+  else { rafLive = false; cx.clearRect(0, 0, cv.width, cv.height); }
 }
-addEventListener('resize', () => { layoutPanel(); if (confOn) { cv.width = innerWidth; cv.height = innerHeight; } });
+addEventListener('resize', () => { layoutPanel(); if (confOn || bursts.length) sizeCanvas(); });
 
 // ── go! ──────────────────────────────────────────────────────────────────
-const _qt = (_params.get('team') || '').toUpperCase();
-if (TEAMS[_qt]) {
-  sel.value = _qt;
+let _initTeam = (_params.get('team') || '').toUpperCase();
+if (!TEAMS[_initTeam] && TEAMS[SAVED.follow]) _initTeam = SAVED.follow;   // restore last followed team
+if (TEAMS[_initTeam]) {
+  sel.value = _initTeam;
   const _qr = _params.get('road');
   if (_qr) { roadOn = true; roadPos = _qr === '2' ? '2' : 'W'; }
+  else if (SAVED.roadOn) { roadOn = true; roadPos = SAVED.roadPos === '2' ? '2' : 'W'; }
   sel.onchange();
 }
 $id('fab').onclick = () => $id('panel').classList.toggle('open');
 applyFormFactor();
-setDay(dayIdx, TEAMS[_qt] ? false : undefined);  // a team deep link keeps the journey fit
-if (TEAMS[_qt]) buildJourney();                  // re-fit now that layout is final
+setDay(dayIdx, TEAMS[_initTeam] ? false : undefined);  // a team deep link keeps the journey fit
+if (TEAMS[_initTeam]) buildJourney();                  // re-fit now that layout is final
 renderStrip();
 if (_params.get('sheet') === '1') $id('panel').classList.add('open');
 const _qg = (_params.get('group') || '').toUpperCase();
