@@ -1312,9 +1312,15 @@ document.addEventListener('keydown', e => {
 // ── group standings (computed from results) ──────────────────────────────
 // FIFA criteria approximation: points → head-to-head points/GD/goals among
 // tied teams → overall GD → overall goals (fair play + ranking unavailable)
-function standingsFor(g) {
+function standingsFor(g, tieRandom) {
   const rows = {};
   GROUPS[g].forEach(c => rows[c] = {c, P:0, W:0, D:0, L:0, GF:0, GA:0, Pts:0});
+  // final tiebreaker: alphabetical (stable, for the real standings display) or a
+  // fixed per-team random key (so Auto randomises only genuinely-tied teams)
+  const rnd = {}; if (tieRandom) GROUPS[g].forEach(c => rnd[c] = Math.random());
+  const lastTie = tieRandom
+    ? (x, y) => rnd[x.c] - rnd[y.c]
+    : (x, y) => TEAMS[x.c][0].localeCompare(TEAMS[y.c][0]);
   const played = MATCHES.filter(m => m.g === g && m.s1 != null);
   for (const m of played) {
     const A = rows[m.a], B = rows[m.b];
@@ -1344,7 +1350,7 @@ function standingsFor(g) {
       }
       tied.sort((x, y) =>
         h2h[y.c].Pts - h2h[x.c].Pts || h2h[y.c].GD - h2h[x.c].GD || h2h[y.c].GF - h2h[x.c].GF ||
-        y.GD - x.GD || y.GF - x.GF || TEAMS[x.c][0].localeCompare(TEAMS[y.c][0]));
+        y.GD - x.GD || y.GF - x.GF || lastTie(x, y));
     }
     out.push(...tied); i = j;
   }
@@ -1497,12 +1503,12 @@ const KO_MATCHES = MATCHES.filter(m => m.src === 'knockout' || m.src === 'final'
 const GROUP_SIZE = 6;   // round-robin matches per 4-team group
 
 const PRED_KEY = 'wcviz.pred.v1';
-const normalizePred = o => ({g:(o&&o.g)||{}, third:(o&&o.third)||{}, win:(o&&o.win)||{}});
+const normalizePred = o => ({g:(o&&o.g)||{}, third:(o&&o.third)||{}, win:(o&&o.win)||{}, manual:(o&&o.manual)||{}});
 function loadPred() {
   const q = _params.get('predict');
   if (q) { try { return normalizePred(JSON.parse(decodeURIComponent(escape(atob(q))))); } catch (e) {} }
   try { const o = JSON.parse(localStorage.getItem(PRED_KEY)); if (o) return normalizePred(o); } catch (e) {}
-  return {g:{}, third:{}, win:{}};
+  return {g:{}, third:{}, win:{}, manual:{}};
 }
 let PRED = loadPred();
 let predOn = false, predView = 'knockout';
@@ -1568,6 +1574,7 @@ function predMove(g, idx, dir) {
   const arr = PRED.g[g], j = idx + dir;
   if (j < 0 || j >= arr.length) return;
   const t = arr[idx]; arr[idx] = arr[j]; arr[j] = t;
+  PRED.manual[g] = 1;                                // hand-arranged → Auto/Random leave it alone
   prunePred(); savePred(); renderBracket();
 }
 function predPickWinner(n, code) {
@@ -1583,8 +1590,12 @@ function predCycleThird(sec) {
   if (next) PRED.third[sec] = next; else delete PRED.third[sec];
   prunePred(); savePred(); renderBracket();
 }
-function predAutoFill() { for (const g of Object.keys(GROUPS)) if (!groupDecided(g)) PRED.g[g] = standingsFor(g).map(r => r.c); savePred(); renderBracket(); }
-function predReset() { if (!confirm('Clear your whole bracket?')) return; PRED = {g:{}, third:{}, win:{}}; savePred(); renderBracket(); }
+const fyShuffle = arr => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+// Auto: seed from current standings, randomising only genuinely-tied teams. Random: ignore
+// standings entirely and shuffle. Both skip groups locked by reality or hand-arranged with ▲▼.
+function predAutoFill() { for (const g of Object.keys(GROUPS)) if (!groupDecided(g) && !PRED.manual[g]) PRED.g[g] = standingsFor(g, true).map(r => r.c); savePred(); renderBracket(); }
+function predRandom() { for (const g of Object.keys(GROUPS)) if (!groupDecided(g) && !PRED.manual[g]) PRED.g[g] = fyShuffle(GROUPS[g]); savePred(); renderBracket(); }
+function predReset() { if (!confirm('Clear your whole bracket?')) return; PRED = {g:{}, third:{}, win:{}, manual:{}}; savePred(); renderBracket(); }
 function predSetView(v) { predView = v; renderBracket(); }
 function predOpen() { predOn = true; $id('bracket').classList.add('open'); $id('predBtn').classList.add('on'); renderBracket(); }
 function predClose() { predOn = false; $id('bracket').classList.remove('open'); $id('predBtn').classList.remove('on'); }
@@ -1621,7 +1632,8 @@ function renderBracket() {
         <button class="${predView === 'knockout' ? 'on' : ''}" onclick="predSetView('knockout')">Knockout</button>
       </div>
       <div class="brkAct">
-        <button onclick="predAutoFill()" title="Fill undecided groups from current standings">⚡ Auto</button>
+        <button onclick="predAutoFill()" title="Seed undecided groups from current standings (ties broken at random); keeps groups you set by hand">⚡ Auto</button>
+        <button onclick="predRandom()" title="Shuffle undecided groups at random, ignoring standings; keeps groups you set by hand">🎲 Random</button>
         <button onclick="predShare()">🔗 Share</button>
         <button onclick="predReset()" title="Clear bracket">↺</button>
         <button class="x" onclick="predClose()" title="Close (Esc)">✕</button>
