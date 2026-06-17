@@ -420,6 +420,11 @@
   .helpFoot{padding:11px 18px; border-top:1px solid var(--panel-border); display:flex; justify-content:flex-end;}
   .helpFoot button{padding:9px 22px; border-radius:10px; border:none; cursor:pointer; font:800 13px 'Outfit',sans-serif; background:linear-gradient(135deg,var(--pitch),var(--pitch-deep)); color:#04150c;}
   .helpFoot button:hover{filter:brightness(1.1);}
+  .langPill{display:flex; margin-left:auto; align-self:center; border:1px solid var(--panel-border); border-radius:8px; overflow:hidden;}
+  .langPill button{background:none; border:none; color:var(--ink-dim); font:800 11px 'Outfit',sans-serif; padding:4px 10px; cursor:pointer; transition:background .15s,color .15s;}
+  .langPill button:hover{color:var(--ink);}
+  .langPill button.on{background:var(--pitch); color:#04150c;}
+  .helpCard .hh .langPill + .hx{margin-left:8px;}
   @media (max-width:760px){
     #help{padding:0;}
     .helpCard{width:100vw; height:100%; max-height:100vh; border-radius:0;}
@@ -580,11 +585,187 @@ const ROUND_COLOR = {
   'Group Stage':'#22e07c','Round of 32':'#4cc9f0','Round of 16':'#b388ff',
   'Quarterfinal':'#ff9f43','Semifinal':'#ff5d8f','Third Place':'#d9a066','Final':'#ffd166'
 };
-const ROUND_SHORT = {
-  'Round of 32':'R32','Round of 16':'R16','Quarterfinal':'QF','Semifinal':'SF','Final':'🏆 FINAL'
+// ── i18n: English + Mexican Spanish ─────────────────────────────────────────
+const LANG_KEY = 'wcviz.lang.v1';
+let LANG = (() => { try { const l = localStorage.getItem(LANG_KEY); if (l === 'en' || l === 'es') return l; } catch (e) {} return 'en'; })();
+const MONTHS_T = {
+  en: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+  es: ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'],
 };
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DOW_T = {
+  en: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+  es: ['dom','lun','mar','mié','jue','vie','sáb'],
+};
+let MONTHS = MONTHS_T[LANG], DOW = DOW_T[LANG];
+
+// Mexican-Spanish country names (display only — data keys stay English codes)
+const TEAM_ES = {
+  ALG:'Argelia', ARG:'Argentina', AUS:'Australia', AUT:'Austria', BEL:'Bélgica',
+  BIH:'Bosnia y Herzegovina', BRA:'Brasil', CAN:'Canadá', CIV:'Costa de Marfil',
+  COD:'RD del Congo', COL:'Colombia', CPV:'Cabo Verde', CRO:'Croacia', CUW:'Curazao',
+  CZE:'Chequia', ECU:'Ecuador', EGY:'Egipto', ENG:'Inglaterra', ESP:'España',
+  FRA:'Francia', GER:'Alemania', GHA:'Ghana', HAI:'Haití', IRN:'Irán', IRQ:'Irak',
+  JOR:'Jordania', JPN:'Japón', KOR:'Corea del Sur', KSA:'Arabia Saudita',
+  MAR:'Marruecos', MEX:'México', NED:'Países Bajos', NOR:'Noruega', NZL:'Nueva Zelanda',
+  PAN:'Panamá', PAR:'Paraguay', POR:'Portugal', QAT:'Catar', RSA:'Sudáfrica',
+  SCO:'Escocia', SEN:'Senegal', SUI:'Suiza', SWE:'Suecia', TUN:'Túnez', TUR:'Turquía',
+  URU:'Uruguay', USA:'Estados Unidos', UZB:'Uzbekistán',
+};
+const teamName = code => (LANG === 'es' && TEAM_ES[code]) ? TEAM_ES[code] : (TEAMS[code] ? TEAMS[code][0] : code);
+const nfmt = n => n.toLocaleString(LANG === 'es' ? 'es-MX' : 'en-US');
+
+const ROUND_NAME_T = {
+  en: {'Group Stage':'Group Stage','Round of 32':'Round of 32','Round of 16':'Round of 16','Quarterfinal':'Quarterfinal','Semifinal':'Semifinal','Third Place':'Third Place','Final':'Final'},
+  es: {'Group Stage':'Fase de Grupos','Round of 32':'Dieciseisavos','Round of 16':'Octavos','Quarterfinal':'Cuartos de Final','Semifinal':'Semifinal','Third Place':'Tercer Lugar','Final':'Final'},
+};
+const roundName = r => (ROUND_NAME_T[LANG] && ROUND_NAME_T[LANG][r]) || r;
+const ROUND_SHORT_T = {
+  en: {'Round of 32':'R32','Round of 16':'R16','Quarterfinal':'QF','Semifinal':'SF','Final':'🏆 FINAL'},
+  es: {'Round of 32':'16avos','Round of 16':'8vos','Quarterfinal':'CF','Semifinal':'SF','Final':'🏆 FINAL'},
+};
+const roundShort = r => (ROUND_SHORT_T[LANG] && ROUND_SHORT_T[LANG][r]) || roundName(r);
+
+const STR = {
+  en: {
+    h1: '<span class="ball">⚽</span> WORLD CUP 26 · MATCH DAY MAP',
+    sub: 'Canada · Mexico · United States &nbsp;|&nbsp; June 11 – July 19, 2026',
+    followLabel: '⭐ Follow:', pickTeam: '— pick a team —',
+    tPrev: 'Previous day (←)', tPlay: 'Play the tournament (space)', tNext: 'Next day (→)',
+    tPred: 'Bracket predictor', tHelp: 'How to use this app',
+    soundOn: 'Goal sounds on — tap to mute', soundOff: 'Goal sounds off — tap to enable',
+    today: 'TODAY', restDay: '😴 Rest day — no matches.',
+    matches: n => `${n} match${n !== 1 ? 'es' : ''}`,
+    cities: n => `${n} cit${n !== 1 ? 'ies' : 'y'}`,
+    groupStageMd: n => `Group Stage · Matchday ${n}`,
+    theFinal: 'THE FINAL 🏆', andSep: ' & ',
+    live: 'LIVE', localLbl: 'local', ft: 'FT', vsWord: 'v',
+    pens: 'pens', aet: 'a.e.t.',
+    groupWord: 'Group', matchWord: 'Match', matchShort: 'M', playsHere: 'PLAYS HERE',
+    capWord: 'capacity', seatsWord: 'seats',
+    yourTime: s => `🕒 Your time: ${s}`,
+    kicksIn: s => `⏳ kicks off in ${s}`,
+    underway: s => `🔴 Underway — kicked off ${s} ago`,
+    wasYourTime: s => `🕒 Was ${s} your time`,
+    noMatchHere: (wd, tm) => `😴 No match here today.<br>Next: <b style="color:var(--pitch)">${wd}</b> at ${tm}`,
+    noMoreHere: 'No more matches at this venue.',
+    journeyOf: name => `${name}&rsquo;s journey`,
+    travel: mi => `✈️ ${mi} mi of scheduled travel`,
+    roadGlory: mi => ` · <b style="color:var(--gold)">+${mi} mi road to glory</b>`,
+    roadBtn: on => `🏆 ROAD TO THE FINAL${on ? ' · ON' : ''}`,
+    asWinners: 'as group winners', asRunners: 'as runners-up', mdShort: n => 'MD' + n,
+    nextKickoff: (dur, a, b, v) => `⏳ Next kickoff in <b style="color:var(--sky)">${dur}</b> — ${a} v ${b} · ${v}`,
+    tournamentDone: '🏆 Tournament complete — see you in 2030!',
+    thTeam: 'TEAM', thP: 'P', thW: 'W', thD: 'D', thL: 'L', thGD: 'GD', thPts: 'PTS',
+    clickFollow: 'Click to follow',
+    legendPlayed: 'top two advance · 3rd place may advance (8 best of 12) · click a team to follow',
+    legendEmpty: 'no results yet — table fills in as matches finish · click a team to follow',
+    fixtures: 'FIXTURES',
+    winnerGroup: g => `Winner Group ${g}`, runnerUp: g => `Runner-up Group ${g}`,
+    thirdPlace: x => `3rd place ${x}`, winnerMatch: n => `Winner of Match ${n}`, loserMatch: n => `Loser of Match ${n}`,
+    predTitle: '🔮 Bracket Predictor', pickChampion: '🏆 Pick a champion',
+    champion: name => `🏆 <b style="color:var(--gold)">${name}</b>`,
+    correct: (c, tt) => `✓ <b>${c}</b>/${tt} correct`,
+    tabGroups: 'Groups', tabKnockout: 'Knockout',
+    autoLabel: '⚡ Auto', randomLabel: '🎲 Random',
+    tAuto: 'Seed undecided groups from current standings (ties broken at random); keeps groups you set by hand',
+    tRandom: 'Shuffle undecided groups at random, ignoring standings; keeps groups you set by hand',
+    share: '🔗 Share', tClear: 'Clear bracket', tClose: 'Close (Esc)',
+    linkCopied: '🔗 Bracket link copied!', copyFailed: 'Copy failed', clipNA: 'Clipboard unavailable',
+    confirmClear: 'Clear your whole bracket?',
+    hintGroups: `Use <b>▲▼</b> to set each group's finish. Top 2 advance (<b style="color:var(--pitch)">green</b>); the 3rd (<b style="color:var(--orange)">amber</b>) can grab a wildcard spot — assign those in <b>Knockout</b>. Finished groups lock to the real result.`,
+    tagFinal: 'FINAL', tagPicked: 'PICKED', tagLive: 'LIVE',
+    hintKnockout: `Tap a team to send them through — winners flow to the next round. Tap an amber <b style="color:var(--orange)">🃏 3rd ▾</b> slot to cycle eligible wildcards. Blanks stay as placeholders; real results lock and score your picks ✓/✗. Tip: hit <b>⚡ Auto</b> to seed groups, then tweak.`,
+    koTitles: {'Round of 32':'Round of 32','Round of 16':'Round of 16','Quarterfinal':'Quarterfinals','Semifinal':'Semifinals','Final':'Final','Third Place':'3rd Place'},
+    thirdSlot: x => `🃏 3rd ${x} ▾`,
+    helpTitle: '👋 How to use the Match Day Map', helpGotIt: 'Got it ⚽',
+    helpRows: [
+      ['🗺️','<b>The map.</b> Every marker is a stadium. Idle ones show a dot &amp; next-match countdown; active ones pulse with the day’s match count; the Final bounces a 🏆. Click any marker for its fixtures &amp; capacity.'],
+      ['📅','<b>Pick a day.</b> Tap a date on the timeline, use <span class="k">◀</span> <span class="k">▶</span>, or the <span class="k">←</span> <span class="k">→</span> keys. Chip colors mark the round — group → R32 → R16 → … → Final.'],
+      ['▶️','<b>Play the tournament.</b> Hit <span class="k">▶</span> (or <span class="k">space</span>) for a day-by-day light show that flashes stadiums in kickoff order.'],
+      ['🪧','<b>Match cards.</b> The side panel lists the day’s games by stadium, with kickoff in <b>both</b> stadium-local and your own time zone. Live games glow red; finished ones dim and show the score.'],
+      ['⭐','<b>Follow a team.</b> Pick one to star their match days, trace their <b>travel route</b> city-to-city, and gold-light every stadium they play in.'],
+      ['🏆','<b>Road to the Final.</b> While following a team, toggle their hypothetical path to MetLife Stadium — as group winners or as runners-up.'],
+      ['📊','<b>Groups.</b> Click any <b>Group X</b> label for live standings (FIFA tiebreakers) and all six fixtures. Tap a team there to follow it.'],
+      ['🔴','<b>Live scores.</b> During matches the scores, clock and standings update on their own — no refresh needed.'],
+      ['🔊','<b>Goal sounds.</b> Toggle 🔊 in the timeline bar for a fanfare when a goal goes in (off by default).'],
+      ['🔮','<b>Bracket predictor.</b> Open 🔮 to order the groups, tap winners through the knockouts, assign third-place wildcards, and share your bracket. Real results lock in and grade your picks ✓/✗.'],
+      ['🔗','<b>Share the view.</b> The URL remembers your day, followed team and bracket — copy it to share exactly what you’re looking at.'],
+    ],
+  },
+  es: {
+    h1: '<span class="ball">⚽</span> MUNDIAL 26 · MAPA DE PARTIDOS',
+    sub: 'Canadá · México · Estados Unidos &nbsp;|&nbsp; 11 de junio – 19 de julio de 2026',
+    followLabel: '⭐ Sigue a:', pickTeam: '— elige un equipo —',
+    tPrev: 'Día anterior (←)', tPlay: 'Reproduce el torneo (espacio)', tNext: 'Día siguiente (→)',
+    tPred: 'Predictor del cuadro', tHelp: 'Cómo usar la app',
+    soundOn: 'Sonidos de gol activados — toca para silenciar', soundOff: 'Sonidos de gol desactivados — toca para activar',
+    today: 'HOY', restDay: '😴 Día de descanso — sin partidos.',
+    matches: n => `${n} partido${n !== 1 ? 's' : ''}`,
+    cities: n => `${n} ciudad${n !== 1 ? 'es' : ''}`,
+    groupStageMd: n => `Fase de Grupos · Jornada ${n}`,
+    theFinal: 'LA FINAL 🏆', andSep: ' y ',
+    live: 'EN VIVO', localLbl: 'local', ft: 'FIN', vsWord: 'vs',
+    pens: 'penales', aet: 't.e.',
+    groupWord: 'Grupo', matchWord: 'Partido', matchShort: 'P', playsHere: 'JUEGA AQUÍ',
+    capWord: 'capacidad', seatsWord: 'asientos',
+    yourTime: s => `🕒 Tu hora: ${s}`,
+    kicksIn: s => `⏳ inicia en ${s}`,
+    underway: s => `🔴 En curso — inició hace ${s}`,
+    wasYourTime: s => `🕒 Fue ${s} (tu hora)`,
+    noMatchHere: (wd, tm) => `😴 Hoy no hay partido aquí.<br>Próximo: <b style="color:var(--pitch)">${wd}</b> a las ${tm}`,
+    noMoreHere: 'No hay más partidos en esta sede.',
+    journeyOf: name => `Camino de ${name}`,
+    travel: mi => `✈️ ${mi} mi de viaje programado`,
+    roadGlory: mi => ` · <b style="color:var(--gold)">+${mi} mi de camino a la gloria</b>`,
+    roadBtn: on => `🏆 CAMINO A LA FINAL${on ? ' · ACTIVO' : ''}`,
+    asWinners: 'como líder de grupo', asRunners: 'como segundo lugar', mdShort: n => 'J' + n,
+    nextKickoff: (dur, a, b, v) => `⏳ Próximo inicio en <b style="color:var(--sky)">${dur}</b> — ${a} vs ${b} · ${v}`,
+    tournamentDone: '🏆 Torneo terminado — ¡nos vemos en 2030!',
+    thTeam: 'EQUIPO', thP: 'PJ', thW: 'G', thD: 'E', thL: 'P', thGD: 'DG', thPts: 'PTS',
+    clickFollow: 'Clic para seguir',
+    legendPlayed: 'los 2 primeros avanzan · el 3er lugar puede avanzar (8 mejores de 12) · clic en un equipo para seguir',
+    legendEmpty: 'aún sin resultados — la tabla se llena al terminar los partidos · clic en un equipo para seguir',
+    fixtures: 'PARTIDOS',
+    winnerGroup: g => `Líder Grupo ${g}`, runnerUp: g => `2º Grupo ${g}`,
+    thirdPlace: x => `3er lugar ${x}`, winnerMatch: n => `Ganador del Partido ${n}`, loserMatch: n => `Perdedor del Partido ${n}`,
+    predTitle: '🔮 Predictor del Cuadro', pickChampion: '🏆 Elige campeón',
+    champion: name => `🏆 <b style="color:var(--gold)">${name}</b>`,
+    correct: (c, tt) => `✓ <b>${c}</b>/${tt} aciertos`,
+    tabGroups: 'Grupos', tabKnockout: 'Eliminatorias',
+    autoLabel: '⚡ Auto', randomLabel: '🎲 Al azar',
+    tAuto: 'Siembra los grupos indecisos según la tabla actual (empates al azar); conserva los grupos que ordenaste a mano',
+    tRandom: 'Revuelve los grupos indecisos al azar, ignorando la tabla; conserva los grupos que ordenaste a mano',
+    share: '🔗 Compartir', tClear: 'Limpiar cuadro', tClose: 'Cerrar (Esc)',
+    linkCopied: '🔗 ¡Enlace del cuadro copiado!', copyFailed: 'Error al copiar', clipNA: 'Portapapeles no disponible',
+    confirmClear: '¿Borrar todo tu cuadro?',
+    hintGroups: `Usa <b>▲▼</b> para definir la posición final de cada grupo. Los 2 primeros avanzan (<b style="color:var(--pitch)">verde</b>); el 3º (<b style="color:var(--orange)">ámbar</b>) puede tomar un lugar de comodín — asígnalos en <b>Eliminatorias</b>. Los grupos terminados se fijan al resultado real.`,
+    tagFinal: 'FINAL', tagPicked: 'ELEGIDO', tagLive: 'EN VIVO',
+    hintKnockout: `Toca un equipo para hacerlo avanzar — los ganadores fluyen a la siguiente ronda. Toca un casillero ámbar <b style="color:var(--orange)">🃏 3º ▾</b> para alternar los comodines elegibles. Los espacios en blanco quedan como marcadores; los resultados reales se fijan y califican tus pronósticos ✓/✗. Consejo: presiona <b>⚡ Auto</b> para sembrar los grupos y luego ajusta.`,
+    koTitles: {'Round of 32':'16avos','Round of 16':'Octavos','Quarterfinal':'Cuartos','Semifinal':'Semis','Final':'Final','Third Place':'3er Lugar'},
+    thirdSlot: x => `🃏 3º ${x} ▾`,
+    helpTitle: '👋 Cómo usar el Mapa de Partidos', helpGotIt: '¡Entendido! ⚽',
+    helpRows: [
+      ['🗺️','<b>El mapa.</b> Cada marcador es un estadio. Los inactivos muestran un punto y la cuenta regresiva al próximo partido; los activos laten con el número de partidos del día; la Final hace rebotar un 🏆. Haz clic en cualquier marcador para ver sus partidos y capacidad.'],
+      ['📅','<b>Elige un día.</b> Toca una fecha en la línea de tiempo, usa <span class="k">◀</span> <span class="k">▶</span>, o las teclas <span class="k">←</span> <span class="k">→</span>. Los colores de las fichas marcan la ronda — grupos → 16avos → 8vos → … → Final.'],
+      ['▶️','<b>Reproduce el torneo.</b> Presiona <span class="k">▶</span> (o <span class="k">espacio</span>) para un espectáculo día a día que ilumina los estadios en orden de inicio.'],
+      ['🪧','<b>Tarjetas de partido.</b> El panel lateral lista los partidos del día por estadio, con el inicio en <b>ambas</b> zonas horarias: la local del estadio y la tuya. Los partidos en vivo brillan en rojo; los terminados se atenúan y muestran el marcador.'],
+      ['⭐','<b>Sigue a un equipo.</b> Elige uno para destacar sus días de partido, trazar su <b>ruta de viaje</b> de ciudad en ciudad e iluminar en dorado cada estadio donde juega.'],
+      ['🏆','<b>Camino a la Final.</b> Mientras sigues a un equipo, activa su trayecto hipotético al MetLife Stadium — como líder de grupo o como segundo lugar.'],
+      ['📊','<b>Grupos.</b> Haz clic en cualquier etiqueta <b>Grupo X</b> para ver la tabla en vivo (criterios FIFA) y los seis partidos. Toca un equipo ahí para seguirlo.'],
+      ['🔴','<b>Marcadores en vivo.</b> Durante los partidos, los marcadores, el reloj y la tabla se actualizan solos — sin recargar.'],
+      ['🔊','<b>Sonidos de gol.</b> Activa 🔊 en la barra de tiempo para una fanfarria cuando cae un gol (desactivado por defecto).'],
+      ['🔮','<b>Predictor del cuadro.</b> Abre 🔮 para ordenar los grupos, enviar ganadores por las eliminatorias, asignar los comodines de tercer lugar y compartir tu cuadro. Los resultados reales se fijan y califican tus pronósticos ✓/✗.'],
+      ['🔗','<b>Comparte la vista.</b> La URL recuerda tu día, equipo seguido y cuadro — cópiala para compartir exactamente lo que ves.'],
+    ],
+  },
+};
+const t = (k, ...a) => { const d = STR[LANG] || STR.en; let v = d[k]; if (v === undefined) v = STR.en[k]; if (v === undefined) return k; return typeof v === 'function' ? v(...a) : v; };
+const fmtWD = dt => LANG === 'es'
+  ? `${DOW[dt.getDay()]}, ${dt.getDate()} ${MONTHS[dt.getMonth()]}`
+  : `${DOW[dt.getDay()]}, ${MONTHS[dt.getMonth()]} ${dt.getDate()}`;
+const fmtMD = dt => LANG === 'es'
+  ? `${dt.getDate()} ${MONTHS[dt.getMonth()]}`
+  : `${MONTHS[dt.getMonth()]} ${dt.getDate()}`;
 
 // ── helpers ──────────────────────────────────────────────────────────────
 const $id = s => document.getElementById(s);
@@ -607,15 +788,15 @@ const esc = s => s.replace(/'/g, "\\'");
 const mdOf = d => d <= '2026-06-17' ? 1 : d <= '2026-06-23' ? 2 : 3;
 const groupOf = code => Object.keys(GROUPS).find(g => GROUPS[g].includes(code));
 
-function teamMeta(t) {
-  if (TEAMS[t]) return {code:t, name:TEAMS[t][0], flag:flagURL(t)};
-  const p = t.slice(1);
+function teamMeta(tag) {
+  if (TEAMS[tag]) return {code:tag, name:teamName(tag), flag:flagURL(tag)};
+  const p = tag.slice(1);
   let badge = '?', label = p, mm;
-  if ((mm = p.match(/^W·(\w)$/)))        { badge = '1' + mm[1]; label = `Winner Group ${mm[1]}`; }
-  else if ((mm = p.match(/^2nd·(\w)$/))) { badge = '2' + mm[1]; label = `Runner-up Group ${mm[1]}`; }
-  else if ((mm = p.match(/^3rd·(.+)$/))) { badge = '3rd'; label = `3rd place ${mm[1]}`; }
-  else if ((mm = p.match(/^W Match (\d+)$/))) { badge = 'W' + mm[1]; label = `Winner of Match ${mm[1]}`; }
-  else if ((mm = p.match(/^L Match (\d+)$/))) { badge = 'L' + mm[1]; label = `Loser of Match ${mm[1]}`; }
+  if ((mm = p.match(/^W·(\w)$/)))        { badge = '1' + mm[1]; label = t('winnerGroup', mm[1]); }
+  else if ((mm = p.match(/^2nd·(\w)$/))) { badge = '2' + mm[1]; label = t('runnerUp', mm[1]); }
+  else if ((mm = p.match(/^3rd·(.+)$/))) { badge = '3rd'; label = t('thirdPlace', mm[1]); }
+  else if ((mm = p.match(/^W Match (\d+)$/))) { badge = 'W' + mm[1]; label = t('winnerMatch', mm[1]); }
+  else if ((mm = p.match(/^L Match (\d+)$/))) { badge = 'L' + mm[1]; label = t('loserMatch', mm[1]); }
   return {badge, label};
 }
 function teamHTML(t, right) {
@@ -651,9 +832,9 @@ const TODAY = `${_now0.getFullYear()}-${String(_now0.getMonth()+1).padStart(2,'0
 
 function dayLabel(d) {
   const rounds = [...new Set(byDay[d].map(m => m.r))];
-  if (rounds.includes('Group Stage')) return [`Group Stage · Matchday ${mdOf(d)}`, 'Group Stage'];
-  if (rounds[0] === 'Final') return ['THE FINAL 🏆', 'Final'];
-  return [rounds.join(' & '), rounds[0]];
+  if (rounds.includes('Group Stage')) return [t('groupStageMd', mdOf(d)), 'Group Stage'];
+  if (rounds[0] === 'Final') return [t('theFinal'), 'Final'];
+  return [rounds.map(roundName).join(t('andSep')), rounds[0]];
 }
 
 // ── map ──────────────────────────────────────────────────────────────────
@@ -685,7 +866,7 @@ function iconFor(name, dayMatches, now) {
   const inner = n === 0 ? '·' : isFinal && !liveNow ? '🏆' : n;
   const sz = n === 0 ? 22 : 40;
   const favTag = isFav
-    ? `<div class="favTag"><img src="${flagURL(follow)}" alt="">${TEAMS[follow][0].toUpperCase()} PLAYS HERE</div>`
+    ? `<div class="favTag"><img src="${flagURL(follow)}" alt="">${teamName(follow).toUpperCase()} ${t('playsHere')}</div>`
     : '';
   return L.divIcon({
     className:'',
@@ -721,21 +902,25 @@ let soundOn = SAVED.sound === true;   // goal sounds opt-in; default muted
 
 // ── timeline chips ───────────────────────────────────────────────────────
 const daysEl = $id('days');
-DAYS.forEach((d, i) => {
-  const dt = dateObj(d);
-  const el = document.createElement('div');
-  el.className = 'day'; el.id = 'dd' + i;
-  const [, rkey] = dayLabel(d);
-  el.innerHTML = `
-    ${d === TODAY ? '<span class="today">TODAY</span>' : ''}
-    <span class="fdot"></span>
-    <div class="dw">${DOW[dt.getDay()]}</div>
-    <div class="dn">${dt.getDate()}</div>
-    <div class="dm">${MONTHS[dt.getMonth()]}</div>
-    <div class="cnt" style="background:${ROUND_COLOR[rkey]}">${byDay[d].length}</div>`;
-  el.onclick = () => { stopPlay(); setDay(i); };
-  daysEl.appendChild(el);
-});
+function buildDayChips() {
+  daysEl.innerHTML = '';
+  DAYS.forEach((d, i) => {
+    const dt = dateObj(d);
+    const el = document.createElement('div');
+    el.className = 'day'; el.id = 'dd' + i;
+    const [, rkey] = dayLabel(d);
+    el.innerHTML = `
+      ${d === TODAY ? `<span class="today">${t('today')}</span>` : ''}
+      <span class="fdot"></span>
+      <div class="dw">${DOW[dt.getDay()]}</div>
+      <div class="dn">${dt.getDate()}</div>
+      <div class="dm">${MONTHS[dt.getMonth()]}</div>
+      <div class="cnt" style="background:${ROUND_COLOR[rkey]}">${byDay[d].length}</div>`;
+    el.onclick = () => { stopPlay(); setDay(i); };
+    daysEl.appendChild(el);
+  });
+}
+buildDayChips();
 
 // ── core render ──────────────────────────────────────────────────────────
 const mqMobile = matchMedia('(max-width: 760px)');
@@ -759,17 +944,17 @@ function setDay(i, fly) {
   const dt = dateObj(d);
   const [label, rkey] = dayLabel(d);
 
-  $id('dayTitle').textContent = `${DOW[dt.getDay()]}, ${MONTHS[dt.getMonth()]} ${dt.getDate()}`;
+  $id('dayTitle').textContent = fmtWD(dt);
   const cities = new Set(dayMatches.map(m => VENUES[m.v][0]));
   $id('dayMeta').innerHTML =
     `<span class="chip round" style="background:${ROUND_COLOR[rkey]}">${label}</span>
-     <span class="chip">${dayMatches.length} match${dayMatches.length>1?'es':''}</span>
-     <span class="chip">${cities.size} cit${cities.size>1?'ies':'y'}</span>`;
+     <span class="chip">${t('matches', dayMatches.length)}</span>
+     <span class="chip">${t('cities', cities.size)}</span>`;
 
   document.querySelectorAll('.day').forEach((el, j) => el.classList.toggle('active', j === dayIdx));
   $id('dd' + dayIdx).scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
 
-  $id('sheetTitle').textContent = `${DOW[dt.getDay()]}, ${MONTHS[dt.getMonth()]} ${dt.getDate()} — ${dayMatches.length} match${dayMatches.length !== 1 ? 'es' : ''}`;
+  $id('sheetTitle').textContent = `${fmtWD(dt)} — ${t('matches', dayMatches.length)}`;
   $id('fab').innerHTML = `📋 ${dayMatches.length}`;
 
   updateMarkers(d);
@@ -801,7 +986,7 @@ function fitDay(dayMatches) {
 function renderPanel(d, dayMatches, quiet) {
   const inner = $id('panelInner');
   inner.classList.toggle('noanim', !!quiet);
-  if (!dayMatches.length) { inner.innerHTML = '<div id="noGames">😴 Rest day — no matches.</div>'; return; }
+  if (!dayMatches.length) { inner.innerHTML = `<div id="noGames">${t('restDay')}</div>`; return; }
   const now = Date.now();
   const byVenue = {};
   dayMatches.forEach(m => (byVenue[m.v] = byVenue[m.v] || []).push(m));
@@ -810,32 +995,32 @@ function renderPanel(d, dayMatches, quiet) {
     const v = VENUES[name];
     html += `<div class="venueHead" onclick="openVenue('${esc(name)}')">
       <div class="dot" style="background:${ROUND_COLOR[ms[0].r]};box-shadow:0 0 10px ${ROUND_COLOR[ms[0].r]}"></div>
-      <div><div class="vn">${name}</div><div class="vc">${v[0]} · ${v[5]} · ${v[4].toLocaleString()} seats</div></div>
+      <div><div class="vn">${name}</div><div class="vc">${v[0]} · ${v[5]} · ${nfmt(v[4])} ${t('seatsWord')}</div></div>
     </div>`;
     for (const m of ms) {
       const fav = follow && (m.a === follow || m.b === follow);
       const st = stateOf(m, now);
       const ko = kickoffUTC(m);
       const koHtml = st === 'live'
-        ? `<span class="liveTag"><span class="reddot"></span>LIVE ${m.clock || '~' + Math.min(Math.round((now - ko) / 60000), 130) + '′'}</span>
-           <small>${fmt12(m.t)} local</small>`
-        : `${fmt12(m.t)}<small>local (UTC${m.utc})</small>${st === 'ft' ? '<span class="ftTag">FT</span>' : ''}`;
+        ? `<span class="liveTag"><span class="reddot"></span>${t('live')} ${m.clock || '~' + Math.min(Math.round((now - ko) / 60000), 130) + '′'}</span>
+           <small>${fmt12(m.t)} ${t('localLbl')}</small>`
+        : `${fmt12(m.t)}<small>${t('localLbl')} (UTC${m.utc})</small>${st === 'ft' ? `<span class="ftTag">${t('ft')}</span>` : ''}`;
       const yourLine = st === 'pre'
-        ? `🕒 Your time: ${yourTime(m)}${ko - now < 48 * 3600000 ? ` · <b style="color:var(--sky)">⏳ kicks off in ${fmtDur(ko - now)}</b>` : ''}`
+        ? `${t('yourTime', yourTime(m))}${ko - now < 48 * 3600000 ? ` · <b style="color:var(--sky)">${t('kicksIn', fmtDur(ko - now))}</b>` : ''}`
         : st === 'live'
-        ? `🔴 Underway — kicked off ${fmtDur(now - ko)} ago`
-        : `🕒 Was ${yourTime(m)} your time`;
+        ? t('underway', fmtDur(now - ko))
+        : t('wasYourTime', yourTime(m));
       const mid = m.s1 != null
-        ? `<div class="score">${m.s1}–${m.s2}${m.pens ? `<small>${m.pens} pens</small>` : m.aet ? '<small>a.e.t.</small>' : ''}</div>`
+        ? `<div class="score">${m.s1}–${m.s2}${m.pens ? `<small>${m.pens} ${t('pens')}</small>` : m.aet ? `<small>${t('aet')}</small>` : ''}</div>`
         : '<div class="vs">VS</div>';
       const groupLink = m.g
-        ? `<span class="groupLink" onclick="event.stopPropagation();openGroup('${m.g}')">Group ${m.g}</span> · ` : '';
+        ? `<span class="groupLink" onclick="event.stopPropagation();openGroup('${m.g}')">${t('groupWord')} ${m.g}</span> · ` : '';
       html += `<div class="${'card' + (fav?' followed':'') + (st==='live'?' live':'') + (st==='ft'?' done':'')}" style="animation-delay:${k++*45}ms"
         onmouseenter="hotMarker('${cssId(name)}',1)" onmouseleave="hotMarker('${cssId(name)}',0)"
         onclick="openVenue('${esc(name)}')">
         <div class="top">
           <div class="ko">${koHtml}</div>
-          <div class="mn">${groupLink}${m.r !== 'Group Stage' ? m.r + ' · ' : ''}Match ${m.n}</div>
+          <div class="mn">${groupLink}${m.r !== 'Group Stage' ? roundName(m.r) + ' · ' : ''}${t('matchWord')} ${m.n}</div>
         </div>
         <div class="teams">${teamHTML(m.a)}${mid}${teamHTML(m.b, true)}</div>
         <div class="your">${yourLine}</div>
@@ -860,7 +1045,7 @@ function openVenue(name) {
       const A = teamMeta(m.a), B = teamMeta(m.b);
       return `<div class="ppm"><span class="t">${fmt12(m.t)}</span>
         ${A.flag ? `<img src="${A.flag}">` : ''}${A.name || A.label}
-        <span style="color:var(--ink-dim)">v</span>
+        <span style="color:var(--ink-dim)">${t('vsWord')}</span>
         ${B.flag ? `<img src="${B.flag}">` : ''}${B.name || B.label}
         ${m.s1 != null ? `<b style="margin-left:auto;color:var(--gold)">${m.s1}–${m.s2}${m.pens ? ` <small>(${m.pens} p)</small>` : ''}</b>` : ''}</div>`;
     }).join('');
@@ -868,13 +1053,13 @@ function openVenue(name) {
     const next = MATCHES.find(m => m.v === name && m.d >= d);
     const dt = next && dateObj(next.d);
     body = `<div class="next">${next
-      ? `😴 No match here today.<br>Next: <b style="color:var(--pitch)">${DOW[dt.getDay()]}, ${MONTHS[dt.getMonth()]} ${dt.getDate()}</b> at ${fmt12(next.t)}`
-      : 'No more matches at this venue.'}</div>`;
+      ? t('noMatchHere', fmtWD(dt), fmt12(next.t))
+      : t('noMoreHere')}</div>`;
   }
   L.popup({offset:[0, -16]})
     .setLatLng([v[2], v[3]])
     .setContent(`<div class="pp"><h3>🏟️ ${name}</h3>
-      <div class="ppc">${v[0]} · ${v[5]}, ${TEAMS[v[1]][0]} · capacity ${v[4].toLocaleString()}</div>${body}</div>`)
+      <div class="ppc">${v[0]} · ${v[5]}, ${teamName(v[1])} · ${t('capWord')} ${nfmt(v[4])}</div>${body}</div>`)
     .openOn(map);
   map.flyTo([v[2], v[3]], Math.max(map.getZoom(), 5.5), {duration:.7});
 }
@@ -905,7 +1090,7 @@ function chainFromTag(tag) {
   let cur = MATCHES.find(m => m.a === tag || m.b === tag);
   const out = [];
   while (cur && out.length < 6) {
-    out.push({v: cur.v, label: ROUND_SHORT[cur.r] || cur.r, d: cur.d});
+    out.push({v: cur.v, label: roundShort(cur.r), d: cur.d});
     if (cur.r === 'Final') break;
     cur = MATCHES.find(m => (m.a === `?W Match ${cur.n}` || m.b === `?W Match ${cur.n}`) && m.r !== 'Third Place');
   }
@@ -934,7 +1119,7 @@ function buildJourney() {
     .sort((x, y) => x.d.localeCompare(y.d));
   const stops = gm.map(m => ({
     v: m.v,
-    label: m.r === 'Group Stage' ? 'MD' + mdOf(m.d) : (ROUND_SHORT[m.r] || m.r),
+    label: m.r === 'Group Stage' ? t('mdShort', mdOf(m.d)) : roundShort(m.r),
     d: m.d, k: m.r !== 'Group Stage', hyp: false,
   }));
   const road = roadOn ? roadFrom(follow, roadPos, gm).map(s => ({...s, k: true, hyp: true})) : [];
@@ -1005,16 +1190,16 @@ function renderJourneyCard(stops, road, miles, kmiles, inGroups) {
   const arrow = '<span class="jarrow">→</span>';
   const chip = s => `<span class="jstop${s.k?' k':''}" onclick="stopPlay();setDay(${DAYS.indexOf(s.d)})">${s.label} ${VENUES[s.v][0]}</span>`;
   j.innerHTML = `
-    <div class="jhead"><img src="${flagURL(follow)}" alt=""> ${TEAMS[follow][0]}&rsquo;s journey
-      <span class="groupLink" style="margin-left:auto;font-size:10.5px;color:var(--ink-dim)" onclick="openGroup('${g}')">Group ${g} →</span></div>
+    <div class="jhead"><img src="${flagURL(follow)}" alt=""> ${t('journeyOf', teamName(follow))}
+      <span class="groupLink" style="margin-left:auto;font-size:10.5px;color:var(--ink-dim)" onclick="openGroup('${g}')">${t('groupWord')} ${g} →</span></div>
     <div class="jstops">${stops.map(chip).join(arrow)}</div>
     ${road.length ? `<div class="jstops">${road.map(chip).join(arrow)}</div>` : ''}
-    <div class="jmiles">✈️ ${Math.round(miles).toLocaleString()} mi of scheduled travel${
-      road.length ? ` · <b style="color:var(--gold)">+${Math.round(kmiles).toLocaleString()} mi road to glory</b>` : ''}</div>
-    <button id="roadBtn" class="${roadOn?'on':''}" onclick="toggleRoad()">🏆 ROAD TO THE FINAL${roadOn?' · ON':''}</button>
+    <div class="jmiles">${t('travel', nfmt(Math.round(miles)))}${
+      road.length ? t('roadGlory', nfmt(Math.round(kmiles))) : ''}</div>
+    <button id="roadBtn" class="${roadOn?'on':''}" onclick="toggleRoad()">${t('roadBtn', roadOn)}</button>
     ${roadOn && inGroups ? `<div class="posSeg">
-      <button class="${roadPos==='W'?'on':''}" onclick="setRoadPos('W')">as group winners</button>
-      <button class="${roadPos==='2'?'on':''}" onclick="setRoadPos('2')">as runners-up</button>
+      <button class="${roadPos==='W'?'on':''}" onclick="setRoadPos('W')">${t('asWinners')}</button>
+      <button class="${roadPos==='2'?'on':''}" onclick="setRoadPos('2')">${t('asRunners')}</button>
     </div>` : ''}`;
   layoutPanel();
 }
@@ -1023,14 +1208,20 @@ function setRoadPos(p) { roadPos = p; buildJourney(); }
 
 // ── follow team ──────────────────────────────────────────────────────────
 const sel = $id('teamSel');
-Object.entries(TEAMS).sort((a, b) => a[1][0].localeCompare(b[1][0]))
-  .forEach(([code, [n]]) => sel.add(new Option(n, code)));
+function rebuildTeamSelect() {
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">${t('pickTeam')}</option>`;
+  Object.keys(TEAMS).sort((a, b) => teamName(a).localeCompare(teamName(b), LANG === 'es' ? 'es' : 'en'))
+    .forEach(code => sel.add(new Option(teamName(code), code)));
+  sel.value = cur;
+}
+rebuildTeamSelect();
 sel.onchange = () => {
   follow = sel.value;
   const img = $id('followFlag');
   if (follow) { img.src = flagURL(follow); img.style.display = 'block'; }
   else img.style.display = 'none';
-  $id('teamFabFace').innerHTML = follow ? `<img src="${flagURL(follow)}" alt="${TEAMS[follow][0]}">` : '⭐';
+  $id('teamFabFace').innerHTML = follow ? `<img src="${flagURL(follow)}" alt="${teamName(follow)}">` : '⭐';
   $id('teamFab').classList.toggle('on', !!follow);
   DAYS.forEach((d, i) => {
     const has = follow && byDay[d].some(m => m.a === follow || m.b === follow);
@@ -1063,7 +1254,7 @@ function renderStrip() {
     strip.className = '';
     strip.innerHTML = live.map(m => {
       const A = teamMeta(m.a), B = teamMeta(m.b);
-      return `<span class="reddot"></span><b>LIVE</b> · ${A.name || A.label}${m.s1 != null ? ` <b style="color:var(--gold)">${m.s1}–${m.s2}</b>` : ' v'} ${B.name || B.label} · ${VENUES[m.v][0]} · ${m.clock || '~' + Math.round((now - kickoffUTC(m)) / 60000) + '′'}`;
+      return `<span class="reddot"></span><b>${t('live')}</b> · ${A.name || A.label}${m.s1 != null ? ` <b style="color:var(--gold)">${m.s1}–${m.s2}</b>` : ' ' + t('vsWord')} ${B.name || B.label} · ${VENUES[m.v][0]} · ${m.clock || '~' + Math.round((now - kickoffUTC(m)) / 60000) + '′'}`;
     }).join('<br>');
     strip.onclick = () => { stopPlay(); setDay(DAYS.indexOf(live[0].d)); openVenue(live[0].v); };
   } else {
@@ -1072,10 +1263,10 @@ function renderStrip() {
     strip.className = 'next';
     if (next) {
       const A = teamMeta(next.a), B = teamMeta(next.b);
-      strip.innerHTML = `⏳ Next kickoff in <b style="color:var(--sky)">${fmtDur(kickoffUTC(next) - now)}</b> — ${A.name || A.label} v ${B.name || B.label} · ${VENUES[next.v][0]}`;
+      strip.innerHTML = t('nextKickoff', fmtDur(kickoffUTC(next) - now), A.name || A.label, B.name || B.label, VENUES[next.v][0]);
       strip.onclick = () => { stopPlay(); setDay(DAYS.indexOf(next.d)); openVenue(next.v); };
     } else {
-      strip.innerHTML = '🏆 Tournament complete — see you in 2030!';
+      strip.innerHTML = t('tournamentDone');
       strip.onclick = null;
     }
   }
@@ -1262,7 +1453,7 @@ function playDay(i) {
       const ms = slots[keys[s]];
       const tLocal = new Date(keys[s]).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
       clockShow(`<span class="t">🕐 ${tLocal}</span>` + ms.map(m =>
-        `<span>${shortHTML(m.a)} <span class="sep">v</span> ${shortHTML(m.b)} <span class="sep">·</span> ${VENUES[m.v][0]}</span>`
+        `<span>${shortHTML(m.a)} <span class="sep">${t('vsWord')}</span> ${shortHTML(m.b)} <span class="sep">·</span> ${VENUES[m.v][0]}</span>`
       ).join('<span class="sep">|</span>'));
       ms.forEach(m => { const id = cssId(m.v); hotMarker(id, 1); hotList.push(id); });
       s++;
@@ -1297,7 +1488,7 @@ const soundBtn = $id('soundBtn');
 function renderSound() {
   soundBtn.textContent = soundOn ? '🔊' : '🔇';
   soundBtn.classList.toggle('on', soundOn);
-  soundBtn.title = soundOn ? 'Goal sounds on — tap to mute' : 'Goal sounds off — tap to enable';
+  soundBtn.title = soundOn ? t('soundOn') : t('soundOff');
 }
 soundBtn.onclick = () => { soundOn = !soundOn; if (soundOn) playGoal(); renderSound(); saveState(); };
 renderSound();
@@ -1363,29 +1554,28 @@ function openGroup(g) {
   const anyPlayed = fx.some(m => m.s1 != null);
   const st = standingsFor(g);
   $id('drawerInner').innerHTML = `
-    <div class="dh"><h2>Group <b>${g}</b></h2><button class="dx" onclick="closeDrawer()">✕</button></div>
+    <div class="dh"><h2>${t('groupWord')} <b>${g}</b></h2><button class="dx" onclick="closeDrawer()">✕</button></div>
     <div class="db">
       <table class="stTbl">
-        <thead><tr><th></th><th class="tl">TEAM</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>PTS</th></tr></thead>
+        <thead><tr><th></th><th class="tl">${t('thTeam')}</th><th>${t('thP')}</th><th>${t('thW')}</th><th>${t('thD')}</th><th>${t('thL')}</th><th>${t('thGD')}</th><th>${t('thPts')}</th></tr></thead>
         <tbody>${st.map((r, i) => `
-          <tr class="${i < 2 ? 'q' : i === 2 ? 'm' : ''}${follow === r.c ? ' fol' : ''}" onclick="followTeam('${r.c}')" title="Click to follow">
+          <tr class="${i < 2 ? 'q' : i === 2 ? 'm' : ''}${follow === r.c ? ' fol' : ''}" onclick="followTeam('${r.c}')" title="${t('clickFollow')}">
             <td class="ps">${i + 1}</td>
-            <td class="tl"><img src="${flagURL(r.c)}" alt="">${TEAMS[r.c][0]}</td>
+            <td class="tl"><img src="${flagURL(r.c)}" alt="">${teamName(r.c)}</td>
             <td>${r.P}</td><td>${r.W}</td><td>${r.D}</td><td>${r.L}</td>
             <td>${r.GD > 0 ? '+' : ''}${r.GD}</td><td class="pts">${r.Pts}</td>
           </tr>`).join('')}</tbody>
       </table>
-      <div class="legend">${anyPlayed ? 'top two advance · 3rd place may advance (8 best of 12) · click a team to follow'
-        : 'no results yet — table fills in as matches finish · click a team to follow'}</div>
-      <div class="gfix"><div class="gfixTitle">FIXTURES</div>
+      <div class="legend">${anyPlayed ? t('legendPlayed') : t('legendEmpty')}</div>
+      <div class="gfix"><div class="gfixTitle">${t('fixtures')}</div>
       ${fx.map(m => {
         const dt = dateObj(m.d);
         return `<div class="gfx" onclick="stopPlay();setDay(${DAYS.indexOf(m.d)});openVenue('${esc(m.v)}')">
-          <span class="gd">${MONTHS[dt.getMonth()]} ${dt.getDate()}</span>
+          <span class="gd">${fmtMD(dt)}</span>
           <img src="${flagURL(m.a)}" alt="">${m.a}
-          ${m.s1 != null ? `<b style="color:var(--gold)">${m.s1}–${m.s2}</b>` : '<span style="color:var(--ink-dim)">v</span>'}
+          ${m.s1 != null ? `<b style="color:var(--gold)">${m.s1}–${m.s2}</b>` : `<span style="color:var(--ink-dim)">${t('vsWord')}</span>`}
           ${m.b}<img src="${flagURL(m.b)}" alt="">
-          <span class="gv">${m.s1 != null ? 'FT' : fmt12(m.t)}<br>${VENUES[m.v][0]}</span></div>`;
+          <span class="gv">${m.s1 != null ? t('ft') : fmt12(m.t)}<br>${VENUES[m.v][0]}</span></div>`;
       }).join('')}
       </div>
     </div>`;
@@ -1595,15 +1785,15 @@ const fyShuffle = arr => { const a = arr.slice(); for (let i = a.length - 1; i >
 // standings entirely and shuffle. Both skip groups locked by reality or hand-arranged with ▲▼.
 function predAutoFill() { for (const g of Object.keys(GROUPS)) if (!groupDecided(g) && !PRED.manual[g]) PRED.g[g] = standingsFor(g, true).map(r => r.c); savePred(); renderBracket(); }
 function predRandom() { for (const g of Object.keys(GROUPS)) if (!groupDecided(g) && !PRED.manual[g]) PRED.g[g] = fyShuffle(GROUPS[g]); savePred(); renderBracket(); }
-function predReset() { if (!confirm('Clear your whole bracket?')) return; PRED = {g:{}, third:{}, win:{}, manual:{}}; savePred(); renderBracket(); }
+function predReset() { if (!confirm(t('confirmClear'))) return; PRED = {g:{}, third:{}, win:{}, manual:{}}; savePred(); renderBracket(); }
 function predSetView(v) { predView = v; renderBracket(); }
 function predOpen() { predOn = true; $id('bracket').classList.add('open'); $id('predBtn').classList.add('on'); renderBracket(); }
 function predClose() { predOn = false; $id('bracket').classList.remove('open'); $id('predBtn').classList.remove('on'); }
 function predToast(msg) { const t = document.createElement('div'); t.className = 'brkToast'; t.textContent = msg; $id('bracket').appendChild(t); setTimeout(() => t.remove(), 2200); }
 function predShare() {
   const url = location.origin + location.pathname + '?predict=' + btoa(unescape(encodeURIComponent(JSON.stringify(PRED))));
-  if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => predToast('🔗 Bracket link copied!'), () => predToast('Copy failed'));
-  else predToast('Clipboard unavailable');
+  if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => predToast(t('linkCopied')), () => predToast(t('copyFailed')));
+  else predToast(t('clipNA'));
 }
 
 // ── prediction scoring vs reality ──
@@ -1621,42 +1811,42 @@ function predScore() {
 // ── rendering ──
 function renderBracket() {
   const sc = predScore(), champ = winnerCode(104);
-  const champHTML = champ ? `🏆 <b style="color:var(--gold)">${TEAMS[champ][0]}</b>` : '🏆 Pick a champion';
+  const champHTML = champ ? t('champion', teamName(champ)) : t('pickChampion');
   $id('bracketInner').innerHTML = `
     <div class="brkHead">
-      <h2><span class="pc">🔮 Bracket Predictor</span></h2>
+      <h2><span class="pc">${t('predTitle')}</span></h2>
       <span class="brkScore">${champHTML}</span>
-      ${sc.t ? `<span class="brkScore">✓ <b>${sc.c}</b>/${sc.t} correct</span>` : ''}
+      ${sc.t ? `<span class="brkScore">${t('correct', sc.c, sc.t)}</span>` : ''}
       <div class="brkTabs">
-        <button class="${predView === 'groups' ? 'on' : ''}" onclick="predSetView('groups')">Groups</button>
-        <button class="${predView === 'knockout' ? 'on' : ''}" onclick="predSetView('knockout')">Knockout</button>
+        <button class="${predView === 'groups' ? 'on' : ''}" onclick="predSetView('groups')">${t('tabGroups')}</button>
+        <button class="${predView === 'knockout' ? 'on' : ''}" onclick="predSetView('knockout')">${t('tabKnockout')}</button>
       </div>
       <div class="brkAct">
-        <button onclick="predAutoFill()" title="Seed undecided groups from current standings (ties broken at random); keeps groups you set by hand">⚡ Auto</button>
-        <button onclick="predRandom()" title="Shuffle undecided groups at random, ignoring standings; keeps groups you set by hand">🎲 Random</button>
-        <button onclick="predShare()">🔗 Share</button>
-        <button onclick="predReset()" title="Clear bracket">↺</button>
-        <button class="x" onclick="predClose()" title="Close (Esc)">✕</button>
+        <button onclick="predAutoFill()" title="${t('tAuto')}">${t('autoLabel')}</button>
+        <button onclick="predRandom()" title="${t('tRandom')}">${t('randomLabel')}</button>
+        <button onclick="predShare()">${t('share')}</button>
+        <button onclick="predReset()" title="${t('tClear')}">↺</button>
+        <button class="x" onclick="predClose()" title="${t('tClose')}">✕</button>
       </div>
     </div>
     <div class="brkBody">${predView === 'groups' ? renderGroupsView() : renderKnockoutView()}</div>`;
 }
 function renderGroupsView() {
-  let h = `<p class="brkHint">Use <b>▲▼</b> to set each group's finish. Top 2 advance (<b style="color:var(--pitch)">green</b>); the 3rd (<b style="color:var(--orange)">amber</b>) can grab a wildcard spot — assign those in <b>Knockout</b>. Finished groups lock to the real result.</p><div class="grpGrid">`;
+  let h = `<p class="brkHint">${t('hintGroups')}</p><div class="grpGrid">`;
   for (const g of Object.keys(GROUPS)) {
     const dec = groupDecided(g), ord = displayOrder(g), committed = !!committedOrder(g);
     const real = dec ? ord : null;
-    const tag = dec ? '<span class="lkTag fin">FINAL</span>'
-      : committed ? '<span class="lkTag pick">PICKED</span>'
-      : '<span class="lkTag live">LIVE</span>';
-    h += `<div class="grpCard"><h3>Group ${g}${tag}</h3>`;
+    const tag = dec ? `<span class="lkTag fin">${t('tagFinal')}</span>`
+      : committed ? `<span class="lkTag pick">${t('tagPicked')}</span>`
+      : `<span class="lkTag live">${t('tagLive')}</span>`;
+    h += `<div class="grpCard"><h3>${t('groupWord')} ${g}${tag}</h3>`;
     ord.forEach((c, i) => {
       const cls = i < 2 ? 'q' : i === 2 ? 'wc' : '';
       let vb = '';
       if (dec && PRED.g[g] && i < 3) { const ok = PRED.g[g][i] === real[i]; vb = `<span class="vb ${ok ? 'ok' : 'no'}">${ok ? '✓' : '✗'}</span>`; }
       h += `<div class="grpRow ${cls}${dec ? ' locked' : ''}">
         <span class="rk">${i + 1}</span>
-        <img src="${flagURL(c)}" alt=""><span class="gn">${TEAMS[c][0]}</span>${vb}
+        <img src="${flagURL(c)}" alt=""><span class="gn">${teamName(c)}</span>${vb}
         <span class="mv">
           <button onclick="predMove('${g}',${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
           <button onclick="predMove('${g}',${i},1)" ${i === ord.length - 1 ? 'disabled' : ''}>▼</button>
@@ -1675,7 +1865,7 @@ function slotHTML(m, side) {
     if (decided && realWinner(m) === code) cls += ' realwin';
     if (!decided) attr = `data-pick onclick="predPickWinner(${m.n},'${code}')"`;
   } else if (isThird) {
-    cls += ' third'; label = `<span class="ph">🃏 3rd ${m[side].slice(5)} ▾</span>`;
+    cls += ' third'; label = `<span class="ph">${t('thirdSlot', m[side].slice(5))}</span>`;
     if (!decided) attr = `onclick="predCycleThird('${m.sec}')"`;
   } else {
     const tm = teamMeta(m[side]); label = `<span class="ph">${tm.label || tm.badge}</span>`;
@@ -1688,16 +1878,16 @@ function koMatchHTML(m) {
   if (decided && PRED.win[m.n]) { const ok = PRED.win[m.n] === realWinner(m); badge = `<span class="vbadge ${ok ? 'ok' : 'no'}">${ok ? '✓' : '✗'}</span>`; }
   const sc = decided ? `<span class="koSc">${m.s1}–${m.s2}${m.pens ? ` (${m.pens}p)` : ''}</span>` : '';
   return `<div class="koMatch${decided ? ' decided' : ''}">
-    <div class="koMn">${ROUND_SHORT[m.r] || m.r} · M${m.n} ${sc}${badge}</div>
+    <div class="koMn">${roundShort(m.r)} · ${t('matchShort')}${m.n} ${sc}${badge}</div>
     ${slotHTML(m,'a')}${slotHTML(m,'b')}</div>`;
 }
 function renderKnockoutView() {
-  const rounds = [['Round of 32','Round of 32'],['Round of 16','Round of 16'],['Quarterfinal','Quarterfinals'],['Semifinal','Semifinals'],['Final','Final'],['Third Place','3rd Place']];
-  let h = `<p class="brkHint">Tap a team to send them through — winners flow to the next round. Tap an amber <b style="color:var(--orange)">🃏 3rd ▾</b> slot to cycle eligible wildcards. Blanks stay as placeholders; real results lock and score your picks ✓/✗. Tip: hit <b>⚡ Auto</b> to seed groups, then tweak.</p><div class="koWrap">`;
-  for (const [r, title] of rounds) {
+  const koRounds = ['Round of 32','Round of 16','Quarterfinal','Semifinal','Final','Third Place'];
+  let h = `<p class="brkHint">${t('hintKnockout')}</p><div class="koWrap">`;
+  for (const r of koRounds) {
     const ms = KO_MATCHES.filter(m => m.r === r).sort((a, b) => a.n - b.n);
     if (!ms.length) continue;
-    h += `<div class="koCol"><h4>${title}</h4>${ms.map(koMatchHTML).join('')}</div>`;
+    h += `<div class="koCol"><h4>${t('koTitles')[r] || roundName(r)}</h4>${ms.map(koMatchHTML).join('')}</div>`;
   }
   return h + `</div>`;
 }
@@ -1706,31 +1896,58 @@ $id('predBtn').onclick = () => predOn ? predClose() : predOpen();
 // ── help / tutorial ────────────────────────────────────────────────────────
 let helpOn = false;
 const HELP_KEY = 'wcviz.seenHelp.v1';
-const HELP_ROWS = [
-  ['🗺️','<b>The map.</b> Every marker is a stadium. Idle ones show a dot &amp; next-match countdown; active ones pulse with the day’s match count; the Final bounces a 🏆. Click any marker for its fixtures &amp; capacity.'],
-  ['📅','<b>Pick a day.</b> Tap a date on the timeline, use <span class="k">◀</span> <span class="k">▶</span>, or the <span class="k">←</span> <span class="k">→</span> keys. Chip colors mark the round — group → R32 → R16 → … → Final.'],
-  ['▶️','<b>Play the tournament.</b> Hit <span class="k">▶</span> (or <span class="k">space</span>) for a day-by-day light show that flashes stadiums in kickoff order.'],
-  ['🪧','<b>Match cards.</b> The side panel lists the day’s games by stadium, with kickoff in <b>both</b> stadium-local and your own time zone. Live games glow red; finished ones dim and show the score.'],
-  ['⭐','<b>Follow a team.</b> Pick one to star their match days, trace their <b>travel route</b> city-to-city, and gold-light every stadium they play in.'],
-  ['🏆','<b>Road to the Final.</b> While following a team, toggle their hypothetical path to MetLife Stadium — as group winners or as runners-up.'],
-  ['📊','<b>Groups.</b> Click any <b>Group X</b> label for live standings (FIFA tiebreakers) and all six fixtures. Tap a team there to follow it.'],
-  ['🔴','<b>Live scores.</b> During matches the scores, clock and standings update on their own — no refresh needed.'],
-  ['🔊','<b>Goal sounds.</b> Toggle 🔊 in the timeline bar for a fanfare when a goal goes in (off by default).'],
-  ['🔮','<b>Bracket predictor.</b> Open 🔮 to order the groups, tap winners through the knockouts, assign third-place wildcards, and share your bracket. Real results lock in and grade your picks ✓/✗.'],
-  ['🔗','<b>Share the view.</b> The URL remembers your day, followed team and bracket — copy it to share exactly what you’re looking at.'],
-];
 function renderHelp() {
   $id('help').firstElementChild.innerHTML = `
-    <div class="hh"><h2><span class="pc">👋 How to use the Match Day Map</span></h2>
-      <button class="hx" onclick="helpClose()" title="Close (Esc)">✕</button></div>
-    <div class="helpBody">${HELP_ROWS.map(([i, t]) => `<div class="helpRow"><div class="hi">${i}</div><div class="ht">${t}</div></div>`).join('')}</div>
-    <div class="helpFoot"><button onclick="helpClose()">Got it ⚽</button></div>`;
+    <div class="hh"><h2><span class="pc">${t('helpTitle')}</span></h2>
+      <span class="langPill" title="Language / Idioma">
+        <button class="${LANG === 'en' ? 'on' : ''}" onclick="setLang('en')">EN</button>
+        <button class="${LANG === 'es' ? 'on' : ''}" onclick="setLang('es')">ES</button>
+      </span>
+      <button class="hx" onclick="helpClose()" title="${t('tClose')}">✕</button></div>
+    <div class="helpBody">${t('helpRows').map(([i, tx]) => `<div class="helpRow"><div class="hi">${i}</div><div class="ht">${tx}</div></div>`).join('')}</div>
+    <div class="helpFoot"><button onclick="helpClose()">${t('helpGotIt')}</button></div>`;
 }
 function helpOpen() { helpOn = true; renderHelp(); $id('help').classList.add('open'); }
 function helpClose() { helpOn = false; $id('help').classList.remove('open'); try { localStorage.setItem(HELP_KEY, '1'); } catch (e) {} }
 $id('helpBtn').onclick = () => helpOn ? helpClose() : helpOpen();
 
+// ── language switch ─────────────────────────────────────────────────────────
+function applyStaticText() {
+  const hdr = $id('hdr');
+  hdr.querySelector('h1').innerHTML = t('h1');
+  hdr.querySelector('.sub').innerHTML = t('sub');
+  const lbl = $id('follow').querySelector('label'); if (lbl) lbl.textContent = t('followLabel');
+  $id('prevBtn').title = t('tPrev'); $id('playBtn').title = t('tPlay'); $id('nextBtn').title = t('tNext');
+  $id('predBtn').title = t('tPred'); $id('helpBtn').title = t('tHelp');
+}
+function applyLanguage() {
+  applyStaticText();
+  rebuildTeamSelect();
+  buildDayChips();
+  DAYS.forEach((d, i) => {
+    const has = follow && byDay[d].some(m => m.a === follow || m.b === follow);
+    const dot = document.querySelector(`#dd${i} .fdot`); if (dot) dot.style.display = has ? 'block' : 'none';
+    $id('dd' + i).classList.toggle('off', !!follow && !has);
+  });
+  setDay(dayIdx, false);
+  buildJourney();           // re-renders journey card text (and refits if following)
+  renderStrip();
+  renderSound();
+  if (predOn) renderBracket();
+  const dr = $id('drawer');
+  if (dr.classList.contains('open')) { const b = dr.querySelector('.dh h2 b'); if (b && GROUPS[b.textContent]) openGroup(b.textContent); }
+  if (helpOn) renderHelp();
+}
+function setLang(l) {
+  if (l === LANG || (l !== 'en' && l !== 'es')) return;
+  LANG = l;
+  try { localStorage.setItem(LANG_KEY, l); } catch (e) {}
+  MONTHS = MONTHS_T[LANG]; DOW = DOW_T[LANG];
+  applyLanguage();
+}
+
 // ── go! ──────────────────────────────────────────────────────────────────
+applyStaticText();
 let _initTeam = (_params.get('team') || '').toUpperCase();
 if (!TEAMS[_initTeam] && TEAMS[SAVED.follow]) _initTeam = SAVED.follow;   // restore last followed team
 if (TEAMS[_initTeam]) {
