@@ -1086,58 +1086,97 @@ setInterval(() => {
   }
 }, 30000);
 
-// ── live score poller ────────────────────────────────────────────────────
-// While matches are in (or just past) their live window, pull the score
-// straight from the Wikipedia article every 2 minutes and update in place.
+// ── live scores: backfill + poll ───────────────────────────────────────────
+// Scores live in the static data.js, so on load we backfill EVERY finished
+// match from Wikipedia (not just the ones in their live window). The interval
+// poller then keeps in-progress games fresh and fires goal confetti.
 const PAGE_TITLE = src =>
   src === 'knockout' ? '2026 FIFA World Cup knockout stage' :
   src === 'final' ? '2026 FIFA World Cup final' :
   '2026 FIFA World Cup Group ' + src.slice(-1);
 
+const _wikiCache = {};   // src -> {t, text}; dedupes fetches across backfill + poller
+async function fetchSrcPage(src) {
+  const c = _wikiCache[src];
+  if (c && Date.now() - c.t < 90000) return c.text;
+  const url = 'https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&rvslots=main'
+    + '&formatversion=2&format=json&origin=*&titles=' + encodeURIComponent(PAGE_TITLE(src));
+  const j = await (await fetch(url)).json();
+  const text = j.query.pages[0].revisions[0].slots.main.content;
+  _wikiCache[src] = {t: Date.now(), text};
+  return text;
+}
+
+// pull one match's score / a.e.t. / penalties out of a page's wikitext.
+// returns true if anything changed; `celebrate` only pops goal confetti for a
+// rising score on a live match (so backfilled history stays silent).
+function applyWikiScore(m, text, celebrate) {
+  const secRe = new RegExp('<section begin="?' + m.sec.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '"? *\\/>([\\s\\S]*?)<section end=');
+  const block = (text.match(secRe) || [])[1];
+  if (!block) return false;
+  const field = f => (block.match(new RegExp('^\\|' + f + '=(.*)$', 'm')) || ['', ''])[1];
+  let changed = false;
+  const sm = field('score').match(/(\d+)\s*[–—-]\s*(\d+)/);
+  if (sm) {
+    const n1 = +sm[1], n2 = +sm[2];
+    if (n1 !== m.s1 || n2 !== m.s2) {
+      if (celebrate && stateOf(m, Date.now()) === 'live' && ((m.s1 != null && n1 > m.s1) || (m.s2 != null && n2 > m.s2))) goalBurst(m.v);
+      m.s1 = n1; m.s2 = n2; changed = true;
+    }
+  }
+  if (/^y/i.test(field('aet')) && !m.aet) { m.aet = 1; changed = true; }
+  const pm = field('penaltyscore').match(/(\d+)\s*[–—-]\s*(\d+)/);
+  if (pm && !m.pens) { m.pens = `${pm[1]}–${pm[2]}`; changed = true; }
+  return changed;
+}
+
+// re-render everything that shows a score
+function refreshViews() {
+  renderStrip();
+  if (!playing) { updateMarkers(DAYS[dayIdx]); renderPanel(DAYS[dayIdx], byDay[DAYS[dayIdx]], true); }
+  if (predOn) renderBracket();
+  const dr = $id('drawer');
+  if (dr.classList.contains('open')) { const b = dr.querySelector('.dh h2 b'); if (b && GROUPS[b.textContent]) openGroup(b.textContent); }
+}
+
 async function pollLiveScores() {
   const now = Date.now();
-  const active = MATCHES.filter(m => {
-    const ko = kickoffUTC(m);
-    return now >= ko && now < ko + windowMs(m) + 45 * 60000;
-  });
+  const active = MATCHES.filter(m => { const ko = kickoffUTC(m); return now >= ko && now < ko + windowMs(m) + 45 * 60000; });
   if (!active.length) return;
   let changed = false;
   for (const src of [...new Set(active.map(m => m.src))]) {
     try {
-      const url = 'https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&rvslots=main'
-        + '&formatversion=2&format=json&origin=*&titles=' + encodeURIComponent(PAGE_TITLE(src));
-      const j = await (await fetch(url)).json();
-      const text = j.query.pages[0].revisions[0].slots.main.content;
-      for (const m of active.filter(x => x.src === src)) {
-        const secRe = new RegExp('<section begin="?' + m.sec.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '"? *\\/>([\\s\\S]*?)<section end=');
-        const block = (text.match(secRe) || [])[1];
-        if (!block) continue;
-        const field = f => (block.match(new RegExp('^\\|' + f + '=(.*)$', 'm')) || ['', ''])[1];
-        const sm = field('score').match(/(\d+)\s*[–—-]\s*(\d+)/);
-        if (sm) {
-          const n1 = +sm[1], n2 = +sm[2];
-          if (n1 !== m.s1 || n2 !== m.s2) {
-            // a strictly rising score on a live match is a goal — celebrate it
-            if (stateOf(m, now) === 'live' && ((m.s1 != null && n1 > m.s1) || (m.s2 != null && n2 > m.s2))) goalBurst(m.v);
-            m.s1 = n1; m.s2 = n2; changed = true;
-          }
-        }
-        if (/^y/i.test(field('aet')) && !m.aet) { m.aet = 1; changed = true; }
-        const pm = field('penaltyscore').match(/(\d+)\s*[–—-]\s*(\d+)/);
-        if (pm && !m.pens) { m.pens = `${pm[1]}–${pm[2]}`; changed = true; }
-      }
+      const text = await fetchSrcPage(src);
+      for (const m of active.filter(x => x.src === src)) if (applyWikiScore(m, text, true)) changed = true;
     } catch (e) { /* offline or API hiccup — retry next tick */ }
   }
-  if (changed) {
-    renderStrip();
-    if (!playing) {
-      updateMarkers(DAYS[dayIdx]);
-      renderPanel(DAYS[dayIdx], byDay[DAYS[dayIdx]], true);
-    }
+  if (changed) refreshViews();
+}
+
+// one-time on load: fill in every match that has kicked off but has no score yet
+async function backfillScores() {
+  const now = Date.now();
+  const need = MATCHES.filter(m => m.s1 == null && now >= kickoffUTC(m));
+  if (!need.length) return;
+  for (const src of [...new Set(need.map(m => m.src))]) {
+    let changed = false;
+    try {
+      const text = await fetchSrcPage(src);
+      for (const m of need.filter(x => x.src === src)) if (applyWikiScore(m, text, false)) changed = true;
+    } catch (e) { /* skip this page — the poller will retry in-window games */ }
+    if (changed) refreshViews();   // progressive: scores show as each page lands
   }
 }
 setInterval(pollLiveScores, 120000);
 pollLiveScores();
+// backfill on load, then retry every 90s until every kicked-off match has a
+// score (covers transient fetch failures + matches that finish while open);
+// self-limiting — once nothing's missing it stops fetching.
+backfillScores();
+const _backfillTimer = setInterval(() => {
+  if (MATCHES.some(m => m.s1 == null && Date.now() >= kickoffUTC(m))) backfillScores();
+  else clearInterval(_backfillTimer);
+}, 90000);
 
 // ESPN scoreboard: faster live source — real-time score + actual match clock
 // (Wikipedia poller above remains authoritative for FT/aet/penalties)
