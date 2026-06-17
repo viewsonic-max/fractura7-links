@@ -466,6 +466,9 @@
     }
     #sheetBar{display:flex; align-items:center; gap:8px; padding:0 4px 7px;}
     #sheetTitle{flex:1; font-size:12.5px; font-weight:800;}
+    #sheetClose{flex-shrink:0; width:30px; height:30px; border-radius:50%; border:1px solid var(--panel-border);
+      background:#16203a; color:var(--ink-dim); font-size:14px; line-height:1; cursor:pointer; display:grid; place-items:center;}
+    #sheetClose:active{background:#22304f; color:var(--ink);}
     #panelInner{mask-image:none; padding-right:2px;}
 
     #fabRow{
@@ -540,7 +543,7 @@
 </div>
 
 <div id="panel">
-  <div id="sheetBar"><div id="sheetTitle"></div></div>
+  <div id="sheetBar"><div id="sheetTitle"></div><button id="sheetClose" title="Close" aria-label="Close match list">✕</button></div>
   <div id="panelInner"></div>
 </div>
 <div id="fabRow">
@@ -1726,6 +1729,7 @@ if (TEAMS[_initTeam]) {
   sel.onchange();
 }
 $id('fab').onclick = () => $id('panel').classList.toggle('open');
+$id('sheetClose').onclick = () => $id('panel').classList.remove('open');
 applyFormFactor();
 setDay(dayIdx, TEAMS[_initTeam] ? false : undefined);  // a team deep link keeps the journey fit
 if (TEAMS[_initTeam]) buildJourney();                  // re-fit now that layout is final
