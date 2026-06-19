@@ -67,7 +67,12 @@
   }
   .jstop.k{background:rgba(255,209,102,.12); border-color:rgba(255,209,102,.45); color:var(--gold);}
   .jstop:hover{transform:translateY(-1px); filter:brightness(1.25);}
-  .jmiles{font-size:10.5px; color:var(--ink-dim); margin-top:7px;}
+  .jmiles{font-size:10.5px; color:var(--ink-dim); margin-top:7px; display:flex; align-items:center; gap:8px;}
+  .jmiles #jOdo{font-weight:800; color:var(--pitch); font-variant-numeric:tabular-nums;}
+  .jplay{margin-left:auto; flex:0 0 auto; width:26px; height:26px; border-radius:50%; cursor:pointer;
+    border:1px solid rgba(34,224,124,.5); background:rgba(34,224,124,.12); color:var(--pitch);
+    font-size:10px; line-height:1; display:flex; align-items:center; justify-content:center; padding-left:2px;}
+  .jplay:hover{background:var(--pitch); color:#04150c; border-color:transparent;}
   #roadBtn{
     margin-top:8px; width:100%; padding:6px; border-radius:9px; cursor:pointer; transition:.15s;
     border:1px solid rgba(255,209,102,.5); background:transparent; color:var(--gold);
@@ -195,6 +200,25 @@
   .gfx .gd{color:var(--pitch); font-weight:800; min-width:48px; font-size:11px;}
   .gfx img{width:20px; height:14px; border-radius:2.5px; object-fit:cover;}
   .gfx .gv{color:var(--ink-dim); margin-left:auto; font-size:10px; font-weight:600; text-align:right;}
+  /* ── What-if scenario mode ── */
+  .whatif{display:flex; gap:6px; align-items:center; margin:9px 2px 2px; flex-wrap:wrap;}
+  #wifBtn{flex:1 1 auto; padding:7px 10px; border-radius:9px; cursor:pointer;
+    border:1px solid rgba(76,201,240,.5); background:transparent; color:var(--sky);
+    font:800 11px 'Outfit',sans-serif; letter-spacing:.4px;}
+  #wifBtn.on{background:linear-gradient(135deg,#9be4ff,var(--sky)); color:#04293a; border-color:transparent;}
+  .wifMini{padding:7px 9px; border-radius:9px; cursor:pointer; border:1px solid rgba(255,255,255,.16);
+    background:#16203a; color:var(--ink-dim); font:800 11px 'Outfit',sans-serif; white-space:nowrap;}
+  .wifMini:hover{color:var(--ink);} .wifMini:disabled{opacity:.4; cursor:default;}
+  .stTbl.proj{box-shadow:0 0 0 1px rgba(76,201,240,.35); border-radius:8px;}
+  .stTbl.proj tr.q td.ps{color:var(--sky);}
+  .gfx.wif{flex-wrap:wrap; cursor:default;}
+  .gfx.wif:hover{background:none;}
+  .ocpills{margin-left:auto; display:flex; gap:4px;}
+  .ocp{padding:4px 7px; border-radius:7px; cursor:pointer; border:1px solid rgba(255,255,255,.16);
+    background:#16203a; color:var(--ink-dim); font:800 10px 'Outfit',sans-serif; max-width:74px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .ocp:hover{color:var(--ink); border-color:rgba(76,201,240,.5);}
+  .ocp.on{background:var(--sky); color:#04293a; border-color:transparent;}
 
   /* ── timeline ───────────────────────────── */
   #tl{
@@ -309,6 +333,10 @@
     width:fit-content;
   }
   .stopBadge.k{background:linear-gradient(135deg,#ffe9a8,var(--gold)); color:#3a2c00;}
+  .stopBadge{transition:opacity .25s, transform .25s;}
+  .stopBadge.dim{opacity:.28;}
+  .stopBadge.pop{animation:badgePop .55s ease;}
+  @keyframes badgePop{0%{transform:scale(1)}30%{transform:scale(1.45)}100%{transform:scale(1)}}
   .ballIcon{font-size:17px; filter:drop-shadow(0 2px 5px rgba(0,0,0,.65)); animation:spin 2.2s linear infinite;}
 
   /* ── popup ──────────────────────────────── */
@@ -651,6 +679,7 @@ const STR = {
     journeyOf: name => `${name}&rsquo;s journey`,
     travel: mi => `✈️ ${mi} mi of scheduled travel`,
     roadGlory: mi => ` · <b style="color:var(--gold)">+${mi} mi road to glory</b>`,
+    playJourney: 'Fly the journey',
     roadBtn: on => `🏆 ROAD TO THE FINAL${on ? ' · ON' : ''}`,
     asWinners: 'as group winners', asRunners: 'as runners-up', mdShort: n => 'MD' + n,
     nextKickoff: (dur, a, b, v) => `⏳ Next kickoff in <b style="color:var(--sky)">${dur}</b> — ${a} v ${b} · ${v}`,
@@ -659,6 +688,9 @@ const STR = {
     clickFollow: 'Click to follow',
     legendPlayed: 'top two advance · 3rd place may advance (8 best of 12) · click a team to follow',
     legendEmpty: 'no results yet — table fills in as matches finish · click a team to follow',
+    legendProj: '🔮 projected standings — pick outcomes below · top two advance',
+    whatIfBtn: on => on ? '🔮 What if? · ON' : '🔮 What if?',
+    drawShort: 'Draw', clearLabel: '↺ Clear',
     fixtures: 'FIXTURES',
     winnerGroup: g => `Winner Group ${g}`, runnerUp: g => `Runner-up Group ${g}`,
     thirdPlace: x => `3rd place ${x}`, winnerMatch: n => `Winner of Match ${n}`, loserMatch: n => `Loser of Match ${n}`,
@@ -717,6 +749,7 @@ const STR = {
     journeyOf: name => `Camino de ${name}`,
     travel: mi => `✈️ ${mi} mi de viaje programado`,
     roadGlory: mi => ` · <b style="color:var(--gold)">+${mi} mi de camino a la gloria</b>`,
+    playJourney: 'Volar el camino',
     roadBtn: on => `🏆 CAMINO A LA FINAL${on ? ' · ACTIVO' : ''}`,
     asWinners: 'como líder de grupo', asRunners: 'como segundo lugar', mdShort: n => 'J' + n,
     nextKickoff: (dur, a, b, v) => `⏳ Próximo inicio en <b style="color:var(--sky)">${dur}</b> — ${a} vs ${b} · ${v}`,
@@ -725,6 +758,9 @@ const STR = {
     clickFollow: 'Clic para seguir',
     legendPlayed: 'los 2 primeros avanzan · el 3er lugar puede avanzar (8 mejores de 12) · clic en un equipo para seguir',
     legendEmpty: 'aún sin resultados — la tabla se llena al terminar los partidos · clic en un equipo para seguir',
+    legendProj: '🔮 tabla proyectada — elige resultados abajo · los 2 primeros avanzan',
+    whatIfBtn: on => on ? '🔮 ¿Qué tal si? · ACTIVO' : '🔮 ¿Qué tal si?',
+    drawShort: 'Empate', clearLabel: '↺ Borrar',
     fixtures: 'PARTIDOS',
     winnerGroup: g => `Líder Grupo ${g}`, runnerUp: g => `2º Grupo ${g}`,
     thirdPlace: x => `3er lugar ${x}`, winnerMatch: n => `Ganador del Partido ${n}`, loserMatch: n => `Perdedor del Partido ${n}`,
@@ -899,6 +935,10 @@ let dayIdx = _qd && DAYS.includes(_qd) ? DAYS.indexOf(_qd)
 let follow = '';
 let roadOn = false, roadPos = 'W';
 let soundOn = SAVED.sound === true;   // goal sounds opt-in; default muted
+// ── group "What if?" scenario state ──
+let curGroup = null;                  // group currently shown in the drawer
+let scenarioOn = false;               // is What-if mode active for this drawer
+let scenario = {};                    // { [matchN]: [s1, s2] } hypothetical results
 
 // ── timeline chips ───────────────────────────────────────────────────────
 const daysEl = $id('days');
@@ -1065,12 +1105,15 @@ function openVenue(name) {
 }
 
 // ── journey arcs + champion's road ───────────────────────────────────────
-let journeyLayer = null, ballTimer = null;
+let journeyLayer = null, ballTimer = null, playTimer = null;
 let journeyVenues = null;   // while following: the only stadiums shown on the map
+let jAnim = null;           // {ball, path, stopIdx, stopMarkers, cumMiles, total} for play-through
 
 function clearJourney() {
   if (journeyLayer) { map.removeLayer(journeyLayer); journeyLayer = null; }
   if (ballTimer) { clearInterval(ballTimer); ballTimer = null; }
+  if (playTimer) { clearInterval(playTimer); playTimer = null; }
+  jAnim = null;
 }
 function arcPoints(a, b) {
   const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
@@ -1133,6 +1176,7 @@ function buildJourney() {
 
   journeyLayer = L.layerGroup().addTo(map);
   let miles = 0, kmiles = 0, fullPath = [];
+  const stopIdx = [0], cumMiles = [0];   // fullPath index + cumulative miles at each stop
   for (let i = 0; i < merged.length - 1; i++) {
     const A = VENUES[merged[i].v], B = VENUES[merged[i+1].v];
     const pts = arcPoints([A[2], A[3]], [B[2], B[3]]);
@@ -1143,10 +1187,13 @@ function buildJourney() {
     L.polyline(pts, {color: knock ? '#ffd166' : '#22e07c', weight: 2.6, opacity: .95,
       dashArray: hyp ? '7 9' : null, interactive: false}).addTo(journeyLayer);
     fullPath = fullPath.concat(pts);
+    stopIdx.push(fullPath.length - 1);
+    // odometer tracks only real scheduled miles; it holds through hypothetical road legs
+    cumMiles.push(cumMiles[cumMiles.length - 1] + (hyp ? 0 : dmi));
   }
-  merged.forEach(s => {
+  const stopMarkers = merged.map(s => {
     const V = VENUES[s.v];
-    L.marker([V[2], V[3]], {
+    return L.marker([V[2], V[3]], {
       icon: L.divIcon({className:'', html:`<div class="stopBadge${s.k?' k':''}">${s.label}</div>`, iconSize:[0,0], iconAnchor:[-13, 27]}),
       interactive: false,
     }).addTo(journeyLayer);
@@ -1158,12 +1205,48 @@ function buildJourney() {
     }).addTo(journeyLayer);
     let idx = 0;
     ballTimer = setInterval(() => { idx = (idx + 1) % fullPath.length; ball.setLatLng(fullPath[idx]); }, 30);
+    jAnim = {ball, path: fullPath, stopIdx, stopMarkers, cumMiles, total: cumMiles[cumMiles.length - 1]};
   }
   const inGroups = gm.length && gm[gm.length - 1].r === 'Group Stage';
   journeyVenues = new Set(merged.map(s => s.v));
   updateMarkers(DAYS[dayIdx]);
   renderJourneyCard(stops, road, miles, kmiles, inGroups);
   fitJourney(merged.map(s => s.v));
+}
+
+// ▶ play-through: send the ball stop-to-stop once, popping each badge on arrival
+// and counting the miles up live; resume the idle loop when it lands at the end.
+let jPlaying = false;
+function badgeEl(marker) { const e = marker.getElement && marker.getElement(); return e ? e.querySelector('.stopBadge') : null; }
+function playJourney() {
+  if (!jAnim || jPlaying || jAnim.path.length < 2) return;
+  jPlaying = true;
+  if (ballTimer) { clearInterval(ballTimer); ballTimer = null; }
+  const {ball, path, stopIdx, stopMarkers, cumMiles, total} = jAnim;
+  const odo = $id('jOdo');
+  stopMarkers.forEach((m, i) => { const b = badgeEl(m); if (b) b.classList.toggle('dim', i > 0); });
+  let i = 0, nextStop = 1;
+  const arrive = s => { const b = badgeEl(stopMarkers[s]); if (b) { b.classList.remove('dim'); b.classList.add('pop'); setTimeout(() => b && b.classList.remove('pop'), 600); } };
+  arrive(0);
+  const tick = () => {
+    i++;
+    ball.setLatLng(path[i]);
+    // interpolate miles between the last reached stop and the next
+    const segFrom = cumMiles[nextStop - 1], segTo = cumMiles[nextStop];
+    const a = stopIdx[nextStop - 1], b = stopIdx[nextStop];
+    const frac = b > a ? (i - a) / (b - a) : 1;
+    if (odo) odo.textContent = nfmt(Math.round(segFrom + (segTo - segFrom) * Math.min(1, Math.max(0, frac))));
+    if (i >= stopIdx[nextStop]) { arrive(nextStop); nextStop++; }
+    if (i >= path.length - 1 || nextStop >= stopIdx.length) {
+      clearInterval(playTimer); playTimer = null; jPlaying = false;
+      if (odo) odo.textContent = nfmt(Math.round(total));
+      // resume gentle idle loop from the start
+      let k = 0;
+      ballTimer = setInterval(() => { k = (k + 1) % path.length; ball.setLatLng(path[k]); }, 30);
+    }
+  };
+  if (playTimer) clearInterval(playTimer);
+  playTimer = setInterval(tick, 26);
 }
 
 // refit the map so the whole drawn path is visible around the UI chrome
@@ -1194,8 +1277,11 @@ function renderJourneyCard(stops, road, miles, kmiles, inGroups) {
       <span class="groupLink" style="margin-left:auto;font-size:10.5px;color:var(--ink-dim)" onclick="openGroup('${g}')">${t('groupWord')} ${g} →</span></div>
     <div class="jstops">${stops.map(chip).join(arrow)}</div>
     ${road.length ? `<div class="jstops">${road.map(chip).join(arrow)}</div>` : ''}
-    <div class="jmiles">${t('travel', nfmt(Math.round(miles)))}${
-      road.length ? t('roadGlory', nfmt(Math.round(kmiles))) : ''}</div>
+    <div class="jmiles">
+      <span>${t('travel', `<span id="jOdo">${nfmt(Math.round(miles))}</span>`)}${
+        road.length ? t('roadGlory', nfmt(Math.round(kmiles))) : ''}</span>
+      <button class="jplay" title="${t('playJourney')}" onclick="playJourney()">▶</button>
+    </div>
     <button id="roadBtn" class="${roadOn?'on':''}" onclick="toggleRoad()">${t('roadBtn', roadOn)}</button>
     ${roadOn && inGroups ? `<div class="posSeg">
       <button class="${roadPos==='W'?'on':''}" onclick="setRoadPos('W')">${t('asWinners')}</button>
@@ -1329,8 +1415,7 @@ function refreshViews() {
   renderStrip();
   if (!playing) { updateMarkers(DAYS[dayIdx]); renderPanel(DAYS[dayIdx], byDay[DAYS[dayIdx]], true); }
   if (predOn) renderBracket();
-  const dr = $id('drawer');
-  if (dr.classList.contains('open')) { const b = dr.querySelector('.dh h2 b'); if (b && GROUPS[b.textContent]) openGroup(b.textContent); }
+  if (curGroup && $id('drawer').classList.contains('open')) renderGroup();
 }
 
 async function pollLiveScores() {
@@ -1503,7 +1588,7 @@ document.addEventListener('keydown', e => {
 // ── group standings (computed from results) ──────────────────────────────
 // FIFA criteria approximation: points → head-to-head points/GD/goals among
 // tied teams → overall GD → overall goals (fair play + ranking unavailable)
-function standingsFor(g, tieRandom) {
+function standingsFor(g, tieRandom, hypo) {
   const rows = {};
   GROUPS[g].forEach(c => rows[c] = {c, P:0, W:0, D:0, L:0, GF:0, GA:0, Pts:0});
   // final tiebreaker: alphabetical (stable, for the real standings display) or a
@@ -1512,7 +1597,9 @@ function standingsFor(g, tieRandom) {
   const lastTie = tieRandom
     ? (x, y) => rnd[x.c] - rnd[y.c]
     : (x, y) => TEAMS[x.c][0].localeCompare(TEAMS[y.c][0]);
-  const played = MATCHES.filter(m => m.g === g && m.s1 != null);
+  // `hypo` (match n -> [s1,s2]) overlays hypothetical scores for the What-if mode
+  const eff = m => { const h = (m.s1 == null && hypo) ? hypo[m.n] : null; return h ? Object.assign({}, m, {s1: h[0], s2: h[1]}) : m; };
+  const played = MATCHES.filter(m => m.g === g).map(eff).filter(m => m.s1 != null);
   for (const m of played) {
     const A = rows[m.a], B = rows[m.b];
     A.P++; B.P++; A.GF += m.s1; A.GA += m.s2; B.GF += m.s2; B.GA += m.s1;
@@ -1549,14 +1636,45 @@ function standingsFor(g, tieRandom) {
 }
 
 // ── group drawer ─────────────────────────────────────────────────────────
+// canonical scorelines for the three What-if outcomes
+const OUTCOMES = {h: [1, 0], d: [1, 1], a: [0, 1]};
+const outcomeOf = (m) => { const s = scenario[m.n]; if (!s) return null; return s[0] > s[1] ? 'h' : s[0] < s[1] ? 'a' : 'd'; };
+
 function openGroup(g) {
+  curGroup = g;
+  scenarioOn = false;
+  scenario = {};
+  renderGroup();
+  $id('drawer').classList.add('open');
+}
+function closeDrawer() { $id('drawer').classList.remove('open'); }
+
+function toggleScenario() { scenarioOn = !scenarioOn; renderGroup(); }
+function setOutcome(n, k) {
+  if (outcomeOf({n}) === k) delete scenario[n];   // tap the active pick again to clear
+  else scenario[n] = OUTCOMES[k].slice();
+  renderGroup();
+}
+function clearScenario() { scenario = {}; renderGroup(); }
+function randomScenario() {
+  const fx = MATCHES.filter(m => m.g === curGroup && m.s1 == null);
+  fx.forEach(m => { scenario[m.n] = OUTCOMES[['h', 'd', 'a'][Math.random() * 3 | 0]].slice(); });
+  renderGroup();
+}
+
+function renderGroup() {
+  const g = curGroup;
   const fx = MATCHES.filter(m => m.g === g);
   const anyPlayed = fx.some(m => m.s1 != null);
-  const st = standingsFor(g);
+  const open = fx.filter(m => m.s1 == null);     // not-yet-played fixtures
+  const hypo = scenarioOn ? scenario : null;
+  const st = standingsFor(g, false, hypo);
+  const nSet = scenarioOn ? Object.keys(scenario).length : 0;
+  const proj = scenarioOn && nSet > 0;           // standings now show projections
   $id('drawerInner').innerHTML = `
     <div class="dh"><h2>${t('groupWord')} <b>${g}</b></h2><button class="dx" onclick="closeDrawer()">✕</button></div>
     <div class="db">
-      <table class="stTbl">
+      <table class="stTbl${proj ? ' proj' : ''}">
         <thead><tr><th></th><th class="tl">${t('thTeam')}</th><th>${t('thP')}</th><th>${t('thW')}</th><th>${t('thD')}</th><th>${t('thL')}</th><th>${t('thGD')}</th><th>${t('thPts')}</th></tr></thead>
         <tbody>${st.map((r, i) => `
           <tr class="${i < 2 ? 'q' : i === 2 ? 'm' : ''}${follow === r.c ? ' fol' : ''}" onclick="followTeam('${r.c}')" title="${t('clickFollow')}">
@@ -1566,10 +1684,26 @@ function openGroup(g) {
             <td>${r.GD > 0 ? '+' : ''}${r.GD}</td><td class="pts">${r.Pts}</td>
           </tr>`).join('')}</tbody>
       </table>
-      <div class="legend">${anyPlayed ? t('legendPlayed') : t('legendEmpty')}</div>
+      <div class="legend">${proj ? t('legendProj') : anyPlayed ? t('legendPlayed') : t('legendEmpty')}</div>
+      ${open.length ? `<div class="whatif">
+        <button id="wifBtn" class="${scenarioOn ? 'on' : ''}" onclick="toggleScenario()">${t('whatIfBtn', scenarioOn)}</button>
+        ${scenarioOn ? `<button class="wifMini" onclick="randomScenario()">${t('randomLabel')}</button>
+          <button class="wifMini" onclick="clearScenario()"${nSet ? '' : ' disabled'}>${t('clearLabel')}</button>` : ''}
+      </div>` : ''}
       <div class="gfix"><div class="gfixTitle">${t('fixtures')}</div>
       ${fx.map(m => {
         const dt = dateObj(m.d);
+        const sc = scenario[m.n];
+        if (scenarioOn && m.s1 == null) {
+          const oc = outcomeOf(m);
+          const pill = (k, label) => `<button class="ocp${oc === k ? ' on' : ''}" onclick="event.stopPropagation();setOutcome(${m.n}, '${k}')">${label}</button>`;
+          return `<div class="gfx wif">
+            <span class="gd">${fmtMD(dt)}</span>
+            <img src="${flagURL(m.a)}" alt="">${m.a}
+            ${sc ? `<b style="color:var(--sky)">${sc[0]}–${sc[1]}</b>` : `<span style="color:var(--ink-dim)">${t('vsWord')}</span>`}
+            ${m.b}<img src="${flagURL(m.b)}" alt="">
+            <span class="ocpills">${pill('h', m.a)}${pill('d', t('drawShort'))}${pill('a', m.b)}</span></div>`;
+        }
         return `<div class="gfx" onclick="stopPlay();setDay(${DAYS.indexOf(m.d)});openVenue('${esc(m.v)}')">
           <span class="gd">${fmtMD(dt)}</span>
           <img src="${flagURL(m.a)}" alt="">${m.a}
@@ -1579,9 +1713,7 @@ function openGroup(g) {
       }).join('')}
       </div>
     </div>`;
-  $id('drawer').classList.add('open');
 }
-function closeDrawer() { $id('drawer').classList.remove('open'); }
 
 // ── goal sound (synthesized via Web Audio — no asset, opt-in) ─────────────
 let audioCtx = null;
@@ -1934,8 +2066,7 @@ function applyLanguage() {
   renderStrip();
   renderSound();
   if (predOn) renderBracket();
-  const dr = $id('drawer');
-  if (dr.classList.contains('open')) { const b = dr.querySelector('.dh h2 b'); if (b && GROUPS[b.textContent]) openGroup(b.textContent); }
+  if (curGroup && $id('drawer').classList.contains('open')) renderGroup();
   if (helpOn) renderHelp();
 }
 function setLang(l) {
