@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>⚽ World Cup 26 — Match Day Map</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b1120">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WC26 Map">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
@@ -593,6 +601,7 @@
   <button class="tlBtn" id="playBtn" title="Play the tournament (space)">▶</button>
   <button class="tlBtn small" id="nextBtn" title="Next day (→)">▶</button>
   <button class="tlBtn small" id="soundBtn" title="Goal sounds">🔇</button>
+  <button class="tlBtn small" id="notifyBtn" title="Match alerts">🔕</button>
   <button class="tlBtn small" id="predBtn" title="Bracket predictor">🔮</button>
   <button class="tlBtn small" id="helpBtn" title="How to use this app">?</button>
   <div id="days"></div>
@@ -661,6 +670,12 @@ const STR = {
     tPrev: 'Previous day (←)', tPlay: 'Play the tournament (space)', tNext: 'Next day (→)',
     tPred: 'Bracket predictor', tHelp: 'How to use this app',
     soundOn: 'Goal sounds on — tap to mute', soundOff: 'Goal sounds off — tap to enable',
+    alertsOn: 'Match alerts on — tap to mute', alertsOff: 'Match alerts off — tap to enable',
+    alertsUnsupported: 'Notifications aren’t supported on this browser.',
+    noteGoalTitle: '⚽ GOAL!',
+    noteKickTitle: team => `🔴 ${team} kick off!`,
+    noteOnTitle: '🔔 Match alerts on',
+    noteOnBody: 'You’ll get a ping for your team’s kickoffs and goals while this page is open.',
     today: 'TODAY', restDay: '😴 Rest day — no matches.',
     matches: n => `${n} match${n !== 1 ? 'es' : ''}`,
     cities: n => `${n} cit${n !== 1 ? 'ies' : 'y'}`,
@@ -720,6 +735,7 @@ const STR = {
       ['📊','<b>Groups.</b> Click any <b>Group X</b> label for live standings (FIFA tiebreakers) and all six fixtures. Tap a team there to follow it.'],
       ['🔴','<b>Live scores.</b> During matches the scores, clock and standings update on their own — no refresh needed.'],
       ['🔊','<b>Goal sounds.</b> Toggle 🔊 in the timeline bar for a fanfare when a goal goes in (off by default).'],
+      ['🔔','<b>Match alerts.</b> Tap 🔔 to get a notification for your followed team’s kickoffs and goals. Install the app to your home screen for the full experience. Alerts ping while the app is open.'],
       ['🔮','<b>Bracket predictor.</b> Open 🔮 to order the groups, tap winners through the knockouts, assign third-place wildcards, and share your bracket. Real results lock in and grade your picks ✓/✗.'],
       ['🔗','<b>Share the view.</b> The URL remembers your day, followed team and bracket — copy it to share exactly what you’re looking at.'],
     ],
@@ -731,6 +747,12 @@ const STR = {
     tPrev: 'Día anterior (←)', tPlay: 'Reproduce el torneo (espacio)', tNext: 'Día siguiente (→)',
     tPred: 'Predictor del cuadro', tHelp: 'Cómo usar la app',
     soundOn: 'Sonidos de gol activados — toca para silenciar', soundOff: 'Sonidos de gol desactivados — toca para activar',
+    alertsOn: 'Alertas activadas — toca para silenciar', alertsOff: 'Alertas desactivadas — toca para activar',
+    alertsUnsupported: 'Las notificaciones no son compatibles con este navegador.',
+    noteGoalTitle: '⚽ ¡GOL!',
+    noteKickTitle: team => `🔴 ¡${team} arranca!`,
+    noteOnTitle: '🔔 Alertas activadas',
+    noteOnBody: 'Recibirás un aviso de los goles y arranques de tu equipo mientras esta página esté abierta.',
     today: 'HOY', restDay: '😴 Día de descanso — sin partidos.',
     matches: n => `${n} partido${n !== 1 ? 's' : ''}`,
     cities: n => `${n} ciudad${n !== 1 ? 'es' : ''}`,
@@ -790,6 +812,7 @@ const STR = {
       ['📊','<b>Grupos.</b> Haz clic en cualquier etiqueta <b>Grupo X</b> para ver la tabla en vivo (criterios FIFA) y los seis partidos. Toca un equipo ahí para seguirlo.'],
       ['🔴','<b>Marcadores en vivo.</b> Durante los partidos, los marcadores, el reloj y la tabla se actualizan solos — sin recargar.'],
       ['🔊','<b>Sonidos de gol.</b> Activa 🔊 en la barra de tiempo para una fanfarria cuando cae un gol (desactivado por defecto).'],
+      ['🔔','<b>Alertas de partido.</b> Toca 🔔 para recibir una notificación de los arranques y goles del equipo que sigues. Instala la app en tu pantalla de inicio para la experiencia completa. Las alertas suenan mientras la app está abierta.'],
       ['🔮','<b>Predictor del cuadro.</b> Abre 🔮 para ordenar los grupos, enviar ganadores por las eliminatorias, asignar los comodines de tercer lugar y compartir tu cuadro. Los resultados reales se fijan y califican tus pronósticos ✓/✗.'],
       ['🔗','<b>Comparte la vista.</b> La URL recuerda tu día, equipo seguido y cuadro — cópiala para compartir exactamente lo que ves.'],
     ],
@@ -925,7 +948,7 @@ const LS_KEY = 'wcviz.v1';
 const loadSaved = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch (e) { return {}; } };
 const SAVED = loadSaved();
 function saveState() {
-  try { localStorage.setItem(LS_KEY, JSON.stringify({follow, roadOn, roadPos, day: DAYS[dayIdx], sound: soundOn})); }
+  try { localStorage.setItem(LS_KEY, JSON.stringify({follow, roadOn, roadPos, day: DAYS[dayIdx], sound: soundOn, notify: notifyOn})); }
   catch (e) { /* storage unavailable (private mode / quota) — ignore */ }
 }
 
@@ -935,6 +958,7 @@ let dayIdx = _qd && DAYS.includes(_qd) ? DAYS.indexOf(_qd)
 let follow = '';
 let roadOn = false, roadPos = 'W';
 let soundOn = SAVED.sound === true;   // goal sounds opt-in; default muted
+let notifyOn = SAVED.notify === true; // match alerts opt-in; needs Notification permission
 // ── group "What if?" scenario state ──
 let curGroup = null;                  // group currently shown in the drawer
 let scenarioOn = false;               // is What-if mode active for this drawer
@@ -1360,6 +1384,7 @@ function renderStrip() {
 }
 setInterval(() => {
   renderStrip();
+  checkKickoffs(Date.now());
   if (!playing) {
     updateMarkers(DAYS[dayIdx]);
     renderPanel(DAYS[dayIdx], byDay[DAYS[dayIdx]], true);
@@ -1400,8 +1425,9 @@ function applyWikiScore(m, text, celebrate) {
   if (sm) {
     const n1 = +sm[1], n2 = +sm[2];
     if (n1 !== m.s1 || n2 !== m.s2) {
-      if (celebrate && stateOf(m, Date.now()) === 'live' && ((m.s1 != null && n1 > m.s1) || (m.s2 != null && n2 > m.s2))) goalBurst(m.v);
+      const rose = (m.s1 != null && n1 > m.s1) || (m.s2 != null && n2 > m.s2);
       m.s1 = n1; m.s2 = n2; changed = true;
+      if (celebrate && rose && stateOf(m, Date.now()) === 'live') { goalBurst(m.v); notifyGoal(m); }
     }
   }
   if (/^y/i.test(field('aet')) && !m.aet) { m.aet = 1; changed = true; }
@@ -1485,7 +1511,7 @@ async function pollESPN() {
         if (c.code === m.a && m.s1 !== c.score) { if (m.s1 != null && c.score > m.s1) scored = true; m.s1 = c.score; changed = true; }
         if (c.code === m.b && m.s2 !== c.score) { if (m.s2 != null && c.score > m.s2) scored = true; m.s2 = c.score; changed = true; }
       }
-      if (scored && stateOf(m, now) === 'live') goalBurst(m.v);   // 🎉 goal!
+      if (scored && stateOf(m, now) === 'live') { goalBurst(m.v); notifyGoal(m); }   // 🎉 goal!
       const clk = st === 'in' ? (e.status.displayClock || null) : null;
       if (m.clock !== clk) { m.clock = clk; changed = true; }
     }
@@ -1577,6 +1603,73 @@ function renderSound() {
 }
 soundBtn.onclick = () => { soundOn = !soundOn; if (soundOn) playGoal(); renderSound(); saveState(); };
 renderSound();
+
+// ── match alerts (local notifications) ────────────────────────────────────
+// The site is static (GitHub Pages, no backend) so there is no server push:
+// these fire from the page's own pollers while the tab is alive — foreground
+// or backgrounded. Goals (any followed-team match, or any live match if no
+// team is followed) and the followed team's kickoff each ping once.
+let swReg = null;
+const notifiedKick = new Set(), notifiedGoal = new Set();
+const notifySupported = () => 'Notification' in window;
+const canNotify = () => notifyOn && notifySupported() && Notification.permission === 'granted';
+
+function showNote(title, body, tag) {
+  try {
+    const opts = {body, tag, renotify: true, icon: 'icon-192.png', badge: 'icon-192.png'};
+    if (swReg && swReg.showNotification) swReg.showNotification(title, opts);
+    else new Notification(title, opts);
+  } catch (e) { /* permission/secure-context edge cases — ignore */ }
+}
+
+function notifyGoal(m) {
+  if (!canNotify()) return;
+  if (follow && m.a !== follow && m.b !== follow) return;   // only your team when following one
+  const key = `${m.n}:${m.s1}-${m.s2}`;
+  if (notifiedGoal.has(key)) return;
+  notifiedGoal.add(key);
+  showNote(t('noteGoalTitle'), `${teamName(m.a)} ${m.s1}–${m.s2} ${teamName(m.b)} · ${VENUES[m.v][0]}`, 'goal-' + m.n);
+}
+
+function checkKickoffs(now) {
+  if (!canNotify() || !follow) return;
+  for (const m of MATCHES) {
+    if ((m.a !== follow && m.b !== follow) || notifiedKick.has(m.n)) continue;
+    const ko = kickoffUTC(m);
+    if (now >= ko && now < ko + 5 * 60000) {           // just kicked off (5-min grace)
+      notifiedKick.add(m.n);
+      showNote(t('noteKickTitle', teamName(follow)), `${teamName(m.a)} ${t('vsWord')} ${teamName(m.b)} · ${VENUES[m.v][0]}`, 'kick-' + m.n);
+    }
+  }
+}
+
+const notifyBtn = $id('notifyBtn');
+function renderNotify() {
+  const on = canNotify();
+  notifyBtn.textContent = on ? '🔔' : '🔕';
+  notifyBtn.classList.toggle('on', on);
+  notifyBtn.title = on ? t('alertsOn') : t('alertsOff');
+}
+async function toggleNotify() {
+  if (!notifySupported()) { alert(t('alertsUnsupported')); return; }
+  if (notifyOn && Notification.permission === 'granted') {
+    notifyOn = false;                                  // mute
+  } else {
+    let perm = Notification.permission;
+    if (perm !== 'granted') perm = await Notification.requestPermission();
+    if (perm !== 'granted') { notifyOn = false; renderNotify(); saveState(); return; }
+    notifyOn = true;
+    showNote(t('noteOnTitle'), t('noteOnBody'), 'welcome');
+  }
+  saveState(); renderNotify();
+}
+notifyBtn.onclick = toggleNotify;
+renderNotify();
+
+// register the service worker so the app is installable + works offline
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => {});
+}
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (helpOn) return helpClose(); if (predOn) return predClose(); return closeDrawer(); }
   if (predOn || helpOn) return;   // a modal owns the keyboard while open
@@ -2065,6 +2158,7 @@ function applyLanguage() {
   buildJourney();           // re-renders journey card text (and refits if following)
   renderStrip();
   renderSound();
+  renderNotify();
   if (predOn) renderBracket();
   if (curGroup && $id('drawer').classList.contains('open')) renderGroup();
   if (helpOn) renderHelp();
