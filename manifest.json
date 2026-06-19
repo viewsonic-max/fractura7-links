@@ -1,0 +1,17 @@
+{
+  "name": "World Cup 26 — Match Day Map",
+  "short_name": "WC26 Map",
+  "description": "Interactive 2026 FIFA World Cup match-day map: live scores, bracket predictor, group what-if scenarios, and your team's journey across North America.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b1120",
+  "theme_color": "#0b1120",
+  "categories": ["sports", "entertainment"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
