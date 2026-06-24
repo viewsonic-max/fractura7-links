@@ -254,7 +254,7 @@
   .tlBtn:hover{transform:scale(1.1);}
   .tlBtn.small{width:34px; height:34px; font-size:13px; background:#222e4d; color:var(--ink); box-shadow:none;}
   .tlBtn.small.on{color:var(--gold); box-shadow:0 0 0 1px var(--gold);}
-  #days{display:flex; gap:6px; overflow-x:auto; scroll-behavior:smooth; padding:4px 2px; scrollbar-width:none;}
+  #days{flex:1 1 0; min-width:0; display:flex; gap:6px; overflow-x:auto; scroll-behavior:smooth; padding:4px 2px; scrollbar-width:none;}
   #days::-webkit-scrollbar{display:none;}
   .day{
     flex-shrink:0; width:54px; padding:6px 0 5px; border-radius:12px; cursor:pointer;
@@ -1002,6 +1002,17 @@ function buildDayChips() {
 }
 buildDayChips();
 
+// Center the active day chip *within the #days strip only*. scrollIntoView() walks
+// every scrollable ancestor — including the document, which has off-screen overflow
+// (the parked drawer) — so it would shove the whole UI sideways. Scroll #days directly.
+function centerDayChip(i) {
+  const chip = $id('dd' + i);
+  if (!chip) return;
+  const c = chip.getBoundingClientRect(), d = daysEl.getBoundingClientRect();
+  const delta = (c.left - d.left) - (daysEl.clientWidth - c.width) / 2;
+  daysEl.scrollTo({ left: daysEl.scrollLeft + delta, behavior: 'smooth' });
+}
+
 // ── core render ──────────────────────────────────────────────────────────
 const mqMobile = matchMedia('(max-width: 760px)');
 function layoutPanel() {
@@ -1032,7 +1043,7 @@ function setDay(i, fly) {
      <span class="chip">${t('cities', cities.size)}</span>`;
 
   document.querySelectorAll('.day').forEach((el, j) => el.classList.toggle('active', j === dayIdx));
-  $id('dd' + dayIdx).scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+  centerDayChip(dayIdx);
 
   $id('sheetTitle').textContent = `${fmtWD(dt)} — ${t('matches', dayMatches.length)}`;
   $id('fab').innerHTML = `📋 ${dayMatches.length}`;
