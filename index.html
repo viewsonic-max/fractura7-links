@@ -2185,10 +2185,23 @@ const HOSTS = new Set(['USA', 'MEX', 'CAN']);
 // per-team attack/defence (mutable, refit each run); *0 keeps the prior seed for L2 pull
 const ATK = {}, DEF = {}, ATK0 = {}, DEF0 = {};
 Object.keys(TEAMS).forEach(c => { const r = ((STRENGTH[c] != null ? STRENGTH[c] : 1500) - 1700) / RATE_K; ATK0[c] = ATK[c] = r; DEF0[c] = DEF[c] = r; });
+// rating uncertainty: each simulation draws a per-team overall-quality shock (log-goal
+// units) so the forecast isn't overconfident. SD shrinks as a team plays more games.
+const SIG0 = 0.13;
+const RSIG = {}, RSHOCK = {};
+const gauss = () => { let u = 0, v = 0; while (u === 0) u = Math.random(); while (v === 0) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
 const venCountry = m => (VENUES[m.v] ? VENUES[m.v][1] : null);
-function lambdas(a, b, vc) {                           // expected goals [λa, λb] for a match at venue-country vc
+// altitude (m) of the high venues; sea-level teams tire there → fewer goals. Teams from
+// high-altitude nations (and the host playing its own altitude) are acclimatised.
+const VALT = { 'Estadio Azteca': 2240, 'Estadio Akron': 1560 };
+const ACCLIM = new Set(['MEX', 'ECU', 'COL']);   // Mexico City / Quito / Bogotá regulars
+const ALT_K = 0.05;                              // log-goal penalty per 1000 m for the unacclimatised
+const venAlt = m => VALT[m.v] || 0;
+function lambdas(a, b, vc, alt) {                      // expected goals [λa, λb] for a match at venue-country vc, altitude `alt` (m)
   const ha = (HOSTS.has(a) && vc === a) ? HOME_ADV : 0, hb = (HOSTS.has(b) && vc === b) ? HOME_ADV : 0;
-  return [Math.exp(BASE + ATK[a] - DEF[b] + ha), Math.exp(BASE + ATK[b] - DEF[a] + hb)];
+  const sa = RSHOCK[a] || 0, sb = RSHOCK[b] || 0;       // per-simulation overall-quality shock (raises a team's attack and defence together)
+  const pa = (alt && !ACCLIM.has(a)) ? ALT_K * alt / 1000 : 0, pb = (alt && !ACCLIM.has(b)) ? ALT_K * alt / 1000 : 0;  // altitude drag
+  return [Math.exp(BASE + (ATK[a]+sa) - (DEF[b]+sb) + ha - pa), Math.exp(BASE + (ATK[b]+sb) - (DEF[a]+sa) + hb - pb)];
 }
 // Fit attack/defence to every played match via online Poisson gradient steps,
 // regularised toward the prior so sparse early data can't overfit. Cached by the
@@ -2198,11 +2211,15 @@ function fitRatings() {
   const sig = playedSig(); if (sig === _fitSig) return; _fitSig = sig;
   Object.keys(TEAMS).forEach(c => { ATK[c] = ATK0[c]; DEF[c] = DEF0[c]; });
   const played = MATCHES.filter(m => m.s1 != null && TEAMS[m.a] && TEAMS[m.b]);
+  // per-team rating SD shrinks with the number of that team's matches we've seen
+  const mp = {}; Object.keys(TEAMS).forEach(c => mp[c] = 0);
+  played.forEach(m => { mp[m.a]++; mp[m.b]++; });
+  Object.keys(TEAMS).forEach(c => RSIG[c] = SIG0 / Math.sqrt(1 + mp[c]));
   if (!played.length) return;
   const eta = 0.015, reg = 0.05, EPOCHS = 14;
   for (let e = 0; e < EPOCHS; e++) {
     for (const m of played) {
-      const vc = venCountry(m), L = lambdas(m.a, m.b, vc), da = m.s1 - L[0], db = m.s2 - L[1];
+      const vc = venCountry(m), L = lambdas(m.a, m.b, vc, venAlt(m)), da = m.s1 - L[0], db = m.s2 - L[1];
       ATK[m.a] += eta * da; DEF[m.b] -= eta * da;       // a out-scoring λ → a more attacking, b leakier
       ATK[m.b] += eta * db; DEF[m.a] -= eta * db;
     }
@@ -2224,10 +2241,15 @@ function dcGoals(la, lb) {
   for (let i = 0; i < 24; i++) { const x = poiss(la), y = poiss(lb); if (Math.random() < dcTau(x, y, la, lb) / M) return [x, y]; }
   return [poiss(la), poiss(lb)];
 }
-function simWinnerKO(a, b, vc) {                        // single match; level → ET/pens by λ share
+function simWinnerKO(a, b, vc, alt) {                   // 90' → extra time → shootout
   if (!a || !b) return a || b || null;
-  const L = lambdas(a, b, vc), g = dcGoals(L[0], L[1]);
-  return g[0] > g[1] ? a : g[1] > g[0] ? b : (Math.random() < L[0] / (L[0] + L[1]) ? a : b);
+  const L = lambdas(a, b, vc, alt), g = dcGoals(L[0], L[1]);
+  if (g[0] !== g[1]) return g[0] > g[1] ? a : b;
+  const e = dcGoals(L[0] / 3, L[1] / 3);                // extra time ≈ 30 min at ⅓ the 90-min rate
+  if (e[0] !== e[1]) return e[0] > e[1] ? a : b;
+  // shootout: near coin-flip — only a slight tilt toward the stronger side
+  const share = L[0] / (L[0] + L[1]);
+  return Math.random() < 0.5 + (share - 0.5) * 0.3 ? a : b;
 }
 
 // the eight R32 third-place slots and which groups can feed each
@@ -2256,10 +2278,11 @@ function thirdSlotMap(qualGroups) {
 
 // one full tournament → { champ, fin:[2], semi:[4] }
 function simTournament() {
+  for (const c of Object.keys(TEAMS)) RSHOCK[c] = gauss() * (RSIG[c] || SIG0);   // draw this sim's rating shocks
   const orders = {}, thirds = [];
   for (const g of Object.keys(GROUPS)) {
     const hypo = {};
-    for (const m of MATCHES) if (m.g === g && m.s1 == null) { const L = lambdas(m.a, m.b, venCountry(m)); hypo[m.n] = dcGoals(L[0], L[1]); }
+    for (const m of MATCHES) if (m.g === g && m.s1 == null) { const L = lambdas(m.a, m.b, venCountry(m), venAlt(m)); hypo[m.n] = dcGoals(L[0], L[1]); }
     const st = standingsFor(g, true, hypo);
     orders[g] = st.map(r => r.c);
     const r3 = st[2]; thirds.push({ g, c: r3.c, Pts: r3.Pts, GD: r3.GD, GF: r3.GF, rnd: Math.random() });
@@ -2284,8 +2307,8 @@ function simTournament() {
     if (m.s1 != null) {                                // real result wins and locks
       if (m.pens) { const pp = m.pens.split(/[–—-]/).map(Number); win[m.n] = pp[0] > pp[1] ? a : b; }
       else if (m.s1 !== m.s2) win[m.n] = m.s1 > m.s2 ? a : b;
-      else { const L = lambdas(a, b, venCountry(m)); win[m.n] = Math.random() < L[0] / (L[0] + L[1]) ? a : b; }
-    } else win[m.n] = simWinnerKO(a, b, venCountry(m));
+      else { const L = lambdas(a, b, venCountry(m), venAlt(m)); win[m.n] = Math.random() < L[0] / (L[0] + L[1]) ? a : b; }
+    } else win[m.n] = simWinnerKO(a, b, venCountry(m), venAlt(m));
   }
   return { champ: win[104], fin: teams[104] || [], semi: [...(teams[101] || []), ...(teams[102] || [])] };
 }
