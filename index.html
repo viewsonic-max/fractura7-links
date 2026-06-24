@@ -1246,20 +1246,33 @@ function thirdRoadStart(code) {
   const n = thirdSlotMap(top8)[g];
   return n == null ? null : {n, certain};
 }
-// which group-finish roads are still real for this team: all three while the
-// group is open; once it's decided, only the place they actually finished — and
-// for a 3rd, only while the best-eight cut could still include them.
+// every final group position this team can still mathematically reach, brute-forced
+// across all outcomes of its group's unplayed matches (canonical 1-0/1-1/0-1
+// scorelines — exact on points, approximate only on goal-difference tie-break edges)
+function reachableIdx(code, g) {
+  const rem = MATCHES.filter(m => m.g === g && m.s1 == null);
+  const keys = ['h', 'd', 'a'], total = Math.pow(3, rem.length), idxs = new Set();
+  for (let mask = 0; mask < total; mask++) {
+    const hypo = {}; let x = mask;
+    for (let i = 0; i < rem.length; i++) { hypo[rem[i].n] = OUTCOMES[keys[x % 3]]; x = Math.floor(x / 3); }
+    idxs.add(standingsFor(g, false, hypo).map(r => r.c).indexOf(code));
+    if (idxs.size === 4) break;
+  }
+  return idxs;
+}
+// which group-finish roads are still real: a position is offered only while the
+// team can still reach it; a 3rd-place road also needs the best-eight cut to be
+// open (or already clinched) once every group is settled.
 function attainablePos(code) {
   const g = groupOf(code); if (!g) return [];
-  if (!groupDecided(g)) return ['W', '2', '3'];
-  const idx = standingsFor(g).map(r => r.c).indexOf(code);
-  if (idx === 0) return ['W'];
-  if (idx === 1) return ['2'];
-  if (idx === 2) {
-    if (Object.keys(GROUPS).every(groupDecided)) { const s = thirdRoadStart(code); return s && s.certain ? ['3'] : []; }
-    return ['3'];
+  const can = reachableIdx(code, g), out = [];
+  if (can.has(0)) out.push('W');
+  if (can.has(1)) out.push('2');
+  if (can.has(2)) out.push('3');
+  if (out.indexOf('3') >= 0 && Object.keys(GROUPS).every(g2 => !MATCHES.some(m => m.g === g2 && m.s1 == null))) {
+    const s = thirdRoadStart(code); if (!(s && s.certain)) out.splice(out.indexOf('3'), 1);
   }
-  return [];   // 4th — out
+  return out;
 }
 // hypothetical remaining path for a team: from group position while in groups,
 // from their last actual fixture once knockout slots resolve to real teams
