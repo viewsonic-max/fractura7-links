@@ -1774,9 +1774,12 @@ function standingsFor(g, tieRandom, hypo) {
         A.GD += m.s1 - m.s2; B.GD += m.s2 - m.s1; A.GF += m.s1; B.GF += m.s2;
         if (m.s1 > m.s2) A.Pts += 3; else if (m.s1 < m.s2) B.Pts += 3; else { A.Pts++; B.Pts++; }
       }
+      // FIFA order: overall GD, overall GF first; head-to-head only breaks teams
+      // still level after those, then fair-play (not modelled) → drawing of lots
       tied.sort((x, y) =>
+        y.GD - x.GD || y.GF - x.GF ||
         h2h[y.c].Pts - h2h[x.c].Pts || h2h[y.c].GD - h2h[x.c].GD || h2h[y.c].GF - h2h[x.c].GF ||
-        y.GD - x.GD || y.GF - x.GF || lastTie(x, y));
+        lastTie(x, y));
     }
     out.push(...tied); i = j;
   }
