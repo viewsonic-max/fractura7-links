@@ -733,6 +733,7 @@ const STR = {
     roadBtn: on => `🏆 ROAD TO THE FINAL${on ? ' · ON' : ''}`,
     asWinners: 'as group winners', asRunners: 'as runners-up', asThird: 'as best third',
     ifBestThird: 'Projected route if they finish among the 8 best third-placed teams — the actual slot depends on which groups’ thirds qualify.',
+    roadOut: 'Did not advance from the group — no road to the final.',
     mdShort: n => 'MD' + n,
     nextKickoff: (dur, a, b, v) => `⏳ Next kickoff in <b style="color:var(--sky)">${dur}</b> — ${a} v ${b} · ${v}`,
     tournamentDone: '🏆 Tournament complete — see you in 2030!',
@@ -817,6 +818,7 @@ const STR = {
     roadBtn: on => `🏆 CAMINO A LA FINAL${on ? ' · ACTIVO' : ''}`,
     asWinners: 'como líder de grupo', asRunners: 'como segundo lugar', asThird: 'como mejor tercero',
     ifBestThird: 'Ruta proyectada si termina entre los 8 mejores terceros — el casillero real depende de qué terceros de grupo clasifiquen.',
+    roadOut: 'No avanzó de su grupo — sin camino a la final.',
     mdShort: n => 'J' + n,
     nextKickoff: (dur, a, b, v) => `⏳ Próximo inicio en <b style="color:var(--sky)">${dur}</b> — ${a} vs ${b} · ${v}`,
     tournamentDone: '🏆 Torneo terminado — ¡nos vemos en 2030!',
@@ -1244,6 +1246,21 @@ function thirdRoadStart(code) {
   const n = thirdSlotMap(top8)[g];
   return n == null ? null : {n, certain};
 }
+// which group-finish roads are still real for this team: all three while the
+// group is open; once it's decided, only the place they actually finished — and
+// for a 3rd, only while the best-eight cut could still include them.
+function attainablePos(code) {
+  const g = groupOf(code); if (!g) return [];
+  if (!groupDecided(g)) return ['W', '2', '3'];
+  const idx = standingsFor(g).map(r => r.c).indexOf(code);
+  if (idx === 0) return ['W'];
+  if (idx === 1) return ['2'];
+  if (idx === 2) {
+    if (Object.keys(GROUPS).every(groupDecided)) { const s = thirdRoadStart(code); return s && s.certain ? ['3'] : []; }
+    return ['3'];
+  }
+  return [];   // 4th — out
+}
 // hypothetical remaining path for a team: from group position while in groups,
 // from their last actual fixture once knockout slots resolve to real teams
 function roadFrom(code, pos, mine) {
@@ -1273,7 +1290,12 @@ function buildJourney() {
     label: m.r === 'Group Stage' ? t('mdShort', mdOf(m.d)) : roundShort(m.r),
     d: m.d, k: m.r !== 'Group Stage', hyp: false,
   }));
-  const road = roadOn ? roadFrom(follow, roadPos, gm).map(s => ({...s, k: true, hyp: true})) : [];
+  const inGroups = gm.length && gm[gm.length - 1].r === 'Group Stage';
+  const posOpts = inGroups ? attainablePos(follow) : [];
+  // reality has locked the finish? snap a now-impossible pick to a valid one
+  if (roadOn && inGroups && posOpts.length && posOpts.indexOf(roadPos) < 0) { roadPos = posOpts[0]; saveState(); }
+  const canRoad = roadOn && (!inGroups || posOpts.length > 0);
+  const road = canRoad ? roadFrom(follow, roadPos, gm).map(s => ({...s, k: true, hyp: true})) : [];
   const all = stops.concat(road);
   const merged = [];
   for (const s of all) {
@@ -1315,10 +1337,9 @@ function buildJourney() {
     ballTimer = setInterval(() => { idx = (idx + 1) % fullPath.length; ball.setLatLng(fullPath[idx]); }, 30);
     jAnim = {ball, path: fullPath, stopIdx, stopMarkers, cumMiles, total: cumMiles[cumMiles.length - 1]};
   }
-  const inGroups = gm.length && gm[gm.length - 1].r === 'Group Stage';
   journeyVenues = new Set(merged.map(s => s.v));
   updateMarkers(DAYS[dayIdx]);
-  renderJourneyCard(stops, road, miles, kmiles, inGroups);
+  renderJourneyCard(stops, road, miles, kmiles, inGroups, posOpts);
   fitJourney(merged.map(s => s.v));
 }
 
@@ -1374,13 +1395,15 @@ function fitJourney(venueNames) {
   });
 }
 
-function renderJourneyCard(stops, road, miles, kmiles, inGroups) {
+function renderJourneyCard(stops, road, miles, kmiles, inGroups, posOpts) {
   const j = $id('journey');
   j.style.display = 'block';
   const g = groupOf(follow);
+  posOpts = posOpts || [];
   // for the "as best third" road, flag when the group isn't currently in the best-8 cut
   const _tr = (roadOn && roadPos === '3' && inGroups) ? thirdRoadStart(follow) : null;
   const _thirdUncertain = !!(_tr && !_tr.certain);
+  const _posLabel = {W: t('asWinners'), '2': t('asRunners'), '3': t('asThird')};
   const arrow = '<span class="jarrow">→</span>';
   const chip = s => `<span class="jstop${s.k?' k':''}" onclick="stopPlay();setDay(${DAYS.indexOf(s.d)})">${s.label} ${VENUES[s.v][0]}</span>`;
   j.innerHTML = `
@@ -1394,11 +1417,10 @@ function renderJourneyCard(stops, road, miles, kmiles, inGroups) {
       <button class="jplay" title="${t('playJourney')}" onclick="playJourney()">▶</button>
     </div>
     <button id="roadBtn" class="${roadOn?'on':''}" onclick="toggleRoad()">${t('roadBtn', roadOn)}</button>
-    ${roadOn && inGroups ? `<div class="posSeg">
-      <button class="${roadPos==='W'?'on':''}" onclick="setRoadPos('W')">${t('asWinners')}</button>
-      <button class="${roadPos==='2'?'on':''}" onclick="setRoadPos('2')">${t('asRunners')}</button>
-      <button class="${roadPos==='3'?'on':''}" onclick="setRoadPos('3')">${t('asThird')}</button>
-    </div>${roadPos === '3' && road.length && _thirdUncertain ? `<div class="roadNote">${t('ifBestThird')}</div>` : ''}` : ''}`;
+    ${roadOn && inGroups ? (posOpts.length
+      ? `<div class="posSeg">${posOpts.map(p => `<button class="${roadPos===p?'on':''}" onclick="setRoadPos('${p}')">${_posLabel[p]}</button>`).join('')}</div>${
+          roadPos === '3' && road.length && _thirdUncertain ? `<div class="roadNote">${t('ifBestThird')}</div>` : ''}`
+      : `<div class="roadNote">${t('roadOut')}</div>`) : ''}`;
   layoutPanel();
 }
 function toggleRoad() { roadOn = !roadOn; buildJourney(); }
