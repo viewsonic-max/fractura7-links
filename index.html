@@ -104,6 +104,7 @@
     background:#16203a; color:var(--ink-dim); font:700 10px 'Outfit',sans-serif; cursor:pointer;
   }
   .posSeg button.on{border-color:var(--gold); color:var(--gold);}
+  .roadNote{margin-top:5px; font-size:9.5px; line-height:1.3; color:var(--ink-dim); font-style:italic;}
   .groupLink{cursor:pointer; text-decoration:underline dotted;}
   .groupLink:hover{color:var(--sky);}
 
@@ -730,7 +731,9 @@ const STR = {
     roadGlory: mi => ` · <b style="color:var(--gold)">+${mi} mi road to glory</b>`,
     playJourney: 'Fly the journey',
     roadBtn: on => `🏆 ROAD TO THE FINAL${on ? ' · ON' : ''}`,
-    asWinners: 'as group winners', asRunners: 'as runners-up', mdShort: n => 'MD' + n,
+    asWinners: 'as group winners', asRunners: 'as runners-up', asThird: 'as best third',
+    ifBestThird: 'Projected route if they finish among the 8 best third-placed teams — the actual slot depends on which groups’ thirds qualify.',
+    mdShort: n => 'MD' + n,
     nextKickoff: (dur, a, b, v) => `⏳ Next kickoff in <b style="color:var(--sky)">${dur}</b> — ${a} v ${b} · ${v}`,
     tournamentDone: '🏆 Tournament complete — see you in 2030!',
     thTeam: 'TEAM', thP: 'P', thW: 'W', thD: 'D', thL: 'L', thGD: 'GD', thPts: 'PTS',
@@ -812,7 +815,9 @@ const STR = {
     roadGlory: mi => ` · <b style="color:var(--gold)">+${mi} mi de camino a la gloria</b>`,
     playJourney: 'Volar el camino',
     roadBtn: on => `🏆 CAMINO A LA FINAL${on ? ' · ACTIVO' : ''}`,
-    asWinners: 'como líder de grupo', asRunners: 'como segundo lugar', mdShort: n => 'J' + n,
+    asWinners: 'como líder de grupo', asRunners: 'como segundo lugar', asThird: 'como mejor tercero',
+    ifBestThird: 'Ruta proyectada si termina entre los 8 mejores terceros — el casillero real depende de qué terceros de grupo clasifiquen.',
+    mdShort: n => 'J' + n,
     nextKickoff: (dur, a, b, v) => `⏳ Próximo inicio en <b style="color:var(--sky)">${dur}</b> — ${a} vs ${b} · ${v}`,
     tournamentDone: '🏆 Torneo terminado — ¡nos vemos en 2030!',
     thTeam: 'EQUIPO', thP: 'PJ', thW: 'G', thD: 'E', thL: 'P', thGD: 'DG', thPts: 'PTS',
@@ -1206,10 +1211,10 @@ function arcPoints(a, b) {
   }
   return pts;
 }
-// walk the bracket from a placeholder tag until the Final (or until slots
-// have been resolved with real teams and the tag no longer exists)
-function chainFromTag(tag) {
-  let cur = MATCHES.find(m => m.a === tag || m.b === tag);
+// walk the bracket forward from a given match until the Final, following the
+// winners' path so a hypothetical run carries all the way through
+function chainFromMatchN(n) {
+  let cur = matchByN(n);
   const out = [];
   while (cur && out.length < 6) {
     out.push({v: cur.v, label: roundShort(cur.r), d: cur.d});
@@ -1218,12 +1223,36 @@ function chainFromTag(tag) {
   }
   return out;
 }
+// walk from a placeholder tag (group winner / runner-up) until the Final (or
+// until slots have been resolved with real teams and the tag no longer exists)
+function chainFromTag(tag) {
+  const m = MATCHES.find(x => x.a === tag || x.b === tag);
+  return m ? chainFromMatchN(m.n) : [];
+}
+// Project which R32 slot this team's group feeds as a best-third finisher. The
+// slot isn't fixed — it depends on which 8 of the 12 groups' thirds qualify — so
+// rank all 12 groups' current 3rd-place teams by Pts/GD/GF and take the best 8,
+// then map that set onto the slots. Returns { n, certain }; certain=false when
+// the group isn't currently inside the cut (we force it in for the hypothetical).
+function thirdRoadStart(code) {
+  const g = groupOf(code); if (!g) return null;
+  const thirds = Object.keys(GROUPS).map(gr => { const r = standingsFor(gr)[2]; return {g: gr, Pts: r.Pts, GD: r.GD, GF: r.GF}; });
+  thirds.sort((x, y) => y.Pts - x.Pts || y.GD - x.GD || y.GF - x.GF || x.g.localeCompare(y.g));
+  let top8 = thirds.slice(0, 8).map(t => t.g);
+  const certain = top8.indexOf(g) >= 0;
+  if (!certain) top8 = top8.slice(0, 7).concat(g);   // force-include for the hypothetical
+  const n = thirdSlotMap(top8)[g];
+  return n == null ? null : {n, certain};
+}
 // hypothetical remaining path for a team: from group position while in groups,
 // from their last actual fixture once knockout slots resolve to real teams
 function roadFrom(code, pos, mine) {
   const last = mine[mine.length - 1];
   if (!last || last.r === 'Final' || last.r === 'Third Place') return [];
-  if (last.r === 'Group Stage') return chainFromTag(pos === 'W' ? `?W·${groupOf(code)}` : `?2nd·${groupOf(code)}`);
+  if (last.r === 'Group Stage') {
+    if (pos === '3') { const s = thirdRoadStart(code); return s ? chainFromMatchN(s.n) : []; }
+    return chainFromTag(pos === 'W' ? `?W·${groupOf(code)}` : `?2nd·${groupOf(code)}`);
+  }
   return chainFromTag(`?W Match ${last.n}`);
 }
 
@@ -1349,6 +1378,9 @@ function renderJourneyCard(stops, road, miles, kmiles, inGroups) {
   const j = $id('journey');
   j.style.display = 'block';
   const g = groupOf(follow);
+  // for the "as best third" road, flag when the group isn't currently in the best-8 cut
+  const _tr = (roadOn && roadPos === '3' && inGroups) ? thirdRoadStart(follow) : null;
+  const _thirdUncertain = !!(_tr && !_tr.certain);
   const arrow = '<span class="jarrow">→</span>';
   const chip = s => `<span class="jstop${s.k?' k':''}" onclick="stopPlay();setDay(${DAYS.indexOf(s.d)})">${s.label} ${VENUES[s.v][0]}</span>`;
   j.innerHTML = `
@@ -1365,7 +1397,8 @@ function renderJourneyCard(stops, road, miles, kmiles, inGroups) {
     ${roadOn && inGroups ? `<div class="posSeg">
       <button class="${roadPos==='W'?'on':''}" onclick="setRoadPos('W')">${t('asWinners')}</button>
       <button class="${roadPos==='2'?'on':''}" onclick="setRoadPos('2')">${t('asRunners')}</button>
-    </div>` : ''}`;
+      <button class="${roadPos==='3'?'on':''}" onclick="setRoadPos('3')">${t('asThird')}</button>
+    </div>${roadPos === '3' && road.length && _thirdUncertain ? `<div class="roadNote">${t('ifBestThird')}</div>` : ''}` : ''}`;
   layoutPanel();
 }
 function toggleRoad() { roadOn = !roadOn; buildJourney(); }
@@ -2424,8 +2457,8 @@ if (!TEAMS[_initTeam] && TEAMS[SAVED.follow]) _initTeam = SAVED.follow;   // res
 if (TEAMS[_initTeam]) {
   sel.value = _initTeam;
   const _qr = _params.get('road');
-  if (_qr) { roadOn = true; roadPos = _qr === '2' ? '2' : 'W'; }
-  else if (SAVED.roadOn) { roadOn = true; roadPos = SAVED.roadPos === '2' ? '2' : 'W'; }
+  if (_qr) { roadOn = true; roadPos = (_qr === '2' || _qr === '3') ? _qr : 'W'; }
+  else if (SAVED.roadOn) { roadOn = true; roadPos = (SAVED.roadPos === '2' || SAVED.roadPos === '3') ? SAVED.roadPos : 'W'; }
   sel.onchange();
 }
 $id('fab').onclick = () => $id('panel').classList.toggle('open');
