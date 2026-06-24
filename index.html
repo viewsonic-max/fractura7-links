@@ -747,7 +747,7 @@ const STR = {
     champion: name => `🏆 <b style="color:var(--gold)">${name}</b>`,
     correct: (c, tt) => `✓ <b>${c}</b>/${tt} correct`,
     tabGroups: 'Groups', tabKnockout: 'Knockout', tabOdds: '🏆 Odds',
-    oddsIntro: `The computer plays the rest of the tournament out <b>10,000×</b> from a team-strength model, always honoring real results — so the odds sharpen as games are played. Independent of your bracket picks.`,
+    oddsIntro: `The computer plays the rest of the tournament out <b>10,000×</b> using each team's attack &amp; defense ratings, with home advantage for the host nations. The ratings are learned from real results, so the odds sharpen as games are played. Independent of your bracket picks.`,
     oddsRerun: '🎲 Re-run', oddsNone: 'Simulating…',
     oddsRunning: (n, tot) => `Simulating… ${n} / ${tot}`,
     oddsDone: n => `Based on ${n} simulations`,
@@ -829,7 +829,7 @@ const STR = {
     champion: name => `🏆 <b style="color:var(--gold)">${name}</b>`,
     correct: (c, tt) => `✓ <b>${c}</b>/${tt} aciertos`,
     tabGroups: 'Grupos', tabKnockout: 'Eliminatorias', tabOdds: '🏆 Pronóstico',
-    oddsIntro: `La computadora juega el resto del torneo <b>10,000×</b> con un modelo de fuerza de cada selección, respetando siempre los resultados reales — así las probabilidades se afinan conforme se juegan los partidos. Independiente de tus pronósticos del cuadro.`,
+    oddsIntro: `La computadora juega el resto del torneo <b>10,000×</b> usando las calificaciones de ataque y defensa de cada selección, con ventaja de local para las anfitrionas. Las calificaciones se ajustan con los resultados reales, así las probabilidades se afinan conforme se juegan los partidos. Independiente de tus pronósticos del cuadro.`,
     oddsRerun: '🎲 Recalcular', oddsNone: 'Simulando…',
     oddsRunning: (n, tot) => `Simulando… ${n} / ${tot}`,
     oddsDone: n => `Basado en ${n} simulaciones`,
@@ -2089,10 +2089,13 @@ function predScore() {
 }
 
 // ── trophy odds: in-browser Monte Carlo forecast ──────────────────────────
-// Plays the rest of the tournament out thousands of times from a team-strength
-// prior, always honouring real results (so odds tighten as games are played).
-// Fully independent of the user's PRED picks — this is the computer's forecast.
-// Elo-ish ratings (rough current international strength; tournament avg ≈ 1700).
+// Plays the rest of the tournament out thousands of times, always honouring real
+// results (so odds tighten as games are played). Independent of the user's PRED.
+// Model (Maher / Dixon-Coles): each team has an attack & defence rating in
+// log-goal units; expected goals λ = exp(BASE + atk_scorer − def_conceder + home).
+// Ratings are seeded from the strength prior below, then FITTED to played results
+// online — so attack/defence diverge from the prior and the forecast keeps learning.
+// Strength prior (rough current international strength; tournament avg ≈ 1700).
 const STRENGTH = {
   ARG:2040, FRA:2010, ESP:2000, ENG:1980, BRA:1965, POR:1935, NED:1905,
   GER:1890, BEL:1865, CRO:1845, URU:1825, COL:1800, MAR:1795, NOR:1760,
@@ -2102,20 +2105,58 @@ const STRENGTH = {
   TUN:1620, COD:1600, RSA:1585, QAT:1560, PAN:1558, KSA:1545, UZB:1545,
   IRQ:1540, JOR:1530, NZL:1500, CPV:1495, HAI:1490, CUW:1450,
 };
-const strOf = c => (STRENGTH[c] != null ? STRENGTH[c] : 1500);
 const ODDS_TOTAL = 10000;
-
-// Poisson sample (Knuth) — goal counts per side from the rating gap.
-function poiss(lambda) { const L = Math.exp(-lambda); let k = 0, p = 1; do { k++; p *= Math.random(); } while (p > L); return k - 1; }
-function simGoals(a, b) {
-  const sup = (strOf(a) - strOf(b)) / 165;          // expected goal supremacy
-  return [poiss(Math.max(0.2, 1.35 + sup / 2)), poiss(Math.max(0.2, 1.35 - sup / 2))];
+const BASE = Math.log(1.35);     // baseline ≈ 1.35 goals/side in an even neutral game
+const HOME_ADV = 0.22;           // host on home soil: ×exp(.22) ≈ 1.25 goals
+const RHO = -0.11;               // Dixon-Coles low-score correlation
+const RATE_K = 500;              // strength points per log-goal unit
+const HOSTS = new Set(['USA', 'MEX', 'CAN']);
+// per-team attack/defence (mutable, refit each run); *0 keeps the prior seed for L2 pull
+const ATK = {}, DEF = {}, ATK0 = {}, DEF0 = {};
+Object.keys(TEAMS).forEach(c => { const r = ((STRENGTH[c] != null ? STRENGTH[c] : 1500) - 1700) / RATE_K; ATK0[c] = ATK[c] = r; DEF0[c] = DEF[c] = r; });
+const venCountry = m => (VENUES[m.v] ? VENUES[m.v][1] : null);
+function lambdas(a, b, vc) {                           // expected goals [λa, λb] for a match at venue-country vc
+  const ha = (HOSTS.has(a) && vc === a) ? HOME_ADV : 0, hb = (HOSTS.has(b) && vc === b) ? HOME_ADV : 0;
+  return [Math.exp(BASE + ATK[a] - DEF[b] + ha), Math.exp(BASE + ATK[b] - DEF[a] + hb)];
 }
-const eloWinP = (a, b) => 1 / (1 + Math.pow(10, (strOf(b) - strOf(a)) / 400));
-function simWinnerKO(a, b) {                          // single match, ET/pens via Elo
+// Fit attack/defence to every played match via online Poisson gradient steps,
+// regularised toward the prior so sparse early data can't overfit. Cached by the
+// played-results signature, so it only recomputes when a new result lands.
+let _fitSig = -1;
+function fitRatings() {
+  const sig = playedSig(); if (sig === _fitSig) return; _fitSig = sig;
+  Object.keys(TEAMS).forEach(c => { ATK[c] = ATK0[c]; DEF[c] = DEF0[c]; });
+  const played = MATCHES.filter(m => m.s1 != null && TEAMS[m.a] && TEAMS[m.b]);
+  if (!played.length) return;
+  const eta = 0.015, reg = 0.05, EPOCHS = 14;
+  for (let e = 0; e < EPOCHS; e++) {
+    for (const m of played) {
+      const vc = venCountry(m), L = lambdas(m.a, m.b, vc), da = m.s1 - L[0], db = m.s2 - L[1];
+      ATK[m.a] += eta * da; DEF[m.b] -= eta * da;       // a out-scoring λ → a more attacking, b leakier
+      ATK[m.b] += eta * db; DEF[m.a] -= eta * db;
+    }
+    Object.keys(TEAMS).forEach(c => { ATK[c] += reg * (ATK0[c] - ATK[c]); DEF[c] += reg * (DEF0[c] - DEF[c]); });
+  }
+}
+
+// Poisson sample (Knuth).
+function poiss(lambda) { const L = Math.exp(-lambda); let k = 0, p = 1; do { k++; p *= Math.random(); } while (p > L); return k - 1; }
+// Dixon-Coles correlated goals: independent Poisson + rejection on the four low-score
+// cells (lifts 0-0 / 1-1, trims 1-0 / 0-1 — i.e. a few more draws than plain Poisson).
+const dcTau = (x, y, la, lb) =>
+  x === 0 && y === 0 ? 1 - la * lb * RHO :
+  x === 0 && y === 1 ? 1 + la * RHO :
+  x === 1 && y === 0 ? 1 + lb * RHO :
+  x === 1 && y === 1 ? 1 - RHO : 1;
+function dcGoals(la, lb) {
+  const M = 1 + Math.abs(RHO) * Math.max(la * lb, 1);   // ≥ max τ, so τ/M ≤ 1
+  for (let i = 0; i < 24; i++) { const x = poiss(la), y = poiss(lb); if (Math.random() < dcTau(x, y, la, lb) / M) return [x, y]; }
+  return [poiss(la), poiss(lb)];
+}
+function simWinnerKO(a, b, vc) {                        // single match; level → ET/pens by λ share
   if (!a || !b) return a || b || null;
-  const [ga, gb] = simGoals(a, b);
-  return ga > gb ? a : gb > ga ? b : (Math.random() < eloWinP(a, b) ? a : b);
+  const L = lambdas(a, b, vc), g = dcGoals(L[0], L[1]);
+  return g[0] > g[1] ? a : g[1] > g[0] ? b : (Math.random() < L[0] / (L[0] + L[1]) ? a : b);
 }
 
 // the eight R32 third-place slots and which groups can feed each
@@ -2147,7 +2188,7 @@ function simTournament() {
   const orders = {}, thirds = [];
   for (const g of Object.keys(GROUPS)) {
     const hypo = {};
-    for (const m of MATCHES) if (m.g === g && m.s1 == null) hypo[m.n] = simGoals(m.a, m.b);
+    for (const m of MATCHES) if (m.g === g && m.s1 == null) { const L = lambdas(m.a, m.b, venCountry(m)); hypo[m.n] = dcGoals(L[0], L[1]); }
     const st = standingsFor(g, true, hypo);
     orders[g] = st.map(r => r.c);
     const r3 = st[2]; thirds.push({ g, c: r3.c, Pts: r3.Pts, GD: r3.GD, GF: r3.GF, rnd: Math.random() });
@@ -2171,8 +2212,9 @@ function simTournament() {
     const a = resolve(m, 'a'), b = resolve(m, 'b'); teams[m.n] = [a, b];
     if (m.s1 != null) {                                // real result wins and locks
       if (m.pens) { const pp = m.pens.split(/[–—-]/).map(Number); win[m.n] = pp[0] > pp[1] ? a : b; }
-      else win[m.n] = m.s1 > m.s2 ? a : m.s2 > m.s1 ? b : (Math.random() < eloWinP(a, b) ? a : b);
-    } else win[m.n] = simWinnerKO(a, b);
+      else if (m.s1 !== m.s2) win[m.n] = m.s1 > m.s2 ? a : b;
+      else { const L = lambdas(a, b, venCountry(m)); win[m.n] = Math.random() < L[0] / (L[0] + L[1]) ? a : b; }
+    } else win[m.n] = simWinnerKO(a, b, venCountry(m));
   }
   return { champ: win[104], fin: teams[104] || [], semi: [...(teams[101] || []), ...(teams[102] || [])] };
 }
@@ -2184,6 +2226,7 @@ const playedSig = () => MATCHES.reduce((a, m) => a + (m.s1 != null ? 1 : 0), 0);
 const fmtPct = p => p <= 0 ? '0%' : p < 0.001 ? '<0.1%' : (p * 100 < 9.95 ? (p * 100).toFixed(1) : Math.round(p * 100)) + '%';
 function runOdds(total) {
   cancelAnimationFrame(oddsRAF); total = total || ODDS_TOTAL;
+  fitRatings();                                         // refit attack/defence to current results first
   const c = { champ: {}, fin: {}, semi: {}, n: 0, _total: total, _sig: playedSig() };
   oddsRunning = true;
   const step = () => {
