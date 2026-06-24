@@ -440,6 +440,24 @@
   .koSlot.third .ph{color:var(--orange); font-weight:800;}
   .vbadge{margin-left:auto; font-weight:900; font-size:12px;}
   .vbadge.ok{color:var(--pitch);} .vbadge.no{color:var(--live);}
+  /* trophy odds */
+  .oddsTop{display:flex; align-items:center; gap:10px; margin-bottom:13px; flex-wrap:wrap;}
+  .oddsRun{padding:6px 13px; border-radius:9px; border:1px solid var(--panel-border); background:#16203a; color:var(--ink); font:800 12px 'Outfit',sans-serif; cursor:pointer;}
+  .oddsRun:hover{filter:brightness(1.25);}
+  .oddsProgWrap{flex:1; min-width:120px; height:6px; background:rgba(255,255,255,.08); border-radius:99px; overflow:hidden;}
+  .oddsProgBar{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--pitch),var(--gold)); transition:width .12s linear;}
+  .oddsList{display:flex; flex-direction:column; gap:5px;}
+  .oddRow{display:grid; grid-template-columns:20px 26px minmax(64px,128px) 1fr 50px 92px; align-items:center; gap:9px; padding:5px 8px; border-radius:9px; background:rgba(255,255,255,.025); font-weight:700;}
+  .oddRow.fav{background:linear-gradient(90deg,rgba(255,209,102,.16),rgba(255,209,102,.02)); border:1px solid rgba(255,209,102,.4);}
+  .oRk{text-align:center; font-weight:900; color:var(--ink-dim); font-size:12px;}
+  .oddRow img{width:26px; height:17px; border-radius:3px; object-fit:cover;}
+  .oNm{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:13.5px;}
+  .oBarWrap{height:13px; background:rgba(255,255,255,.05); border-radius:7px; overflow:hidden;}
+  .oBar{display:block; height:100%; background:linear-gradient(90deg,var(--pitch-deep),var(--pitch)); border-radius:7px; transition:width .25s ease;}
+  .oddRow.fav .oBar{background:linear-gradient(90deg,var(--gold),var(--hot));}
+  .oPct{font-weight:900; font-size:13px; text-align:right;}
+  .oSub{font-size:10px; color:var(--ink-dim); font-weight:700; white-space:nowrap; text-align:right;}
+  @media (max-width:560px){ .oddRow{grid-template-columns:18px 24px 1fr 46px; gap:7px;} .oBarWrap,.oSub{display:none;} }
   .brkToast{position:absolute; bottom:22px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,#ffe9a8,var(--gold)); color:#3a2c00; font:800 12px 'Outfit',sans-serif; padding:9px 16px; border-radius:999px; box-shadow:0 8px 28px rgba(0,0,0,.5); animation:chipin .2s ease;}
 
   /* ── help / tutorial ────────────────────────────── */
@@ -728,7 +746,12 @@ const STR = {
     predTitle: '🔮 Bracket Predictor', pickChampion: '🏆 Pick a champion',
     champion: name => `🏆 <b style="color:var(--gold)">${name}</b>`,
     correct: (c, tt) => `✓ <b>${c}</b>/${tt} correct`,
-    tabGroups: 'Groups', tabKnockout: 'Knockout',
+    tabGroups: 'Groups', tabKnockout: 'Knockout', tabOdds: '🏆 Odds',
+    oddsIntro: `The computer plays the rest of the tournament out <b>10,000×</b> from a team-strength model, always honoring real results — so the odds sharpen as games are played. Independent of your bracket picks.`,
+    oddsRerun: '🎲 Re-run', oddsNone: 'Simulating…',
+    oddsRunning: (n, tot) => `Simulating… ${n} / ${tot}`,
+    oddsDone: n => `Based on ${n} simulations`,
+    oddsSub: (f, s) => `Final ${f} · Semi ${s}`,
     autoLabel: '⚡ Auto', randomLabel: '🎲 Random',
     tAuto: 'Seed undecided groups from current standings (ties broken at random); keeps groups you set by hand',
     tRandom: 'Shuffle undecided groups at random, ignoring standings; keeps groups you set by hand',
@@ -805,7 +828,12 @@ const STR = {
     predTitle: '🔮 Predictor del Cuadro', pickChampion: '🏆 Elige campeón',
     champion: name => `🏆 <b style="color:var(--gold)">${name}</b>`,
     correct: (c, tt) => `✓ <b>${c}</b>/${tt} aciertos`,
-    tabGroups: 'Grupos', tabKnockout: 'Eliminatorias',
+    tabGroups: 'Grupos', tabKnockout: 'Eliminatorias', tabOdds: '🏆 Pronóstico',
+    oddsIntro: `La computadora juega el resto del torneo <b>10,000×</b> con un modelo de fuerza de cada selección, respetando siempre los resultados reales — así las probabilidades se afinan conforme se juegan los partidos. Independiente de tus pronósticos del cuadro.`,
+    oddsRerun: '🎲 Recalcular', oddsNone: 'Simulando…',
+    oddsRunning: (n, tot) => `Simulando… ${n} / ${tot}`,
+    oddsDone: n => `Basado en ${n} simulaciones`,
+    oddsSub: (f, s) => `Final ${f} · Semi ${s}`,
     autoLabel: '⚡ Auto', randomLabel: '🎲 Al azar',
     tAuto: 'Siembra los grupos indecisos según la tabla actual (empates al azar); conserva los grupos que ordenaste a mano',
     tRandom: 'Revuelve los grupos indecisos al azar, ignorando la tabla; conserva los grupos que ordenaste a mano',
@@ -2060,28 +2088,172 @@ function predScore() {
   return {c, t};
 }
 
+// ── trophy odds: in-browser Monte Carlo forecast ──────────────────────────
+// Plays the rest of the tournament out thousands of times from a team-strength
+// prior, always honouring real results (so odds tighten as games are played).
+// Fully independent of the user's PRED picks — this is the computer's forecast.
+// Elo-ish ratings (rough current international strength; tournament avg ≈ 1700).
+const STRENGTH = {
+  ARG:2040, FRA:2010, ESP:2000, ENG:1980, BRA:1965, POR:1935, NED:1905,
+  GER:1890, BEL:1865, CRO:1845, URU:1825, COL:1800, MAR:1795, NOR:1760,
+  SUI:1745, JPN:1735, SEN:1730, AUT:1725, USA:1720, MEX:1715, TUR:1710,
+  ECU:1700, KOR:1690, SWE:1680, CZE:1675, CIV:1672, CAN:1670, SCO:1665,
+  EGY:1665, BIH:1660, AUS:1658, IRN:1655, ALG:1645, PAR:1640, GHA:1630,
+  TUN:1620, COD:1600, RSA:1585, QAT:1560, PAN:1558, KSA:1545, UZB:1545,
+  IRQ:1540, JOR:1530, NZL:1500, CPV:1495, HAI:1490, CUW:1450,
+};
+const strOf = c => (STRENGTH[c] != null ? STRENGTH[c] : 1500);
+const ODDS_TOTAL = 10000;
+
+// Poisson sample (Knuth) — goal counts per side from the rating gap.
+function poiss(lambda) { const L = Math.exp(-lambda); let k = 0, p = 1; do { k++; p *= Math.random(); } while (p > L); return k - 1; }
+function simGoals(a, b) {
+  const sup = (strOf(a) - strOf(b)) / 165;          // expected goal supremacy
+  return [poiss(Math.max(0.2, 1.35 + sup / 2)), poiss(Math.max(0.2, 1.35 - sup / 2))];
+}
+const eloWinP = (a, b) => 1 / (1 + Math.pow(10, (strOf(b) - strOf(a)) / 400));
+function simWinnerKO(a, b) {                          // single match, ET/pens via Elo
+  if (!a || !b) return a || b || null;
+  const [ga, gb] = simGoals(a, b);
+  return ga > gb ? a : gb > ga ? b : (Math.random() < eloWinP(a, b) ? a : b);
+}
+
+// the eight R32 third-place slots and which groups can feed each
+const THIRD_SLOTS = KO_MATCHES
+  .filter(m => (m.a + m.b).indexOf('3rd·') >= 0)
+  .map(m => { const side = m.a.indexOf('3rd·') >= 0 ? 'a' : 'b'; return { n: m.n, groups: m[side].split('3rd·')[1].split('/') }; });
+// Match the 8 qualifying third-place groups to the 8 slots (bipartite matching on
+// the candidate lists). Memoised by the qualifying-group set — only 12-choose-8 keys.
+const _thirdCache = {};
+function thirdSlotMap(qualGroups) {
+  const key = qualGroups.slice().sort().join('');
+  if (key in _thirdCache) return _thirdCache[key];
+  const opts = qualGroups.map(g => ({ g, slots: THIRD_SLOTS.filter(s => s.groups.indexOf(g) >= 0).map(s => s.n) }));
+  opts.sort((a, b) => a.slots.length - b.slots.length);   // fewest options first
+  const used = {}, res = {};
+  const bt = i => {
+    if (i === opts.length) return true;
+    for (const sn of opts[i].slots) { if (used[sn]) continue; used[sn] = 1; res[opts[i].g] = sn; if (bt(i + 1)) return true; used[sn] = 0; }
+    return false;
+  };
+  let out = null;
+  if (bt(0)) out = res;
+  else { out = {}; const free = THIRD_SLOTS.map(s => s.n); qualGroups.forEach((g, i) => out[g] = free[i]); }  // fallback: rare, ignore constraints
+  return _thirdCache[key] = out;
+}
+
+// one full tournament → { champ, fin:[2], semi:[4] }
+function simTournament() {
+  const orders = {}, thirds = [];
+  for (const g of Object.keys(GROUPS)) {
+    const hypo = {};
+    for (const m of MATCHES) if (m.g === g && m.s1 == null) hypo[m.n] = simGoals(m.a, m.b);
+    const st = standingsFor(g, true, hypo);
+    orders[g] = st.map(r => r.c);
+    const r3 = st[2]; thirds.push({ g, c: r3.c, Pts: r3.Pts, GD: r3.GD, GF: r3.GF, rnd: Math.random() });
+  }
+  thirds.sort((x, y) => y.Pts - x.Pts || y.GD - x.GD || y.GF - x.GF || x.rnd - y.rnd);
+  const top8 = thirds.slice(0, 8);
+  const map = thirdSlotMap(top8.map(t => t.g));
+  const thirdAt = {}; top8.forEach(t => { const sn = map[t.g]; if (sn != null) thirdAt[sn] = t.c; });
+
+  const win = {}, teams = {};
+  const resolve = (m, side) => {
+    const tag = m[side]; if (TEAMS[tag]) return tag; const p = tag.slice(1); let mm;
+    if ((mm = p.match(/^W·(\w)$/))) return orders[mm[1]][0];
+    if ((mm = p.match(/^2nd·(\w)$/))) return orders[mm[1]][1];
+    if (p.indexOf('3rd·') === 0) return thirdAt[m.n] || null;
+    if ((mm = p.match(/^W Match (\d+)$/))) return win[+mm[1]];
+    if ((mm = p.match(/^L Match (\d+)$/))) { const k = +mm[1], pr = teams[k] || []; return win[k] === pr[0] ? pr[1] : pr[0]; }
+    return null;
+  };
+  for (const m of KO_SORTED) {
+    const a = resolve(m, 'a'), b = resolve(m, 'b'); teams[m.n] = [a, b];
+    if (m.s1 != null) {                                // real result wins and locks
+      if (m.pens) { const pp = m.pens.split(/[–—-]/).map(Number); win[m.n] = pp[0] > pp[1] ? a : b; }
+      else win[m.n] = m.s1 > m.s2 ? a : m.s2 > m.s1 ? b : (Math.random() < eloWinP(a, b) ? a : b);
+    } else win[m.n] = simWinnerKO(a, b);
+  }
+  return { champ: win[104], fin: teams[104] || [], semi: [...(teams[101] || []), ...(teams[102] || [])] };
+}
+const KO_SORTED = KO_MATCHES.slice().sort((a, b) => a.n - b.n);
+
+// ── odds run loop + paint (batched on rAF so the bars animate live) ──
+let ODDS = null, oddsRAF = 0, oddsRunning = false;
+const playedSig = () => MATCHES.reduce((a, m) => a + (m.s1 != null ? 1 : 0), 0);
+const fmtPct = p => p <= 0 ? '0%' : p < 0.001 ? '<0.1%' : (p * 100 < 9.95 ? (p * 100).toFixed(1) : Math.round(p * 100)) + '%';
+function runOdds(total) {
+  cancelAnimationFrame(oddsRAF); total = total || ODDS_TOTAL;
+  const c = { champ: {}, fin: {}, semi: {}, n: 0, _total: total, _sig: playedSig() };
+  oddsRunning = true;
+  const step = () => {
+    const end = Math.min(c.n + 150, total);
+    for (; c.n < end; c.n++) {
+      const r = simTournament();
+      if (r.champ) c.champ[r.champ] = (c.champ[r.champ] || 0) + 1;
+      r.fin.forEach(x => x && (c.fin[x] = (c.fin[x] || 0) + 1));
+      r.semi.forEach(x => x && (c.semi[x] = (c.semi[x] || 0) + 1));
+    }
+    ODDS = c; paintOdds();
+    if (c.n < total) oddsRAF = requestAnimationFrame(step); else oddsRunning = false;
+  };
+  oddsRAF = requestAnimationFrame(step);
+}
+function paintOdds() {
+  const wrap = $id('oddsList'); if (!wrap || !ODDS) return;
+  const n = ODDS.n || 1;
+  const order = Object.keys(ODDS.champ).sort((a, b) => ODDS.champ[b] - ODDS.champ[a]);
+  const top = order.length ? ODDS.champ[order[0]] / n : 1;
+  wrap.innerHTML = order.length ? order.map((c, i) => {
+    const p = ODDS.champ[c] / n, w = Math.max(2, p / top * 100);
+    return `<div class="oddRow${i === 0 ? ' fav' : ''}">
+      <span class="oRk">${i + 1}</span><img src="${flagURL(c)}" alt="">
+      <span class="oNm">${teamName(c)}</span>
+      <span class="oBarWrap"><span class="oBar" style="width:${w}%"></span></span>
+      <span class="oPct">${fmtPct(p)}</span>
+      <span class="oSub">${t('oddsSub', fmtPct((ODDS.fin[c] || 0) / n), fmtPct((ODDS.semi[c] || 0) / n))}</span>
+    </div>`;
+  }).join('') : `<div class="brkHint">${t('oddsNone')}</div>`;
+  const prog = $id('oddsProg'); if (prog) prog.style.width = Math.round(ODDS.n / ODDS._total * 100) + '%';
+  const stat = $id('oddsStat');
+  if (stat) stat.innerHTML = ODDS.n >= ODDS._total ? t('oddsDone', nfmt(ODDS.n)) : t('oddsRunning', nfmt(ODDS.n), nfmt(ODDS._total));
+}
+function renderOddsView() {
+  const fresh = ODDS && ODDS._sig === playedSig();
+  setTimeout(() => { if (fresh && !oddsRunning) paintOdds(); else if (!oddsRunning) runOdds(ODDS_TOTAL); }, 0);
+  return `<p class="brkHint">${t('oddsIntro')}</p>
+    <div class="oddsTop">
+      <button class="oddsRun" onclick="runOdds(${ODDS_TOTAL})">${t('oddsRerun')}</button>
+      <span id="oddsStat" class="brkScore"></span>
+      <span class="oddsProgWrap"><span id="oddsProg" class="oddsProgBar"></span></span>
+    </div>
+    <div id="oddsList" class="oddsList"></div>`;
+}
+
 // ── rendering ──
 function renderBracket() {
   const sc = predScore(), champ = winnerCode(104);
   const champHTML = champ ? t('champion', teamName(champ)) : t('pickChampion');
+  const odds = predView === 'odds';
   $id('bracketInner').innerHTML = `
     <div class="brkHead">
       <h2><span class="pc">${t('predTitle')}</span></h2>
-      <span class="brkScore">${champHTML}</span>
-      ${sc.t ? `<span class="brkScore">${t('correct', sc.c, sc.t)}</span>` : ''}
+      ${odds ? '' : `<span class="brkScore">${champHTML}</span>
+      ${sc.t ? `<span class="brkScore">${t('correct', sc.c, sc.t)}</span>` : ''}`}
       <div class="brkTabs">
         <button class="${predView === 'groups' ? 'on' : ''}" onclick="predSetView('groups')">${t('tabGroups')}</button>
         <button class="${predView === 'knockout' ? 'on' : ''}" onclick="predSetView('knockout')">${t('tabKnockout')}</button>
+        <button class="${odds ? 'on' : ''}" onclick="predSetView('odds')">${t('tabOdds')}</button>
       </div>
       <div class="brkAct">
-        <button onclick="predAutoFill()" title="${t('tAuto')}">${t('autoLabel')}</button>
+        ${odds ? '' : `<button onclick="predAutoFill()" title="${t('tAuto')}">${t('autoLabel')}</button>
         <button onclick="predRandom()" title="${t('tRandom')}">${t('randomLabel')}</button>
         <button onclick="predShare()">${t('share')}</button>
-        <button onclick="predReset()" title="${t('tClear')}">↺</button>
+        <button onclick="predReset()" title="${t('tClear')}">↺</button>`}
         <button class="x" onclick="predClose()" title="${t('tClose')}">✕</button>
       </div>
     </div>
-    <div class="brkBody">${predView === 'groups' ? renderGroupsView() : renderKnockoutView()}</div>`;
+    <div class="brkBody">${odds ? renderOddsView() : predView === 'groups' ? renderGroupsView() : renderKnockoutView()}</div>`;
 }
 function renderGroupsView() {
   let h = `<p class="brkHint">${t('hintGroups')}</p><div class="grpGrid">`;
