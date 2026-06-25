@@ -2056,27 +2056,40 @@ let predOn = false, predView = 'knockout';
 function savePred() { try { localStorage.setItem(PRED_KEY, JSON.stringify(PRED)); } catch (e) {} }
 
 const groupDecided = g => { const fx = MATCHES.filter(m => m.g === g); return fx.length === GROUP_SIZE && fx.every(m => m.s1 != null); };
-// A finishing position is "clinched" when a team's worst case (loses all its remaining
-// games) still beats every rival's best case (wins all theirs). Pure points → provably
-// safe: goal difference can never overturn a strict points gap, so this never false-locks.
-// (It conservatively misses the rarer GD-only clinches, which stay placeholders.)
+// A finishing place is "clinched" when a team holds it in EVERY remaining win/draw/loss
+// combination of the group's unplayed games, using the real 2026 tiebreak chain as far as
+// it settles without goal difference: overall points, then head-to-head points among teams
+// level on points (e.g. losing yet staying top because you won the head-to-head). A place
+// is locked only when GD can't change it, so this never false-locks; GD-dependent races
+// (tied on points AND head-to-head points) conservatively stay open.
 const _clinchCache = {};
 function clinchedOrder(g) {
   const key = g + ':' + playedSig();
   if (key in _clinchCache) return _clinchCache[key];
-  const teams = GROUPS[g], cur = {}, rem = {};
-  teams.forEach(c => { cur[c] = 0; rem[c] = 0; });
-  for (const m of MATCHES.filter(x => x.g === g)) {
-    if (m.s1 == null) { rem[m.a]++; rem[m.b]++; }
-    else if (m.s1 > m.s2) cur[m.a] += 3; else if (m.s1 < m.s2) cur[m.b] += 3; else { cur[m.a]++; cur[m.b]++; }
+  const teams = GROUPS[g], gm = MATCHES.filter(m => m.g === g), rem = gm.filter(m => m.s1 == null);
+  const k = rem.length, total = Math.pow(3, k);
+  const posSet = {}; teams.forEach(t => posSet[t] = new Set());
+  for (let mask = 0; mask < total; mask++) {
+    const P = {}; teams.forEach(t => P[t] = 0);
+    const rr = {}; let x = mask;                                        // rr[matchN] = 0 home win / 1 draw / 2 away win
+    for (let i = 0; i < k; i++) { const r = x % 3; x = (x - r) / 3; rr[rem[i].n] = r; const m = rem[i]; if (r === 0) P[m.a] += 3; else if (r === 2) P[m.b] += 3; else { P[m.a]++; P[m.b]++; } }
+    for (const m of gm) { if (m.s1 == null) continue; if (m.s1 > m.s2) P[m.a] += 3; else if (m.s1 < m.s2) P[m.b] += 3; else { P[m.a]++; P[m.b]++; } }
+    const resOf = m => m.s1 != null ? (m.s1 > m.s2 ? 0 : m.s1 < m.s2 ? 2 : 1) : rr[m.n];
+    for (const X of teams) {
+      let above = 0, amb = false;
+      for (const Y of teams) {
+        if (Y === X) continue;
+        if (P[Y] > P[X]) { above++; continue; }
+        if (P[Y] < P[X]) continue;
+        const lvl = teams.filter(t => P[t] === P[X]), hp = {}; lvl.forEach(t => hp[t] = 0);   // head-to-head among teams level on points
+        for (const m of gm) { if (lvl.indexOf(m.a) < 0 || lvl.indexOf(m.b) < 0) continue; const r = resOf(m); if (r == null) continue; if (r === 0) hp[m.a] += 3; else if (r === 2) hp[m.b] += 3; else { hp[m.a]++; hp[m.b]++; } }
+        if (hp[Y] > hp[X]) above++; else if (hp[Y] === hp[X]) amb = true;   // tied on points AND head-to-head → only GD left → undetermined
+      }
+      posSet[X].add(amb ? -1 : above);
+    }
   }
-  const lo = c => cur[c], hi = c => cur[c] + 3 * rem[c];
   const order = [null, null, null, null];
-  for (const X of teams) {
-    const above = teams.filter(Y => Y !== X && lo(Y) > hi(X)).length;   // Y guaranteed above X
-    const below = teams.filter(Y => Y !== X && lo(X) > hi(Y)).length;   // X guaranteed above Y
-    if (above + below === teams.length - 1) order[above] = X;           // every rival resolved → X's place is locked
-  }
+  for (const X of teams) { const s = [...posSet[X]]; if (s.length === 1 && s[0] >= 0) order[s[0]] = X; }   // same place in every scenario, GD never needed
   return _clinchCache[key] = order;
 }
 // committed = what feeds the bracket: real order if the group is done; otherwise the
