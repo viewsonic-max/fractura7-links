@@ -2187,7 +2187,7 @@ const ATK = {}, DEF = {}, ATK0 = {}, DEF0 = {};
 Object.keys(TEAMS).forEach(c => { const r = ((STRENGTH[c] != null ? STRENGTH[c] : 1500) - 1700) / RATE_K; ATK0[c] = ATK[c] = r; DEF0[c] = DEF[c] = r; });
 // rating uncertainty: each simulation draws a per-team overall-quality shock (log-goal
 // units) so the forecast isn't overconfident. SD shrinks as a team plays more games.
-const SIG0 = 0.13;
+const SIG0 = 0.10;   // tuned down from 0.13: better out-of-sample per-match calibration, tails still meaningfully fat
 const RSIG = {}, RSHOCK = {};
 const gauss = () => { let u = 0, v = 0; while (u === 0) u = Math.random(); while (v === 0) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
 const venCountry = m => (VENUES[m.v] ? VENUES[m.v][1] : null);
