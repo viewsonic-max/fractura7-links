@@ -2505,7 +2505,7 @@ function renderGroupsView() {
       const lock = dec || clinch[i] === c;            // reality has fixed this row (full result, or a clinched place)
       let vb = '';
       if (dec && PRED.g[g] && i < 3) { const ok = PRED.g[g][i] === real[i]; vb = `<span class="vb ${ok ? 'ok' : 'no'}">${ok ? '✓' : '✗'}</span>`; }
-      else if (clinch[i] === c) vb = `<span class="vb ok" title="${t('clinched')}">🔒</span>`;
+      else if (!dec && clinch[i] === c) vb = `<span class="vb ok" title="${t('clinched')}">🔒</span>`;
       h += `<div class="grpRow ${cls}${lock ? ' locked' : ''}">
         <span class="rk">${i + 1}</span>
         <img src="${flagURL(c)}" alt=""><span class="gn">${teamName(c)}</span>${vb}
