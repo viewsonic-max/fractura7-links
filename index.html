@@ -763,7 +763,7 @@ const STR = {
     linkCopied: '🔗 Bracket link copied!', copyFailed: 'Copy failed', clipNA: 'Clipboard unavailable',
     confirmClear: 'Clear your whole bracket?',
     hintGroups: `Use <b>▲▼</b> to set each group's finish. Top 2 advance (<b style="color:var(--pitch)">green</b>); the 3rd (<b style="color:var(--orange)">amber</b>) can grab a wildcard spot — assign those in <b>Knockout</b>. Finished groups lock to the real result.`,
-    tagFinal: 'FINAL', tagPicked: 'PICKED', tagLive: 'LIVE',
+    tagFinal: 'FINAL', tagPicked: 'PICKED', tagLive: 'LIVE', clinched: 'Place clinched — locked by results',
     hintKnockout: `Tap a team to send them through — winners flow to the next round. Tap an amber <b style="color:var(--orange)">🃏 3rd ▾</b> slot to cycle eligible wildcards. Blanks stay as placeholders; real results lock and score your picks ✓/✗. Tip: hit <b>⚡ Auto</b> to seed groups, then tweak.`,
     koTitles: {'Round of 32':'Round of 32','Round of 16':'Round of 16','Quarterfinal':'Quarterfinals','Semifinal':'Semifinals','Final':'Final','Third Place':'3rd Place'},
     thirdSlot: x => `🃏 3rd ${x} ▾`,
@@ -848,7 +848,7 @@ const STR = {
     linkCopied: '🔗 ¡Enlace del cuadro copiado!', copyFailed: 'Error al copiar', clipNA: 'Portapapeles no disponible',
     confirmClear: '¿Borrar todo tu cuadro?',
     hintGroups: `Usa <b>▲▼</b> para definir la posición final de cada grupo. Los 2 primeros avanzan (<b style="color:var(--pitch)">verde</b>); el 3º (<b style="color:var(--orange)">ámbar</b>) puede tomar un lugar de comodín — asígnalos en <b>Eliminatorias</b>. Los grupos terminados se fijan al resultado real.`,
-    tagFinal: 'FINAL', tagPicked: 'ELEGIDO', tagLive: 'EN VIVO',
+    tagFinal: 'FINAL', tagPicked: 'ELEGIDO', tagLive: 'EN VIVO', clinched: 'Puesto asegurado — fijado por resultados',
     hintKnockout: `Toca un equipo para hacerlo avanzar — los ganadores fluyen a la siguiente ronda. Toca un casillero ámbar <b style="color:var(--orange)">🃏 3º ▾</b> para alternar los comodines elegibles. Los espacios en blanco quedan como marcadores; los resultados reales se fijan y califican tus pronósticos ✓/✗. Consejo: presiona <b>⚡ Auto</b> para sembrar los grupos y luego ajusta.`,
     koTitles: {'Round of 32':'16avos','Round of 16':'Octavos','Quarterfinal':'Cuartos','Semifinal':'Semis','Final':'Final','Third Place':'3er Lugar'},
     thirdSlot: x => `🃏 3º ${x} ▾`,
@@ -2056,13 +2056,49 @@ let predOn = false, predView = 'knockout';
 function savePred() { try { localStorage.setItem(PRED_KEY, JSON.stringify(PRED)); } catch (e) {} }
 
 const groupDecided = g => { const fx = MATCHES.filter(m => m.g === g); return fx.length === GROUP_SIZE && fx.every(m => m.s1 != null); };
-// committed = what feeds the bracket: real order if the group is done, else the
-// user's predicted order, else null (slot stays a placeholder — blanks are fine)
+// A finishing position is "clinched" when a team's worst case (loses all its remaining
+// games) still beats every rival's best case (wins all theirs). Pure points → provably
+// safe: goal difference can never overturn a strict points gap, so this never false-locks.
+// (It conservatively misses the rarer GD-only clinches, which stay placeholders.)
+const _clinchCache = {};
+function clinchedOrder(g) {
+  const key = g + ':' + playedSig();
+  if (key in _clinchCache) return _clinchCache[key];
+  const teams = GROUPS[g], cur = {}, rem = {};
+  teams.forEach(c => { cur[c] = 0; rem[c] = 0; });
+  for (const m of MATCHES.filter(x => x.g === g)) {
+    if (m.s1 == null) { rem[m.a]++; rem[m.b]++; }
+    else if (m.s1 > m.s2) cur[m.a] += 3; else if (m.s1 < m.s2) cur[m.b] += 3; else { cur[m.a]++; cur[m.b]++; }
+  }
+  const lo = c => cur[c], hi = c => cur[c] + 3 * rem[c];
+  const order = [null, null, null, null];
+  for (const X of teams) {
+    const above = teams.filter(Y => Y !== X && lo(Y) > hi(X)).length;   // Y guaranteed above X
+    const below = teams.filter(Y => Y !== X && lo(X) > hi(Y)).length;   // X guaranteed above Y
+    if (above + below === teams.length - 1) order[above] = X;           // every rival resolved → X's place is locked
+  }
+  return _clinchCache[key] = order;
+}
+// committed = what feeds the bracket: real order if the group is done; otherwise the
+// user's predicted order, but with any mathematically clinched slot overridden by reality
+// (the clinched team is forced into its place; every other slot stays the user's pick).
 function committedOrder(g) {
   if (groupDecided(g)) return standingsFor(g).map(r => r.c);
-  return PRED.g[g] || null;
+  const clinch = clinchedOrder(g), user = PRED.g[g] || null;
+  if (!clinch.some(Boolean)) return user;
+  const result = clinch.slice(), used = new Set(clinch.filter(Boolean));
+  const rest = (user || []).filter(c => !used.has(c));
+  let ri = 0;
+  for (let p = 0; p < 4; p++) if (!result[p]) result[p] = rest[ri++] || null;
+  return result;
 }
-const displayOrder = g => committedOrder(g) || standingsFor(g).map(r => r.c);
+// full order for display: fill any still-unresolved slots from current standings
+const displayOrder = g => {
+  const o = committedOrder(g); if (o && o.every(Boolean)) return o;
+  const base = standingsFor(g).map(r => r.c); if (!o) return base;
+  const used = new Set(o.filter(Boolean)), rest = base.filter(c => !used.has(c));
+  let ri = 0; return o.map(x => x || rest[ri++]);
+};
 
 function slotTeam(m, side) {
   const tag = m[side];
@@ -2111,11 +2147,13 @@ function prunePred() {
 // ── prediction actions ──
 function predMove(g, idx, dir) {
   if (groupDecided(g)) return;
-  if (!PRED.g[g]) PRED.g[g] = standingsFor(g).map(r => r.c);
-  const arr = PRED.g[g], j = idx + dir;
-  if (j < 0 || j >= arr.length) return;
+  const j = idx + dir;
+  if (j < 0 || j >= GROUPS[g].length) return;
+  const clinch = clinchedOrder(g);
+  if (clinch[idx] || clinch[j]) return;              // reality has locked one of these slots — can't reorder it
+  const arr = displayOrder(g).slice();               // edit what's shown (clinch-merged), so indices match the UI
   const t = arr[idx]; arr[idx] = arr[j]; arr[j] = t;
-  PRED.manual[g] = 1;                                // hand-arranged → Auto/Random leave it alone
+  PRED.g[g] = arr; PRED.manual[g] = 1;               // hand-arranged → Auto/Random leave it alone
   prunePred(); savePred(); renderBracket();
 }
 function predPickWinner(n, code) {
@@ -2395,22 +2433,24 @@ function renderBracket() {
 function renderGroupsView() {
   let h = `<p class="brkHint">${t('hintGroups')}</p><div class="grpGrid">`;
   for (const g of Object.keys(GROUPS)) {
-    const dec = groupDecided(g), ord = displayOrder(g), committed = !!committedOrder(g);
+    const dec = groupDecided(g), ord = displayOrder(g), clinch = clinchedOrder(g);
     const real = dec ? ord : null;
     const tag = dec ? `<span class="lkTag fin">${t('tagFinal')}</span>`
-      : committed ? `<span class="lkTag pick">${t('tagPicked')}</span>`
+      : PRED.g[g] ? `<span class="lkTag pick">${t('tagPicked')}</span>`
       : `<span class="lkTag live">${t('tagLive')}</span>`;
     h += `<div class="grpCard"><h3>${t('groupWord')} ${g}${tag}</h3>`;
     ord.forEach((c, i) => {
       const cls = i < 2 ? 'q' : i === 2 ? 'wc' : '';
+      const lock = dec || clinch[i] === c;            // reality has fixed this row (full result, or a clinched place)
       let vb = '';
       if (dec && PRED.g[g] && i < 3) { const ok = PRED.g[g][i] === real[i]; vb = `<span class="vb ${ok ? 'ok' : 'no'}">${ok ? '✓' : '✗'}</span>`; }
-      h += `<div class="grpRow ${cls}${dec ? ' locked' : ''}">
+      else if (clinch[i] === c) vb = `<span class="vb ok" title="${t('clinched')}">🔒</span>`;
+      h += `<div class="grpRow ${cls}${lock ? ' locked' : ''}">
         <span class="rk">${i + 1}</span>
         <img src="${flagURL(c)}" alt=""><span class="gn">${teamName(c)}</span>${vb}
         <span class="mv">
-          <button onclick="predMove('${g}',${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
-          <button onclick="predMove('${g}',${i},1)" ${i === ord.length - 1 ? 'disabled' : ''}>▼</button>
+          <button onclick="predMove('${g}',${i},-1)" ${i === 0 || lock || clinch[i-1] ? 'disabled' : ''}>▲</button>
+          <button onclick="predMove('${g}',${i},1)" ${i === ord.length - 1 || lock || clinch[i+1] ? 'disabled' : ''}>▼</button>
         </span></div>`;
     });
     h += `</div>`;
