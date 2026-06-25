@@ -2045,8 +2045,56 @@ const GROUP_SIZE = 6;   // round-robin matches per 4-team group
 
 const PRED_KEY = 'wcviz.pred.v1';
 const normalizePred = o => ({g:(o&&o.g)||{}, third:(o&&o.third)||{}, win:(o&&o.win)||{}, manual:(o&&o.manual)||{}});
+
+// ── compact share codec ─────────────────────────────────────────────────────
+// The bracket structure is fixed and known to the app, so a share only needs the
+// CHOICES, not labels: a team → 1 char (index into the sorted roster), a group order
+// → its permutation rank (0-23, 1 char), and which groups/matches/wildcards are set
+// → bit masks. ~60 chars for a full bracket vs ~1250 for base64(JSON).
+const _B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+const _TIDX = Object.keys(TEAMS).slice().sort();
+const _FACT = [1, 1, 2, 6, 24];
+const _koList = () => MATCHES.filter(m => m.src === 'knockout' || m.src === 'final').sort((a, b) => a.n - b.n);
+const _thirdSecs = () => _koList().filter(m => (m.a + m.b).indexOf('3rd·') >= 0).map(m => m.sec);
+const _packBits = bits => { let s = ''; for (let i = 0; i < bits.length; i += 6) { let v = 0; for (let j = 0; j < 6; j++) v = (v << 1) | (bits[i + j] || 0); s += _B64[v]; } return s; };
+const _unpackBits = (str, n) => { const b = []; for (const ch of str) { const v = _B64.indexOf(ch); for (let j = 5; j >= 0; j--) b.push((v >> j) & 1); } return b.slice(0, n); };
+function _permRank(arr, canon) { const rem = canon.slice(); let r = 0; const n = arr.length; for (let i = 0; i < n; i++) { const k = rem.indexOf(arr[i]); if (k < 0) return -1; r += k * _FACT[n - 1 - i]; rem.splice(k, 1); } return r; }
+function _permUnrank(rank, canon) { const rem = canon.slice(), out = []; let r = rank; const n = canon.length; for (let i = 0; i < n; i++) { const f = _FACT[n - 1 - i], k = Math.floor(r / f); r -= k * f; out.push(rem.splice(k, 1)[0]); } return out; }
+function encodePred() {
+  const GORD = Object.keys(GROUPS).slice().sort();
+  const gbits = GORD.map(g => (PRED.g[g] && _permRank(PRED.g[g], GROUPS[g]) >= 0) ? 1 : 0);
+  let s = '1' + _packBits(gbits);
+  GORD.forEach((g, i) => { if (gbits[i]) s += _B64[_permRank(PRED.g[g], GROUPS[g])]; });
+  const KO = _koList();
+  const wbits = KO.map(m => (PRED.win[m.n] && _TIDX.indexOf(PRED.win[m.n]) >= 0) ? 1 : 0);
+  s += _packBits(wbits);
+  KO.forEach((m, i) => { if (wbits[i]) s += _B64[_TIDX.indexOf(PRED.win[m.n])]; });
+  const TS = _thirdSecs();
+  const tbits = TS.map(sec => (PRED.third[sec] && _TIDX.indexOf(PRED.third[sec]) >= 0) ? 1 : 0);
+  s += _packBits(tbits);
+  TS.forEach((sec, i) => { if (tbits[i]) s += _B64[_TIDX.indexOf(PRED.third[sec])]; });
+  return s;
+}
+function decodePred(s) {
+  if (!s || s[0] !== '1') return null;
+  let p = 1;
+  const out = { g: {}, third: {}, win: {}, manual: {} };
+  const GORD = Object.keys(GROUPS).slice().sort();
+  const gw = Math.ceil(GORD.length / 6), gbits = _unpackBits(s.substr(p, gw), GORD.length); p += gw;
+  GORD.forEach((g, i) => { if (gbits[i]) { out.g[g] = _permUnrank(_B64.indexOf(s[p++]), GROUPS[g]); out.manual[g] = 1; } });
+  const KO = _koList();
+  const ww = Math.ceil(KO.length / 6), wbits = _unpackBits(s.substr(p, ww), KO.length); p += ww;
+  KO.forEach((m, i) => { if (wbits[i]) out.win[m.n] = _TIDX[_B64.indexOf(s[p++])]; });
+  const TS = _thirdSecs();
+  const tw = Math.ceil(TS.length / 6), tbits = _unpackBits(s.substr(p, tw), TS.length); p += tw;
+  TS.forEach((sec, i) => { if (tbits[i]) out.third[sec] = _TIDX[_B64.indexOf(s[p++])]; });
+  return normalizePred(out);
+}
+
 function loadPred() {
-  const q = _params.get('predict');
+  const c = _params.get('p');
+  if (c) { try { const d = decodePred(c); if (d) return d; } catch (e) {} }
+  const q = _params.get('predict');                       // legacy long links still open
   if (q) { try { return normalizePred(JSON.parse(decodeURIComponent(escape(atob(q))))); } catch (e) {} }
   try { const o = JSON.parse(localStorage.getItem(PRED_KEY)); if (o) return normalizePred(o); } catch (e) {}
   return {g:{}, third:{}, win:{}, manual:{}};
@@ -2193,7 +2241,7 @@ function predOpen() { predOn = true; $id('bracket').classList.add('open'); $id('
 function predClose() { predOn = false; $id('bracket').classList.remove('open'); $id('predBtn').classList.remove('on'); }
 function predToast(msg) { const t = document.createElement('div'); t.className = 'brkToast'; t.textContent = msg; $id('bracket').appendChild(t); setTimeout(() => t.remove(), 2200); }
 function predShare() {
-  const url = location.origin + location.pathname + '?predict=' + btoa(unescape(encodeURIComponent(JSON.stringify(PRED))));
+  const url = location.origin + location.pathname + '?p=' + encodePred();
   if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => predToast(t('linkCopied')), () => predToast(t('copyFailed')));
   else predToast(t('clipNA'));
 }
