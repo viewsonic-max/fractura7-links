@@ -71,7 +71,8 @@
   .chip{font-size:11px; font-weight:600; padding:3px 10px; border-radius:999px;
     background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);}
   .chip.round{color:#04150c;}
-  .chip.goals{color:var(--gold); border-color:rgba(255,209,102,.35); background:rgba(255,209,102,.08);}
+  .chip.goals{color:var(--gold); border-color:rgba(255,209,102,.35); background:rgba(255,209,102,.08); cursor:pointer;}
+  .chip.goals:hover{background:rgba(255,209,102,.16);}
 
   /* ── live strip ─────────────────────────── */
   #liveStrip{
@@ -509,6 +510,18 @@
     #help{padding:0;}
     .helpCard{width:100vw; height:100%; max-height:100vh; border-radius:0;}
   }
+  /* top scorers panel (reuses .helpCard) */
+  #scorers{position:absolute; inset:0; z-index:1660; display:none; background:rgba(7,11,22,.86); backdrop-filter:blur(6px); padding:18px;}
+  #scorers.open{display:flex; justify-content:center; align-items:center;}
+  .scRow{display:flex; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid rgba(255,255,255,.05);}
+  .scRow:last-child{border-bottom:none;}
+  .scRow .rk{width:22px; text-align:center; color:var(--ink-dim); font-weight:800; font-size:12px;}
+  .scRow img{width:24px; height:17px; border-radius:2px; object-fit:cover; flex:none;}
+  .scRow .nm{flex:1; font-weight:600; font-size:14px;}
+  .scRow .tm{color:var(--ink-dim); font-size:11px; font-weight:700;}
+  .scRow .gl{font-weight:900; color:var(--gold); font-size:15px; min-width:20px; text-align:right;}
+  .scMsg{padding:26px; text-align:center; color:var(--ink-dim); font-size:13px;}
+  @media (max-width:760px){ #scorers{padding:0;} }
 
   #confetti{position:absolute; inset:0; z-index:1500; pointer-events:none;}
 
@@ -641,6 +654,7 @@
 <div id="drawer" role="dialog" aria-modal="true" aria-label="Group details"><div id="drawerInner"></div></div>
 <div id="bracket" role="dialog" aria-modal="true" aria-label="Bracket predictor"><div id="bracketInner"></div></div>
 <div id="help" role="dialog" aria-modal="true" aria-label="How to use this app"><div class="helpCard"></div></div>
+<div id="scorers" role="dialog" aria-modal="true" aria-label="Top scorers" onclick="if(event.target===this)closeScorers()"><div class="helpCard"></div></div>
 <div id="clockChip"></div>
 
 <div id="tl">
@@ -729,7 +743,9 @@ const STR = {
     matches: n => `${n} match${n !== 1 ? 'es' : ''}`,
     cities: n => `${n} cit${n !== 1 ? 'ies' : 'y'}`,
     goalsTally: (g, avg) => `⚽ ${g}${avg ? ' · ' + avg + '/game' : ''}`,
-    goalsTitle: 'Total goals scored in the tournament so far',
+    goalsTitle: 'Total goals so far — tap for top scorers',
+    scorersTitle: 'Top Scorers', scorersEmpty: 'No goals recorded yet.',
+    scorersLoading: 'Loading top scorers…', scorersErr: 'Couldn’t load scorers — try again shortly.',
     groupStageMd: n => `Group Stage · Matchday ${n}`,
     theFinal: 'THE FINAL 🏆', andSep: ' & ',
     live: 'LIVE', localLbl: 'local', ft: 'FT', vsWord: 'v',
@@ -817,7 +833,9 @@ const STR = {
     matches: n => `${n} partido${n !== 1 ? 's' : ''}`,
     cities: n => `${n} ciudad${n !== 1 ? 'es' : ''}`,
     goalsTally: (g, avg) => `⚽ ${g}${avg ? ' · ' + avg + '/partido' : ''}`,
-    goalsTitle: 'Goles totales del torneo hasta ahora',
+    goalsTitle: 'Goles totales — toca para ver goleadores',
+    scorersTitle: 'Goleadores', scorersEmpty: 'Aún no hay goles.',
+    scorersLoading: 'Cargando goleadores…', scorersErr: 'No se pudieron cargar — intenta en un momento.',
     groupStageMd: n => `Fase de Grupos · Jornada ${n}`,
     theFinal: 'LA FINAL 🏆', andSep: ' y ',
     live: 'EN VIVO', localLbl: 'local', ft: 'FIN', vsWord: 'vs',
@@ -1085,7 +1103,7 @@ mqMobile.addEventListener('change', applyFormFactor);
 
 // running tournament goal tally (cumulative across every played match, all days)
 const totalGoals = () => { let g = 0, p = 0; for (const m of MATCHES) if (m.s1 != null) { g += m.s1 + m.s2; p++; } return { g, p }; };
-function goalsChipHTML() { const { g, p } = totalGoals(); return `<span class="chip goals" id="goalsChip" title="${t('goalsTitle')}">${t('goalsTally', g, p ? (g / p).toFixed(1) : '')}</span>`; }
+function goalsChipHTML() { const { g, p } = totalGoals(); return `<span class="chip goals" id="goalsChip" role="button" tabindex="0" title="${t('goalsTitle')}" onclick="openScorers()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openScorers()}">${t('goalsTally', g, p ? (g / p).toFixed(1) : '')}</span>`; }
 function updateGoalsChip() { const el = $id('goalsChip'); if (el) el.outerHTML = goalsChipHTML(); }
 
 function setDay(i, fly) {
@@ -1821,7 +1839,7 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => {});
 }
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { if (helpOn) return helpClose(); if (predOn) return predClose(); return closeDrawer(); }
+  if (e.key === 'Escape') { if (scorersOn) return closeScorers(); if (helpOn) return helpClose(); if (predOn) return predClose(); return closeDrawer(); }
   if (predOn || helpOn) return;   // a modal owns the keyboard while open
   if (e.key === 'ArrowLeft') { stopPlay(); stepDay(-1); }
   if (e.key === 'ArrowRight') { stopPlay(); stepDay(1); }
@@ -2585,6 +2603,53 @@ function renderKnockoutView() {
 $id('predBtn').onclick = () => predOn ? predClose() : predOpen();
 
 // ── help / tutorial ────────────────────────────────────────────────────────
+// ── top scorers ─────────────────────────────────────────────────────────────
+// Aggregated from the ESPN scoreboard (same CORS-OK source as live scores), one
+// fetch per played date. Past dates are immutable so they're cached; the latest
+// date is refetched each open. Own goals and shootout goals are excluded.
+const _ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard';
+const _scorerCache = {};
+async function loadScorers() {
+  const dates = [...new Set(MATCHES.filter(m => m.s1 != null).map(m => m.d))].sort();
+  if (!dates.length) return [];
+  const latest = dates[dates.length - 1];
+  const groups = await Promise.all(dates.map(async d => {
+    const k = d.replace(/-/g, '');
+    if (d !== latest && _scorerCache[k]) return _scorerCache[k];
+    try { const j = await (await fetch(_ESPN_SB + '?dates=' + k)).json(); const evs = j.events || []; if (d !== latest) _scorerCache[k] = evs; return evs; }
+    catch (e) { return _scorerCache[k] || []; }
+  }));
+  const seen = new Set(), tally = {};
+  for (const evs of groups) for (const e of evs) {
+    if (seen.has(e.id)) continue; seen.add(e.id);
+    const c = e.competitions && e.competitions[0]; if (!c || !c.details) continue;
+    const tmap = {}; (c.competitors || []).forEach(t => { tmap[t.id] = t.team && t.team.abbreviation; });
+    for (const d of c.details) {
+      if (!d.scoringPlay || d.ownGoal || d.shootout) continue;          // exclude own goals + shootout pens
+      const a = d.athletesInvolved && d.athletesInvolved[0]; if (!a || !a.displayName) continue;
+      const tm = (d.team && tmap[d.team.id]) || '', key = a.displayName + '|' + tm;
+      (tally[key] = tally[key] || { name: a.displayName, team: tm, goals: 0 }).goals++;
+    }
+  }
+  return Object.values(tally).sort((x, y) => y.goals - x.goals || x.name.localeCompare(y.name)).slice(0, 20);
+}
+let scorersOn = false;
+function openScorers() {
+  scorersOn = true;
+  const card = $id('scorers').querySelector('.helpCard');
+  card.innerHTML = `<div class="hh"><h2>⚽ ${t('scorersTitle')}</h2><button class="hx" onclick="closeScorers()" aria-label="${t('tClose')}">✕</button></div><div class="helpBody"><div class="scMsg">${t('scorersLoading')}</div></div>`;
+  $id('scorers').classList.add('open');
+  loadScorers().then(renderScorers).catch(() => { const b = $id('scorers').querySelector('.helpBody'); if (scorersOn && b) b.innerHTML = `<div class="scMsg">${t('scorersErr')}</div>`; });
+}
+function closeScorers() { scorersOn = false; $id('scorers').classList.remove('open'); }
+function renderScorers(list) {
+  if (!scorersOn) return;
+  const body = $id('scorers').querySelector('.helpBody'); if (!body) return;
+  body.innerHTML = list.length
+    ? list.map((s, i) => `<div class="scRow"><span class="rk">${i + 1}</span>${TEAMS[s.team] ? `<img src="${flagURL(s.team)}" alt="">` : ''}<span class="nm">${s.name}</span><span class="tm">${s.team || ''}</span><span class="gl">${s.goals}</span></div>`).join('')
+    : `<div class="scMsg">${t('scorersEmpty')}</div>`;
+}
+
 let helpOn = false;
 const HELP_KEY = 'wcviz.seenHelp.v1';
 const IG_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>';
