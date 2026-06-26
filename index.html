@@ -71,6 +71,7 @@
   .chip{font-size:11px; font-weight:600; padding:3px 10px; border-radius:999px;
     background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);}
   .chip.round{color:#04150c;}
+  .chip.goals{color:var(--gold); border-color:rgba(255,209,102,.35); background:rgba(255,209,102,.08);}
 
   /* ── live strip ─────────────────────────── */
   #liveStrip{
@@ -727,6 +728,8 @@ const STR = {
     today: 'TODAY', restDay: '😴 Rest day — no matches.',
     matches: n => `${n} match${n !== 1 ? 'es' : ''}`,
     cities: n => `${n} cit${n !== 1 ? 'ies' : 'y'}`,
+    goalsTally: (g, avg) => `⚽ ${g}${avg ? ' · ' + avg + '/game' : ''}`,
+    goalsTitle: 'Total goals scored in the tournament so far',
     groupStageMd: n => `Group Stage · Matchday ${n}`,
     theFinal: 'THE FINAL 🏆', andSep: ' & ',
     live: 'LIVE', localLbl: 'local', ft: 'FT', vsWord: 'v',
@@ -813,6 +816,8 @@ const STR = {
     today: 'HOY', restDay: '😴 Día de descanso — sin partidos.',
     matches: n => `${n} partido${n !== 1 ? 's' : ''}`,
     cities: n => `${n} ciudad${n !== 1 ? 'es' : ''}`,
+    goalsTally: (g, avg) => `⚽ ${g}${avg ? ' · ' + avg + '/partido' : ''}`,
+    goalsTitle: 'Goles totales del torneo hasta ahora',
     groupStageMd: n => `Fase de Grupos · Jornada ${n}`,
     theFinal: 'LA FINAL 🏆', andSep: ' y ',
     live: 'EN VIVO', localLbl: 'local', ft: 'FIN', vsWord: 'vs',
@@ -1078,6 +1083,11 @@ function applyFormFactor() {
 }
 mqMobile.addEventListener('change', applyFormFactor);
 
+// running tournament goal tally (cumulative across every played match, all days)
+const totalGoals = () => { let g = 0, p = 0; for (const m of MATCHES) if (m.s1 != null) { g += m.s1 + m.s2; p++; } return { g, p }; };
+function goalsChipHTML() { const { g, p } = totalGoals(); return `<span class="chip goals" id="goalsChip" title="${t('goalsTitle')}">${t('goalsTally', g, p ? (g / p).toFixed(1) : '')}</span>`; }
+function updateGoalsChip() { const el = $id('goalsChip'); if (el) el.outerHTML = goalsChipHTML(); }
+
 function setDay(i, fly) {
   dayIdx = (i + DAYS.length) % DAYS.length;
   const d = DAYS[dayIdx];
@@ -1090,7 +1100,8 @@ function setDay(i, fly) {
   $id('dayMeta').innerHTML =
     `<span class="chip round" style="background:${ROUND_COLOR[rkey]}">${label}</span>
      <span class="chip">${t('matches', dayMatches.length)}</span>
-     <span class="chip">${t('cities', cities.size)}</span>`;
+     <span class="chip">${t('cities', cities.size)}</span>
+     ${goalsChipHTML()}`;
 
   document.querySelectorAll('.day').forEach((el, j) => el.classList.toggle('active', j === dayIdx));
   centerDayChip(dayIdx);
@@ -1577,6 +1588,7 @@ function applyWikiScore(m, text, celebrate) {
 // re-render everything that shows a score
 function refreshViews() {
   renderStrip();
+  updateGoalsChip();
   if (!playing) { updateMarkers(DAYS[dayIdx]); renderPanel(DAYS[dayIdx], byDay[DAYS[dayIdx]], true); }
   if (predOn) renderBracket();
   if (curGroup && $id('drawer').classList.contains('open')) renderGroup();
