@@ -2693,7 +2693,7 @@ function loadScorersTab(tab) {
 function renderScorers(list) {
   if (!scorersOn) return;
   const body = $id('scorers').querySelector('.helpBody'); if (!body) return;
-  const val = s => scorersTab === 'cards' ? `<span class="cards">🟨 ${s.y}${s.r ? `  🟥 ${s.r}` : ''}</span>` : `<span class="gl">${s.n}</span>`;
+  const val = s => scorersTab === 'cards' ? `<span class="cards">${s.y ? `🟨 ${s.y}` : ''}${s.y && s.r ? '  ' : ''}${s.r ? `🟥 ${s.r}` : ''}</span>` : `<span class="gl">${s.n}</span>`;
   body.innerHTML = list.length
     ? list.map((s, i) => `<div class="scRow"><span class="rk">${i + 1}</span>${TEAMS[s.team] ? `<img src="${flagURL(s.team)}" alt="">` : ''}<span class="nm">${s.name}</span><span class="tm">${s.team || ''}</span>${val(s)}</div>`).join('')
     : `<div class="scMsg">${t('scorersEmpty')}</div>`;
