@@ -521,6 +521,10 @@
   .scRow .tm{color:var(--ink-dim); font-size:11px; font-weight:700;}
   .scRow .gl{font-weight:900; color:var(--gold); font-size:15px; min-width:20px; text-align:right;}
   .scMsg{padding:26px; text-align:center; color:var(--ink-dim); font-size:13px;}
+  .scTabs{display:flex; gap:6px; padding:10px 18px 4px;}
+  .scTabs button{flex:1; padding:7px; border-radius:9px; border:1px solid var(--panel-border); background:#16203a; color:var(--ink-dim); font:800 12px 'Outfit',sans-serif; cursor:pointer;}
+  .scTabs button:hover{color:var(--ink);}
+  .scTabs button.on{border-color:var(--gold); color:var(--gold); background:rgba(255,209,102,.1);}
   @media (max-width:760px){ #scorers{padding:0;} }
 
   #confetti{position:absolute; inset:0; z-index:1500; pointer-events:none;}
@@ -744,8 +748,8 @@ const STR = {
     cities: n => `${n} cit${n !== 1 ? 'ies' : 'y'}`,
     goalsTally: (g, avg) => `⚽ ${g}${avg ? ' · ' + avg + '/game' : ''}`,
     goalsTitle: 'Total goals so far — tap for top scorers',
-    scorersTitle: 'Top Scorers', scorersEmpty: 'No goals recorded yet.',
-    scorersLoading: 'Loading top scorers…', scorersErr: 'Couldn’t load scorers — try again shortly.',
+    scorersTitle: 'Leaders', scorersEmpty: 'Nothing recorded yet.', tabGoals: '⚽ Goals', tabAssists: '🅰️ Assists',
+    scorersLoading: 'Loading…', scorersErr: 'Couldn’t load — try again shortly.',
     groupStageMd: n => `Group Stage · Matchday ${n}`,
     theFinal: 'THE FINAL 🏆', andSep: ' & ',
     live: 'LIVE', localLbl: 'local', ft: 'FT', vsWord: 'v',
@@ -834,8 +838,8 @@ const STR = {
     cities: n => `${n} ciudad${n !== 1 ? 'es' : ''}`,
     goalsTally: (g, avg) => `⚽ ${g}${avg ? ' · ' + avg + '/partido' : ''}`,
     goalsTitle: 'Goles totales — toca para ver goleadores',
-    scorersTitle: 'Goleadores', scorersEmpty: 'Aún no hay goles.',
-    scorersLoading: 'Cargando goleadores…', scorersErr: 'No se pudieron cargar — intenta en un momento.',
+    scorersTitle: 'Líderes', scorersEmpty: 'Aún no hay nada.', tabGoals: '⚽ Goles', tabAssists: '🅰️ Asistencias',
+    scorersLoading: 'Cargando…', scorersErr: 'No se pudieron cargar — intenta en un momento.',
     groupStageMd: n => `Fase de Grupos · Jornada ${n}`,
     theFinal: 'LA FINAL 🏆', andSep: ' y ',
     live: 'EN VIVO', localLbl: 'local', ft: 'FIN', vsWord: 'vs',
@@ -2603,13 +2607,18 @@ function renderKnockoutView() {
 $id('predBtn').onclick = () => predOn ? predClose() : predOpen();
 
 // ── help / tutorial ────────────────────────────────────────────────────────
-// ── top scorers ─────────────────────────────────────────────────────────────
-// Aggregated from the ESPN scoreboard (same CORS-OK source as live scores), one
-// fetch per played date. Past dates are immutable so they're cached; the latest
-// date is refetched each open. Own goals and shootout goals are excluded.
+// ── top scorers / assists ───────────────────────────────────────────────────
+// Goals: aggregated from the ESPN scoreboard (same CORS-OK source as live scores),
+// one fetch per played date (past dates cached, latest refetched), own goals and
+// shootout pens excluded. Assists: ESPN core leaders endpoint (CORS-OK from this
+// origin), resolving athlete + team refs (cached). Both memoised per panel-open.
 const _ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard';
-const _scorerCache = {};
-async function loadScorers() {
+const _ESPN_LEAD = 'https://sports.core.api.espn.com/v2/sports/soccer/leagues/fifa.world/seasons/2026/types/1/leaders';
+const _scorerCache = {};        // per-date scoreboard events (immutable past dates)
+const _refCache = {};           // ESPN core $ref -> resolved json, dedupes lookups
+let _goalsList = null, _assistsList = null;
+async function _getRef(ref) { ref = ref.replace('http://', 'https://'); if (_refCache[ref]) return _refCache[ref]; return _refCache[ref] = await (await fetch(ref)).json(); }
+async function loadGoals() {
   const dates = [...new Set(MATCHES.filter(m => m.s1 != null).map(m => m.d))].sort();
   if (!dates.length) return [];
   const latest = dates[dates.length - 1];
@@ -2628,25 +2637,52 @@ async function loadScorers() {
       if (!d.scoringPlay || d.ownGoal || d.shootout) continue;          // exclude own goals + shootout pens
       const a = d.athletesInvolved && d.athletesInvolved[0]; if (!a || !a.displayName) continue;
       const tm = (d.team && tmap[d.team.id]) || '', key = a.displayName + '|' + tm;
-      (tally[key] = tally[key] || { name: a.displayName, team: tm, goals: 0 }).goals++;
+      (tally[key] = tally[key] || { name: a.displayName, team: tm, n: 0 }).n++;
     }
   }
-  return Object.values(tally).sort((x, y) => y.goals - x.goals || x.name.localeCompare(y.name)).slice(0, 20);
+  return Object.values(tally).sort((x, y) => y.n - x.n || x.name.localeCompare(y.name)).slice(0, 20);
 }
-let scorersOn = false;
+async function loadAssists() {
+  const j = await (await fetch(_ESPN_LEAD)).json();
+  const cat = (j.categories || []).find(c => c.name === 'assistsLeaders'); if (!cat) return [];
+  const out = await Promise.all((cat.leaders || []).slice(0, 20).map(async l => {
+    try { const a = await _getRef(l.athlete.$ref); let tm = ''; if (a.team && a.team.$ref) { const t = await _getRef(a.team.$ref); tm = t.abbreviation || ''; } return { name: a.displayName, team: tm, n: l.value }; }
+    catch (e) { return null; }
+  }));
+  return out.filter(Boolean);
+}
+let scorersOn = false, scorersTab = 'goals';
 function openScorers() {
-  scorersOn = true;
-  const card = $id('scorers').querySelector('.helpCard');
-  card.innerHTML = `<div class="hh"><h2>⚽ ${t('scorersTitle')}</h2><button class="hx" onclick="closeScorers()" aria-label="${t('tClose')}">✕</button></div><div class="helpBody"><div class="scMsg">${t('scorersLoading')}</div></div>`;
+  scorersOn = true; scorersTab = 'goals'; _goalsList = null; _assistsList = null;
+  $id('scorers').querySelector('.helpCard').innerHTML =
+    `<div class="hh"><h2>⚽ ${t('scorersTitle')}</h2><button class="hx" onclick="closeScorers()" aria-label="${t('tClose')}">✕</button></div>`
+    + `<div class="scTabs"><button id="scTabG" class="on" onclick="setScorersTab('goals')">${t('tabGoals')}</button><button id="scTabA" onclick="setScorersTab('assists')">${t('tabAssists')}</button></div>`
+    + `<div class="helpBody"><div class="scMsg">${t('scorersLoading')}</div></div>`;
   $id('scorers').classList.add('open');
-  loadScorers().then(renderScorers).catch(() => { const b = $id('scorers').querySelector('.helpBody'); if (scorersOn && b) b.innerHTML = `<div class="scMsg">${t('scorersErr')}</div>`; });
+  loadScorersTab('goals');
 }
 function closeScorers() { scorersOn = false; $id('scorers').classList.remove('open'); }
+function setScorersTab(tab) {
+  if (!scorersOn) return;
+  scorersTab = tab;
+  const g = $id('scTabG'), a = $id('scTabA'); if (g) g.classList.toggle('on', tab === 'goals'); if (a) a.classList.toggle('on', tab === 'assists');
+  loadScorersTab(tab);
+}
+function loadScorersTab(tab) {
+  const body = $id('scorers').querySelector('.helpBody'); if (!body) return;
+  const cached = tab === 'goals' ? _goalsList : _assistsList;
+  if (cached) return renderScorers(cached);
+  body.innerHTML = `<div class="scMsg">${t('scorersLoading')}</div>`;
+  (tab === 'goals' ? loadGoals() : loadAssists()).then(list => {
+    if (tab === 'goals') _goalsList = list; else _assistsList = list;
+    if (scorersOn && scorersTab === tab) renderScorers(list);
+  }).catch(() => { if (scorersOn && scorersTab === tab) body.innerHTML = `<div class="scMsg">${t('scorersErr')}</div>`; });
+}
 function renderScorers(list) {
   if (!scorersOn) return;
   const body = $id('scorers').querySelector('.helpBody'); if (!body) return;
   body.innerHTML = list.length
-    ? list.map((s, i) => `<div class="scRow"><span class="rk">${i + 1}</span>${TEAMS[s.team] ? `<img src="${flagURL(s.team)}" alt="">` : ''}<span class="nm">${s.name}</span><span class="tm">${s.team || ''}</span><span class="gl">${s.goals}</span></div>`).join('')
+    ? list.map((s, i) => `<div class="scRow"><span class="rk">${i + 1}</span>${TEAMS[s.team] ? `<img src="${flagURL(s.team)}" alt="">` : ''}<span class="nm">${s.name}</span><span class="tm">${s.team || ''}</span><span class="gl">${s.n}</span></div>`).join('')
     : `<div class="scMsg">${t('scorersEmpty')}</div>`;
 }
 
