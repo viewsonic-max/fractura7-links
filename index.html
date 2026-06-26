@@ -520,6 +520,7 @@
   .scRow .nm{flex:1; font-weight:600; font-size:14px;}
   .scRow .tm{color:var(--ink-dim); font-size:11px; font-weight:700;}
   .scRow .gl{font-weight:900; color:var(--gold); font-size:15px; min-width:20px; text-align:right;}
+  .scRow .cards{font-weight:800; font-size:12.5px; white-space:nowrap; color:var(--ink);}
   .scMsg{padding:26px; text-align:center; color:var(--ink-dim); font-size:13px;}
   .scTabs{display:flex; gap:6px; padding:10px 18px 4px;}
   .scTabs button{flex:1; padding:7px; border-radius:9px; border:1px solid var(--panel-border); background:#16203a; color:var(--ink-dim); font:800 12px 'Outfit',sans-serif; cursor:pointer;}
@@ -748,7 +749,7 @@ const STR = {
     cities: n => `${n} cit${n !== 1 ? 'ies' : 'y'}`,
     goalsTally: (g, avg) => `⚽ ${g}${avg ? ' · ' + avg + '/game' : ''}`,
     goalsTitle: 'Total goals so far — tap for top scorers',
-    scorersTitle: 'Leaders', scorersEmpty: 'Nothing recorded yet.', tabGoals: '⚽ Goals', tabAssists: '🅰️ Assists',
+    scorersTitle: 'Leaders', scorersEmpty: 'Nothing recorded yet.', tabGoals: '⚽ Goals', tabAssists: '🅰️ Assists', tabCards: '🟨 Cards',
     scorersLoading: 'Loading…', scorersErr: 'Couldn’t load — try again shortly.',
     groupStageMd: n => `Group Stage · Matchday ${n}`,
     theFinal: 'THE FINAL 🏆', andSep: ' & ',
@@ -838,7 +839,7 @@ const STR = {
     cities: n => `${n} ciudad${n !== 1 ? 'es' : ''}`,
     goalsTally: (g, avg) => `⚽ ${g}${avg ? ' · ' + avg + '/partido' : ''}`,
     goalsTitle: 'Goles totales — toca para ver goleadores',
-    scorersTitle: 'Líderes', scorersEmpty: 'Aún no hay nada.', tabGoals: '⚽ Goles', tabAssists: '🅰️ Asistencias',
+    scorersTitle: 'Líderes', scorersEmpty: 'Aún no hay nada.', tabGoals: '⚽ Goles', tabAssists: '🅰️ Asistencias', tabCards: '🟨 Tarjetas',
     scorersLoading: 'Cargando…', scorersErr: 'No se pudieron cargar — intenta en un momento.',
     groupStageMd: n => `Fase de Grupos · Jornada ${n}`,
     theFinal: 'LA FINAL 🏆', andSep: ' y ',
@@ -2616,7 +2617,7 @@ const _ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.worl
 const _ESPN_LEAD = 'https://sports.core.api.espn.com/v2/sports/soccer/leagues/fifa.world/seasons/2026/types/1/leaders';
 const _scorerCache = {};        // per-date scoreboard events (immutable past dates)
 const _refCache = {};           // ESPN core $ref -> resolved json, dedupes lookups
-let _goalsList = null, _assistsList = null;
+let _goalsList = null, _assistsList = null, _cardsList = null;
 async function _getRef(ref) { ref = ref.replace('http://', 'https://'); if (_refCache[ref]) return _refCache[ref]; return _refCache[ref] = await (await fetch(ref)).json(); }
 async function loadGoals() {
   const dates = [...new Set(MATCHES.filter(m => m.s1 != null).map(m => m.d))].sort();
@@ -2651,12 +2652,22 @@ async function loadAssists() {
   }));
   return out.filter(Boolean);
 }
+async function loadCards() {
+  const j = await (await fetch(_ESPN_LEAD)).json();
+  const byRef = {};
+  for (const [cname, key] of [['yellowCards', 'y'], ['redCards', 'r']]) {
+    const cat = (j.categories || []).find(c => c.name === cname); if (!cat) continue;
+    for (const l of (cat.leaders || []).slice(0, 25)) { const r = l.athlete && l.athlete.$ref; if (!r) continue; (byRef[r] = byRef[r] || { ref: r, y: 0, r: 0 })[key] = l.value; }
+  }
+  await Promise.all(Object.values(byRef).map(async o => { try { const a = await _getRef(o.ref); o.name = a.displayName; if (a.team && a.team.$ref) { const t = await _getRef(a.team.$ref); o.team = t.abbreviation || ''; } } catch (e) {} }));
+  return Object.values(byRef).filter(o => o.name).sort((x, y) => y.r - x.r || y.y - x.y || x.name.localeCompare(y.name)).slice(0, 20);
+}
 let scorersOn = false, scorersTab = 'goals';
 function openScorers() {
-  scorersOn = true; scorersTab = 'goals'; _goalsList = null; _assistsList = null;
+  scorersOn = true; scorersTab = 'goals'; _goalsList = null; _assistsList = null; _cardsList = null;
   $id('scorers').querySelector('.helpCard').innerHTML =
     `<div class="hh"><h2>⚽ ${t('scorersTitle')}</h2><button class="hx" onclick="closeScorers()" aria-label="${t('tClose')}">✕</button></div>`
-    + `<div class="scTabs"><button id="scTabG" class="on" onclick="setScorersTab('goals')">${t('tabGoals')}</button><button id="scTabA" onclick="setScorersTab('assists')">${t('tabAssists')}</button></div>`
+    + `<div class="scTabs"><button id="scTabG" class="on" onclick="setScorersTab('goals')">${t('tabGoals')}</button><button id="scTabA" onclick="setScorersTab('assists')">${t('tabAssists')}</button><button id="scTabC" onclick="setScorersTab('cards')">${t('tabCards')}</button></div>`
     + `<div class="helpBody"><div class="scMsg">${t('scorersLoading')}</div></div>`;
   $id('scorers').classList.add('open');
   loadScorersTab('goals');
@@ -2665,24 +2676,26 @@ function closeScorers() { scorersOn = false; $id('scorers').classList.remove('op
 function setScorersTab(tab) {
   if (!scorersOn) return;
   scorersTab = tab;
-  const g = $id('scTabG'), a = $id('scTabA'); if (g) g.classList.toggle('on', tab === 'goals'); if (a) a.classList.toggle('on', tab === 'assists');
+  [['scTabG', 'goals'], ['scTabA', 'assists'], ['scTabC', 'cards']].forEach(([id, t2]) => { const el = $id(id); if (el) el.classList.toggle('on', tab === t2); });
   loadScorersTab(tab);
 }
 function loadScorersTab(tab) {
   const body = $id('scorers').querySelector('.helpBody'); if (!body) return;
-  const cached = tab === 'goals' ? _goalsList : _assistsList;
+  const cached = tab === 'goals' ? _goalsList : tab === 'assists' ? _assistsList : _cardsList;
   if (cached) return renderScorers(cached);
   body.innerHTML = `<div class="scMsg">${t('scorersLoading')}</div>`;
-  (tab === 'goals' ? loadGoals() : loadAssists()).then(list => {
-    if (tab === 'goals') _goalsList = list; else _assistsList = list;
+  const loader = tab === 'goals' ? loadGoals() : tab === 'assists' ? loadAssists() : loadCards();
+  loader.then(list => {
+    if (tab === 'goals') _goalsList = list; else if (tab === 'assists') _assistsList = list; else _cardsList = list;
     if (scorersOn && scorersTab === tab) renderScorers(list);
   }).catch(() => { if (scorersOn && scorersTab === tab) body.innerHTML = `<div class="scMsg">${t('scorersErr')}</div>`; });
 }
 function renderScorers(list) {
   if (!scorersOn) return;
   const body = $id('scorers').querySelector('.helpBody'); if (!body) return;
+  const val = s => scorersTab === 'cards' ? `<span class="cards">🟨 ${s.y}${s.r ? `  🟥 ${s.r}` : ''}</span>` : `<span class="gl">${s.n}</span>`;
   body.innerHTML = list.length
-    ? list.map((s, i) => `<div class="scRow"><span class="rk">${i + 1}</span>${TEAMS[s.team] ? `<img src="${flagURL(s.team)}" alt="">` : ''}<span class="nm">${s.name}</span><span class="tm">${s.team || ''}</span><span class="gl">${s.n}</span></div>`).join('')
+    ? list.map((s, i) => `<div class="scRow"><span class="rk">${i + 1}</span>${TEAMS[s.team] ? `<img src="${flagURL(s.team)}" alt="">` : ''}<span class="nm">${s.name}</span><span class="tm">${s.team || ''}</span>${val(s)}</div>`).join('')
     : `<div class="scMsg">${t('scorersEmpty')}</div>`;
 }
 
