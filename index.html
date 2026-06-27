@@ -1578,24 +1578,43 @@ const PAGE_TITLE = src =>
   src === 'final' ? '2026 FIFA World Cup final' :
   '2026 FIFA World Cup Group ' + src.slice(-1);
 
-const _wikiCache = {};   // src -> {t, text}; dedupes fetches across backfill + poller
-async function fetchSrcPage(src) {
-  const c = _wikiCache[src];
+const _wikiCache = {};   // title -> {t, text}; dedupes fetches across backfill + poller + transclusions
+async function fetchWikiText(title) {
+  const c = _wikiCache[title];
   if (c && Date.now() - c.t < 90000) return c.text;
   const url = 'https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&rvslots=main'
-    + '&formatversion=2&format=json&origin=*&titles=' + encodeURIComponent(PAGE_TITLE(src));
+    + '&formatversion=2&format=json&origin=*&titles=' + encodeURIComponent(title);
   const j = await (await fetch(url)).json();
-  const text = j.query.pages[0].revisions[0].slots.main.content;
-  _wikiCache[src] = {t: Date.now(), text};
+  const pg = j.query.pages[0];
+  const text = (pg && pg.revisions && pg.revisions[0].slots.main.content) || '';
+  _wikiCache[title] = {t: Date.now(), text};
   return text;
+}
+const fetchSrcPage = src => fetchWikiText(PAGE_TITLE(src));
+
+// pull a match's <section begin=SEC/>…<section end=…> block out of a page's wikitext
+const _secEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const sectionBlock = (text, sec) =>
+  (text.match(new RegExp('<section begin="?' + _secEsc(sec) + '"? *\\/>([\\s\\S]*?)<section end=')) || [])[1] || null;
+
+// Resolve a match's block, following one level of labeled-section transclusion:
+// once a match becomes notable Wikipedia moves it to its own article and the group
+// page keeps only {{#lst:Article|SEC}}, so the inline |score= disappears. Chase it.
+async function matchBlock(m, pageText) {
+  let block = sectionBlock(pageText, m.sec);
+  if (!block) return null;
+  const lst = block.match(/\{\{\s*#lst:\s*([^|}]+?)\s*\|\s*([^|}]+?)\s*\}\}/i);
+  if (lst) {
+    const art = await fetchWikiText(lst[1].trim());
+    block = sectionBlock(art, lst[2].trim()) || block;
+  }
+  return block;
 }
 
 // pull one match's score / a.e.t. / penalties out of a page's wikitext.
 // returns true if anything changed; `celebrate` only pops goal confetti for a
 // rising score on a live match (so backfilled history stays silent).
-function applyWikiScore(m, text, celebrate) {
-  const secRe = new RegExp('<section begin="?' + m.sec.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '"? *\\/>([\\s\\S]*?)<section end=');
-  const block = (text.match(secRe) || [])[1];
+function applyScoreBlock(m, block, celebrate) {
   if (!block) return false;
   const field = f => (block.match(new RegExp('^\\|' + f + '=(.*)$', 'm')) || ['', ''])[1];
   let changed = false;
@@ -1631,7 +1650,7 @@ async function pollLiveScores() {
   for (const src of [...new Set(active.map(m => m.src))]) {
     try {
       const text = await fetchSrcPage(src);
-      for (const m of active.filter(x => x.src === src)) if (applyWikiScore(m, text, true)) changed = true;
+      for (const m of active.filter(x => x.src === src)) if (applyScoreBlock(m, await matchBlock(m, text), true)) changed = true;
     } catch (e) { /* offline or API hiccup — retry next tick */ }
   }
   if (changed) refreshViews();
@@ -1646,7 +1665,7 @@ async function backfillScores() {
     let changed = false;
     try {
       const text = await fetchSrcPage(src);
-      for (const m of need.filter(x => x.src === src)) if (applyWikiScore(m, text, false)) changed = true;
+      for (const m of need.filter(x => x.src === src)) if (applyScoreBlock(m, await matchBlock(m, text), false)) changed = true;
     } catch (e) { /* skip this page — the poller will retry in-window games */ }
     if (changed) refreshViews();   // progressive: scores show as each page lands
   }
