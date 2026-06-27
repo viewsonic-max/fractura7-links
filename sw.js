@@ -3,7 +3,7 @@
 // clients pick up new HTML/JS. Network-first for navigations (fresh app when
 // online, cached shell when offline); cache-first for the static shell assets;
 // runtime cache for cross-origin CDN assets (Leaflet, fonts, flags).
-const CACHE = 'wcviz-v3';
+const CACHE = 'wcviz-v4';
 const SHELL = [
   './',
   './index.html',
