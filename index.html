@@ -153,6 +153,11 @@
   }
   #followFlag{width:26px; height:19px; border-radius:3px; object-fit:cover; display:none;
     box-shadow:0 0 0 2px var(--gold);}
+  #followClear{display:none; order:2; place-items:center; width:28px; height:30px; padding:0;
+    background:#16203a; color:var(--ink-dim); border:1px solid var(--panel-border);
+    border-radius:9px; font:700 13px 'Outfit',sans-serif; line-height:1; cursor:pointer;}
+  #followClear:hover{color:var(--ink); border-color:var(--gold);}
+  #follow.on #followClear{display:grid;}
 
   /* ── side panel ─────────────────────────── */
   #panel{
@@ -616,6 +621,11 @@
     #teamFabFace{font-size:16px; line-height:1;}
     #teamFabFace img{width:27px; height:19px; border-radius:3px; display:block; object-fit:cover;}
     #teamFab select{position:absolute; inset:0; width:100%; height:100%; opacity:0; font-size:16px;}
+    #teamFabClear{display:none; position:absolute; top:-7px; right:-7px; z-index:3;
+      width:21px; height:21px; border-radius:999px; background:#16203a; color:var(--ink);
+      border:1.5px solid var(--gold); font:700 11px/19px 'Outfit',sans-serif; text-align:center;
+      cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.5);}
+    #teamFab.on #teamFabClear{display:block;}
 
     /* compact timeline */
     #tl{left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom)); padding:8px; gap:7px; border-radius:14px;}
@@ -668,6 +678,7 @@
   <img id="followFlag" alt="">
   <label for="teamSel">⭐ Follow:</label>
   <select id="teamSel"><option value="">— pick a team —</option></select>
+  <button id="followClear" type="button" title="Clear team · reset view" aria-label="Clear team and reset view" onclick="clearFollow()">✕</button>
 </div>
 
 <div id="panel">
@@ -676,7 +687,7 @@
 </div>
 <div id="fabRow">
   <button id="fab" aria-label="Toggle match list">📋</button>
-  <div id="teamFab" role="button" title="Follow a team" aria-label="Follow a team"><span id="teamFabFace">⭐</span></div>
+  <div id="teamFab" role="button" title="Follow a team" aria-label="Follow a team"><span id="teamFabFace">⭐</span><span id="teamFabClear" role="button" title="Clear team · reset view" aria-label="Clear team and reset view" onclick="event.stopPropagation(); clearFollow()">✕</span></div>
 </div>
 <div id="drawer" role="dialog" aria-modal="true" aria-label="Group details"><div id="drawerInner"></div></div>
 <div id="bracket" role="dialog" aria-modal="true" aria-label="Bracket predictor"><div id="bracketInner"></div></div>
@@ -797,7 +808,7 @@ const STR = {
     nextKickoff: (dur, a, b, v) => `⏳ Next kickoff in <b style="color:var(--sky)">${dur}</b> — ${a} v ${b} · ${v}`,
     tournamentDone: '🏆 Tournament complete — see you in 2030!',
     thTeam: 'TEAM', thP: 'P', thW: 'W', thD: 'D', thL: 'L', thGD: 'GD', thPts: 'PTS',
-    clickFollow: 'Click to follow',
+    clickFollow: 'Click to follow', clearTeam: 'Clear team · reset view',
     legendPlayed: 'top two advance · 3rd place may advance (8 best of 12) · click a team to follow',
     legendEmpty: 'no results yet — table fills in as matches finish · click a team to follow',
     legendProj: '🔮 projected standings — pick outcomes below · top two advance',
@@ -887,7 +898,7 @@ const STR = {
     nextKickoff: (dur, a, b, v) => `⏳ Próximo inicio en <b style="color:var(--sky)">${dur}</b> — ${a} vs ${b} · ${v}`,
     tournamentDone: '🏆 Torneo terminado — ¡nos vemos en 2030!',
     thTeam: 'EQUIPO', thP: 'PJ', thW: 'G', thD: 'E', thL: 'P', thGD: 'DG', thPts: 'PTS',
-    clickFollow: 'Clic para seguir',
+    clickFollow: 'Clic para seguir', clearTeam: 'Quitar equipo · restablecer vista',
     legendPlayed: 'los 2 primeros avanzan · el 3er lugar puede avanzar (8 mejores de 12) · clic en un equipo para seguir',
     legendEmpty: 'aún sin resultados — la tabla se llena al terminar los partidos · clic en un equipo para seguir',
     legendProj: '🔮 tabla proyectada — elige resultados abajo · los 2 primeros avanzan',
@@ -1527,6 +1538,7 @@ sel.onchange = () => {
   else img.style.display = 'none';
   $id('teamFabFace').innerHTML = follow ? `<img src="${flagURL(follow)}" alt="${teamName(follow)}">` : '⭐';
   $id('teamFab').classList.toggle('on', !!follow);
+  $id('follow').classList.toggle('on', !!follow);   // reveals the desktop ✕ clear button
   DAYS.forEach((d, i) => {
     const has = follow && byDay[d].some(m => m.a === follow || m.b === follow);
     document.querySelector(`#dd${i} .fdot`).style.display = has ? 'block' : 'none';
@@ -1546,6 +1558,14 @@ const teamDayIdxs = () =>
 function followTeam(c) {
   sel.value = c; sel.onchange();
   if ($id('drawer').classList.contains('open')) openGroup(groupOf(c));
+}
+// one-tap reset: unfollow, drop the road toggle, and fly the map back to the
+// default North-America view (the ✕ on the follow control / team FAB)
+function clearFollow() {
+  if (!follow) return;
+  roadOn = false;
+  sel.value = ''; sel.onchange();          // clears journey, arcs, day dots, highlights (+ persists via buildJourney→saveState)
+  try { map.flyTo([37.5, -97], 4, { duration: .8 }); } catch (e) {}
 }
 
 // ── live engine ──────────────────────────────────────────────────────────
@@ -2811,6 +2831,7 @@ function applyStaticText() {
   const lbl = $id('follow').querySelector('label'); if (lbl) lbl.textContent = t('followLabel');
   $id('prevBtn').title = t('tPrev'); $id('playBtn').title = t('tPlay'); $id('nextBtn').title = t('tNext');
   $id('predBtn').title = t('tPred'); $id('helpBtn').title = t('tHelp');
+  [$id('followClear'), $id('teamFabClear')].forEach(el => { if (el) { el.title = t('clearTeam'); el.setAttribute('aria-label', t('clearTeam')); } });
 }
 function applyLanguage() {
   applyStaticText();
