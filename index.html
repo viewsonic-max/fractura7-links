@@ -806,7 +806,7 @@ const STR = {
     linkCopied: '🔗 Bracket link copied!', copyFailed: 'Copy failed', clipNA: 'Clipboard unavailable',
     confirmClear: 'Clear your whole bracket?',
     hintGroups: `Use <b>▲▼</b> to set each group's finish. Top 2 advance (<b style="color:var(--pitch)">green</b>); the 3rd (<b style="color:var(--orange)">amber</b>) can grab a wildcard spot — assign those in <b>Knockout</b>. Finished groups lock to the real result.`,
-    tagFinal: 'FINAL', tagPicked: 'PICKED', tagLive: 'LIVE', clinched: 'Place clinched — locked by results',
+    tagFinal: 'FINAL', tagPicked: 'PICKED', tagLive: 'LIVE', clinched: 'Place clinched — locked by results', qualified: 'Qualified for the knockout stage',
     moveUp: n => `Move ${n} up`, moveDown: n => `Move ${n} down`,
     hintKnockout: `Tap a team to send them through — winners flow to the next round. Tap an amber <b style="color:var(--orange)">🃏 3rd ▾</b> slot to cycle eligible wildcards. Blanks stay as placeholders; real results lock and score your picks ✓/✗. Tip: hit <b>⚡ Auto</b> to seed groups, then tweak.`,
     koTitles: {'Round of 32':'Round of 32','Round of 16':'Round of 16','Quarterfinal':'Quarterfinals','Semifinal':'Semifinals','Final':'Final','Third Place':'3rd Place'},
@@ -896,7 +896,7 @@ const STR = {
     linkCopied: '🔗 ¡Enlace del cuadro copiado!', copyFailed: 'Error al copiar', clipNA: 'Portapapeles no disponible',
     confirmClear: '¿Borrar todo tu cuadro?',
     hintGroups: `Usa <b>▲▼</b> para definir la posición final de cada grupo. Los 2 primeros avanzan (<b style="color:var(--pitch)">verde</b>); el 3º (<b style="color:var(--orange)">ámbar</b>) puede tomar un lugar de comodín — asígnalos en <b>Eliminatorias</b>. Los grupos terminados se fijan al resultado real.`,
-    tagFinal: 'FINAL', tagPicked: 'ELEGIDO', tagLive: 'EN VIVO', clinched: 'Puesto asegurado — fijado por resultados',
+    tagFinal: 'FINAL', tagPicked: 'ELEGIDO', tagLive: 'EN VIVO', clinched: 'Puesto asegurado — fijado por resultados', qualified: 'Clasificado a la fase final',
     moveUp: n => `Subir a ${n}`, moveDown: n => `Bajar a ${n}`,
     hintKnockout: `Toca un equipo para hacerlo avanzar — los ganadores fluyen a la siguiente ronda. Toca un casillero ámbar <b style="color:var(--orange)">🃏 3º ▾</b> para alternar los comodines elegibles. Los espacios en blanco quedan como marcadores; los resultados reales se fijan y califican tus pronósticos ✓/✗. Consejo: presiona <b>⚡ Auto</b> para sembrar los grupos y luego ajusta.`,
     koTitles: {'Round of 32':'16avos','Round of 16':'Octavos','Quarterfinal':'Cuartos','Semifinal':'Semis','Final':'Final','Third Place':'3er Lugar'},
@@ -2582,6 +2582,7 @@ function renderGroupsView() {
       const lock = dec || clinch[i] === c;            // reality has fixed this row (full result, or a clinched place)
       let vb = '';
       if (dec && PRED.g[g] && i < 3) { const ok = PRED.g[g][i] === real[i]; vb = `<span class="vb ${ok ? 'ok' : 'no'}">${ok ? '✓' : '✗'}</span>`; }
+      else if (dec && i < 2) vb = `<span class="vb ok" title="${t('qualified')}">✓</span>`;   // finished group, no pick to grade → mark the qualified top two
       else if (!dec && clinch[i] === c) vb = `<span class="vb ok" title="${t('clinched')}">🔒</span>`;
       h += `<div class="grpRow ${cls}${lock ? ' locked' : ''}">
         <span class="rk">${i + 1}</span>
