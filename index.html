@@ -69,8 +69,20 @@
     -webkit-background-clip:text; background-clip:text; color:transparent;
     display:flex; align-items:center; gap:8px;
   }
-  #hdr h1 .ball{font-size:24px; -webkit-text-fill-color:initial; animation:spin 9s linear infinite; display:inline-block;}
+  #hdr h1 .ball{font-size:24px; -webkit-text-fill-color:initial; animation:spin 9s linear infinite; display:inline-block; cursor:pointer;}
   @keyframes spin{to{transform:rotate(360deg)}}
+  /* easter egg: tap the header ball 5× and it breaks loose, bouncing across the map */
+  #looseBall{position:fixed; left:14px; top:46px; font-size:40px; z-index:2000; pointer-events:none; will-change:transform; filter:drop-shadow(0 6px 8px rgba(0,0,0,.6)); animation:ballKick 2.6s cubic-bezier(.45,0,.55,1) forwards;}
+  @keyframes ballKick{
+    0%{transform:translate(0,0) rotate(0);}
+    14%{transform:translate(12vw,-9vh) rotate(200deg);}
+    30%{transform:translate(26vw,46vh) rotate(430deg);}
+    43%{transform:translate(38vw,20vh) rotate(650deg);}
+    57%{transform:translate(52vw,58vh) rotate(910deg);}
+    70%{transform:translate(64vw,36vh) rotate(1130deg);}
+    84%{transform:translate(78vw,64vh) rotate(1350deg);}
+    100%{transform:translate(98vw,72vh) rotate(1580deg); opacity:0;}
+  }
   #hdr .sub{font-size:11.5px; color:var(--ink-dim); margin-top:3px;}
   #dayTitle{font-size:26px; font-weight:800; margin-top:10px; line-height:1;}
   #dayMeta{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;}
@@ -2851,6 +2863,35 @@ if (_params.get('predict')) predOpen();
 // first-time visitors get the tutorial once (unless a deep link is steering them somewhere)
 let _seenHelp = true; try { _seenHelp = !!localStorage.getItem(HELP_KEY); } catch (e) {}
 if (!_seenHelp && !_params.get('predict') && !_params.get('group') && !_params.get('play')) helpOpen();
+
+// ── easter eggs ───────────────────────────────────────────────────────────────
+// A signature in the console for anyone who opens devtools.
+(() => {
+  try {
+    console.log('%c⚽  WORLD CUP 26 · MATCH DAY MAP',
+      'font:700 14px/1.6 system-ui,sans-serif; color:#22e07c; text-shadow:0 1px 0 rgba(0,0,0,.4)');
+    console.log('%c104 matches · 16 stadiums · 3 host nations · one self-contained HTML file.\nbuilt in stoppage time — poke around. (psst: the ball up top likes attention.)',
+      'color:#7d8aa3; font:12px/1.6 monospace');
+  } catch (e) {}
+})();
+// Tap the spinning header ball 5× (within ~1.2s of each tap) and it breaks loose,
+// bouncing across the map before rolling off. Delegated so it survives the header's
+// language-toggle re-render; respects reduced-motion.
+let _ballTaps = 0, _ballLast = 0;
+document.addEventListener('click', e => {
+  if (!e.target.closest || !e.target.closest('#hdr h1 .ball')) return;
+  const now = Date.now();
+  _ballTaps = (now - _ballLast < 1200) ? _ballTaps + 1 : 1;
+  _ballLast = now;
+  if (_ballTaps >= 5) { _ballTaps = 0; kickBall(); }
+});
+function kickBall() {
+  if (reduceMotion || document.getElementById('looseBall')) return;   // a11y: skip the flight under reduced motion; ignore re-taps mid-flight
+  const b = document.createElement('div');
+  b.id = 'looseBall'; b.textContent = '⚽'; b.setAttribute('aria-hidden', 'true');
+  b.addEventListener('animationend', () => b.remove());
+  document.body.appendChild(b);
+}
 </script>
 </body>
 </html>
