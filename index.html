@@ -423,7 +423,18 @@
   .stopBadge.dim{opacity:.28;}
   .stopBadge.pop{animation:badgePop .55s ease;}
   @keyframes badgePop{0%{transform:scale(1)}30%{transform:scale(1.45)}100%{transform:scale(1)}}
-  .ballIcon{font-size:17px; filter:drop-shadow(0 2px 5px rgba(0,0,0,.65)); animation:spin 2.2s linear infinite;}
+  .ballWrap{position:relative; display:inline-block; line-height:1;}
+  .ballIcon{display:inline-block; font-size:17px; filter:drop-shadow(0 2px 5px rgba(0,0,0,.65)); animation:spin 2.2s linear infinite;}
+  /* "¿Y si sí?" speech bubble that rides the ball up Mexico's road to the Final */
+  .ballSay{position:absolute; left:17px; top:50%; transform:translateY(-50%); white-space:nowrap;
+    padding:3px 8px; border-radius:9px; background:rgba(11,17,32,.93); border:1px solid var(--gold);
+    color:var(--gold); font:800 12px 'Outfit',sans-serif; box-shadow:0 4px 14px rgba(0,0,0,.55); pointer-events:none;}
+  .ballSay[hidden]{display:none;}
+  .ballSay.say-pop{animation:sayPop .5s ease;}
+  @keyframes sayPop{0%{transform:translateY(-50%) scale(.5); opacity:0;}60%{transform:translateY(-50%) scale(1.14);}100%{transform:translateY(-50%) scale(1); opacity:1;}}
+  .ballSay.l4{color:#fff; font-size:13px; background:linear-gradient(120deg,rgba(255,209,102,.34),rgba(11,17,32,.93)); box-shadow:0 0 16px rgba(255,209,102,.6);}
+  .ballSay.l5{color:#fff; border-color:var(--hot);}
+  .ballSay.l6{color:#fff; font-size:13px; border-color:var(--hot); background:linear-gradient(120deg,rgba(255,93,143,.4),rgba(11,17,32,.95)); box-shadow:0 0 18px rgba(255,93,143,.6);}
 
   /* ── popup ──────────────────────────────── */
   .leaflet-popup-content-wrapper{
@@ -1334,7 +1345,7 @@ function chainFromMatchN(n) {
   let cur = matchByN(n);
   const out = [];
   while (cur && out.length < 6) {
-    out.push({v: cur.v, label: roundShort(cur.r), d: cur.d});
+    out.push({v: cur.v, label: roundShort(cur.r), d: cur.d, r: cur.r});
     if (cur.r === 'Final') break;
     cur = MATCHES.find(m => (m.a === `?W Match ${cur.n}` || m.b === `?W Match ${cur.n}`) && m.r !== 'Third Place');
   }
@@ -1416,7 +1427,7 @@ function buildJourney() {
   const stops = gm.map(m => ({
     v: m.v,
     label: m.r === 'Group Stage' ? t('mdShort', mdOf(m.d)) : roundShort(m.r),
-    d: m.d, k: m.r !== 'Group Stage', hyp: false,
+    d: m.d, k: m.r !== 'Group Stage', hyp: false, r: m.r,
   }));
   const inGroups = gm.length && gm[gm.length - 1].r === 'Group Stage';
   const posOpts = inGroups ? attainablePos(follow) : [];
@@ -1428,7 +1439,7 @@ function buildJourney() {
   const merged = [];
   for (const s of all) {
     const p = merged[merged.length - 1];
-    if (p && p.v === s.v) p.label += ' · ' + s.label;
+    if (p && p.v === s.v) { p.label += ' · ' + s.label; p.r = s.r; }   // same venue → keep the deeper (later) round
     else merged.push({...s});
   }
 
@@ -1456,14 +1467,27 @@ function buildJourney() {
       interactive: false,
     }).addTo(journeyLayer);
   });
+  // Mexico easter egg: an escalating "¿Y si sí?" that rides the ball up the road to
+  // the Final — one phrase per stop, climbing the YSISI ladder (peaks at the QF =
+  // winning the Round of 16, "el quinto partido"). Only on Mexico's hypothetical road.
+  let says = null;
+  if (follow === _MX && road.length) {
+    let last = null;
+    says = merged.map(s => {
+      const tier = ROAD_TIER[s.r];
+      const here = tier ? { phrase: YSISI[tier].phrase, lvl: YSISI[tier].lvl } : null;
+      if (here && (!last || here.lvl >= last.lvl)) last = here;   // never step backward
+      return last;
+    });
+  }
   if (fullPath.length > 1) {
     const ball = L.marker(fullPath[0], {
-      icon: L.divIcon({className:'', html:'<div class="ballIcon">⚽</div>', iconSize:[20,20], iconAnchor:[10,10]}),
+      icon: L.divIcon({className:'', html:'<div class="ballWrap"><span class="ballIcon">⚽</span><span class="ballSay" hidden></span></div>', iconSize:[20,20], iconAnchor:[10,10]}),
       interactive: false, zIndexOffset: 3000,
     }).addTo(journeyLayer);
     let idx = 0;
     if (!reduceMotion) ballTimer = setInterval(() => { idx = (idx + 1) % fullPath.length; ball.setLatLng(fullPath[idx]); }, 30);
-    jAnim = {ball, path: fullPath, stopIdx, stopMarkers, cumMiles, total: cumMiles[cumMiles.length - 1]};
+    jAnim = {ball, path: fullPath, stopIdx, stopMarkers, cumMiles, total: cumMiles[cumMiles.length - 1], says};
   }
   journeyVenues = new Set(merged.map(s => s.v));
   updateMarkers(DAYS[dayIdx]);
@@ -1475,16 +1499,31 @@ function buildJourney() {
 // and counting the miles up live; resume the idle loop when it lands at the end.
 let jPlaying = false;
 function badgeEl(marker) { const e = marker.getElement && marker.getElement(); return e ? e.querySelector('.stopBadge') : null; }
+// the "¿Y si sí?" speech bubble that rides the ball (Mexico road easter egg)
+function ballSayEl() { const e = jAnim && jAnim.ball.getElement && jAnim.ball.getElement(); return e ? e.querySelector('.ballSay') : null; }
+function setBallSay(stopI) {
+  const el = ballSayEl(); if (!el || !jAnim || !jAnim.says) return;
+  const say = jAnim.says[stopI];
+  if (!say) { el.hidden = true; el.removeAttribute('data-s'); return; }
+  if (el.dataset.s === String(say.lvl)) return;          // same phrase already up
+  el.dataset.s = String(say.lvl);
+  el.textContent = say.phrase;
+  el.className = 'ballSay l' + say.lvl;
+  el.hidden = false;
+  if (!reduceMotion) { void el.offsetWidth; el.classList.add('say-pop'); setTimeout(() => el && el.classList.remove('say-pop'), 520); }
+}
+function hideBallSay() { const el = ballSayEl(); if (el) { el.hidden = true; el.removeAttribute('data-s'); } }
 function playJourney() {
   if (!jAnim || jPlaying || jAnim.path.length < 2) return;
   jPlaying = true;
   if (ballTimer) { clearInterval(ballTimer); ballTimer = null; }
-  const {ball, path, stopIdx, stopMarkers, cumMiles, total} = jAnim;
+  const {ball, path, stopIdx, stopMarkers, cumMiles, total, says} = jAnim;
   const odo = $id('jOdo');
   stopMarkers.forEach((m, i) => { const b = badgeEl(m); if (b) b.classList.toggle('dim', i > 0); });
   let i = 0, nextStop = 1;
   const arrive = s => { const b = badgeEl(stopMarkers[s]); if (b) { b.classList.remove('dim'); b.classList.add('pop'); setTimeout(() => b && b.classList.remove('pop'), 600); } };
   arrive(0);
+  if (says) setBallSay(0); else hideBallSay();
   const tick = () => {
     i++;
     ball.setLatLng(path[i]);
@@ -1494,9 +1533,11 @@ function playJourney() {
     const frac = b > a ? (i - a) / (b - a) : 1;
     if (odo) odo.textContent = nfmt(Math.round(segFrom + (segTo - segFrom) * Math.min(1, Math.max(0, frac))));
     if (i >= stopIdx[nextStop]) { arrive(nextStop); nextStop++; }
+    if (says) setBallSay(nextStop - 1);                  // the bubble climbs as the ball reaches each round
     if (i >= path.length - 1 || nextStop >= stopIdx.length) {
       clearInterval(playTimer); playTimer = null; jPlaying = false;
       if (odo) odo.textContent = nfmt(Math.round(total));
+      if (says) setTimeout(hideBallSay, 2200);           // let the Final line land, then clear
       // resume gentle idle loop from the start
       let k = 0;
       ballTimer = setInterval(() => { k = (k + 1) % path.length; ball.setLatLng(path[k]); }, 30);
@@ -1618,6 +1659,9 @@ const YSISI = {
   champion: {lvl:7, phrase:'SÍ. SÍ FUE.',                     en:'Yes. It happened. 😭🏆🇲🇽',              es:'Sí. Sí fue. 😭🏆🇲🇽'},
   out:      {lvl:8, phrase:'…la próxima. Siempre la próxima.', en:'…next time. Always next time. 🥲🇲🇽',   es:'…la próxima. Siempre la próxima. 🥲🇲🇽'},
 };
+// which "¿Y si sí?" tier rides the ball as it reaches each round on the Road to the
+// Final (arriving at a round ⇒ you're playing it). Peaks at the QF stop = won the R16.
+const ROAD_TIER = {'Group Stage':'w1', 'Round of 32':'group', 'Round of 16':'r32', 'Quarterfinal':'r16', 'Semifinal':'qf', 'Final':'final'};
 const _MX = 'MEX';
 const _MX_ROUNDS = ['Group Stage','Round of 32','Round of 16','Quarterfinal','Semifinal','Final'];
 const _mxMatches = () => MATCHES.filter(m => m.a === _MX || m.b === _MX);
