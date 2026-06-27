@@ -230,6 +230,10 @@
   .stTbl tr.m td.ps{color:var(--orange);}
   .stTbl td.pts{font-weight:900; color:var(--gold);}
   .stTbl tr.fol td{background:rgba(255,209,102,.08);}
+  .t3b{margin-left:5px; font-weight:900; font-size:11px; vertical-align:1px;}
+  .t3b.ok{color:var(--pitch);} .t3b.no{color:var(--ink-dim);}
+  .stTbl tr.t3in td.ps{color:var(--pitch);}
+  .stTbl tr.t3out{opacity:.5;}
   .legend{font-size:9.5px; color:var(--ink-dim); margin:6px 2px 0;}
   .gfix{margin-top:10px; border-top:1px solid rgba(255,255,255,.08); padding-top:8px;}
   .gfixTitle{font-size:10px; font-weight:800; color:var(--ink-dim); letter-spacing:1px; margin:0 6px 4px;}
@@ -806,7 +810,7 @@ const STR = {
     linkCopied: '🔗 Bracket link copied!', copyFailed: 'Copy failed', clipNA: 'Clipboard unavailable',
     confirmClear: 'Clear your whole bracket?',
     hintGroups: `Use <b>▲▼</b> to set each group's finish. Top 2 advance (<b style="color:var(--pitch)">green</b>); the 3rd (<b style="color:var(--orange)">amber</b>) can grab a wildcard spot — assign those in <b>Knockout</b>. Finished groups lock to the real result.`,
-    tagFinal: 'FINAL', tagPicked: 'PICKED', tagLive: 'LIVE', clinched: 'Place clinched — locked by results', qualified: 'Qualified for the knockout stage',
+    tagFinal: 'FINAL', tagPicked: 'PICKED', tagLive: 'LIVE', clinched: 'Place clinched — locked by results', qualified: 'Qualified for the knockout stage', thirdIn: 'Clinched a best-third spot — advancing', thirdOut: 'Eliminated from the best-third race',
     moveUp: n => `Move ${n} up`, moveDown: n => `Move ${n} down`,
     hintKnockout: `Tap a team to send them through — winners flow to the next round. Tap an amber <b style="color:var(--orange)">🃏 3rd ▾</b> slot to cycle eligible wildcards. Blanks stay as placeholders; real results lock and score your picks ✓/✗. Tip: hit <b>⚡ Auto</b> to seed groups, then tweak.`,
     koTitles: {'Round of 32':'Round of 32','Round of 16':'Round of 16','Quarterfinal':'Quarterfinals','Semifinal':'Semifinals','Final':'Final','Third Place':'3rd Place'},
@@ -896,7 +900,7 @@ const STR = {
     linkCopied: '🔗 ¡Enlace del cuadro copiado!', copyFailed: 'Error al copiar', clipNA: 'Portapapeles no disponible',
     confirmClear: '¿Borrar todo tu cuadro?',
     hintGroups: `Usa <b>▲▼</b> para definir la posición final de cada grupo. Los 2 primeros avanzan (<b style="color:var(--pitch)">verde</b>); el 3º (<b style="color:var(--orange)">ámbar</b>) puede tomar un lugar de comodín — asígnalos en <b>Eliminatorias</b>. Los grupos terminados se fijan al resultado real.`,
-    tagFinal: 'FINAL', tagPicked: 'ELEGIDO', tagLive: 'EN VIVO', clinched: 'Puesto asegurado — fijado por resultados', qualified: 'Clasificado a la fase final',
+    tagFinal: 'FINAL', tagPicked: 'ELEGIDO', tagLive: 'EN VIVO', clinched: 'Puesto asegurado — fijado por resultados', qualified: 'Clasificado a la fase final', thirdIn: 'Aseguró un lugar como mejor tercero — avanza', thirdOut: 'Eliminado de la lucha por mejor tercero',
     moveUp: n => `Subir a ${n}`, moveDown: n => `Bajar a ${n}`,
     hintKnockout: `Toca un equipo para hacerlo avanzar — los ganadores fluyen a la siguiente ronda. Toca un casillero ámbar <b style="color:var(--orange)">🃏 3º ▾</b> para alternar los comodines elegibles. Los espacios en blanco quedan como marcadores; los resultados reales se fijan y califican tus pronósticos ✓/✗. Consejo: presiona <b>⚡ Auto</b> para sembrar los grupos y luego ajusta.`,
     koTitles: {'Round of 32':'16avos','Round of 16':'Octavos','Quarterfinal':'Cuartos','Semifinal':'Semis','Final':'Final','Third Place':'3er Lugar'},
@@ -1970,13 +1974,18 @@ function renderGroup() {
     <div class="db">
       <table class="stTbl${proj ? ' proj' : ''}">
         <thead><tr><th></th><th class="tl">${t('thTeam')}</th><th>${t('thP')}</th><th>${t('thW')}</th><th>${t('thD')}</th><th>${t('thL')}</th><th>${t('thGD')}</th><th>${t('thPts')}</th></tr></thead>
-        <tbody>${st.map((r, i) => `
-          <tr class="${i < 2 ? 'q' : i === 2 ? 'm' : ''}${follow === r.c ? ' fol' : ''}" onclick="followTeam('${r.c}')" title="${t('clickFollow')}">
+        <tbody>${(() => { const t3 = proj ? null : thirdAdvanceStatus()[g]; return st.map((r, i) => {
+          const rk = i < 2 ? 'q' : i === 2 ? 'm' : '';
+          const t3cls = i === 2 && t3 === 'in' ? ' t3in' : i === 2 && t3 === 'out' ? ' t3out' : '';
+          const badge = i === 2 && t3 === 'in' ? `<span class="t3b ok" title="${t('thirdIn')}">✓</span>`
+            : i === 2 && t3 === 'out' ? `<span class="t3b no" title="${t('thirdOut')}">✗</span>` : '';
+          return `
+          <tr class="${rk}${t3cls}${follow === r.c ? ' fol' : ''}" onclick="followTeam('${r.c}')" title="${t('clickFollow')}">
             <td class="ps">${i + 1}</td>
-            <td class="tl"><img src="${flagURL(r.c)}" alt="">${teamName(r.c)}</td>
+            <td class="tl"><img src="${flagURL(r.c)}" alt="">${teamName(r.c)}${badge}</td>
             <td>${r.P}</td><td>${r.W}</td><td>${r.D}</td><td>${r.L}</td>
             <td>${r.GD > 0 ? '+' : ''}${r.GD}</td><td class="pts">${r.Pts}</td>
-          </tr>`).join('')}</tbody>
+          </tr>`; }).join(''); })()}</tbody>
       </table>
       <div class="legend">${proj ? t('legendProj') : anyPlayed ? t('legendPlayed') : t('legendEmpty')}</div>
       ${open.length ? `<div class="whatif">
@@ -2216,6 +2225,42 @@ function clinchedOrder(g) {
   const order = [null, null, null, null];
   for (const X of teams) { const s = [...posSet[X]]; if (s.length === 1 && s[0] >= 0) order[s[0]] = X; }   // same place in every scenario, GD never needed
   return _clinchCache[key] = order;
+}
+// Has each group's third-placed team clinched (or lost) one of the 8 best-third
+// knockout spots? Across groups, thirds are ranked by Pts → GD → GF (no head-to-head
+// — they're in different groups) and the top 8 of 12 advance (FIFA regs / Wikipedia
+// "Ranking of third-placed teams"). Groups are independent, so a third's worst case
+// is every OTHER group's third reaching its max possible points, its best case the
+// min. We judge on POINTS ALONE — never letting goal difference lock a race — so this
+// never false-clinches (matching clinchedOrder's philosophy): a finalised third is
+// 'in' when ≤7 other thirds can even match its points, 'out' when ≥8 are sure to top
+// it, else null (GD-dependent / still open). Only finalised thirds get a verdict.
+const _third8Cache = {};
+function thirdAdvanceStatus() {
+  const key = playedSig();
+  if (key in _third8Cache) return _third8Cache[key];
+  const G = Object.keys(GROUPS), band = {};
+  for (const g of G) {
+    const rem = MATCHES.filter(m => m.g === g && m.s1 == null), pts = standingsFor(g)[2].Pts;
+    if (!rem.length) { band[g] = { max: pts, min: pts, decided: true, pts }; continue; }
+    let mx = -1, mn = 99; const total = Math.pow(3, rem.length);
+    for (let mask = 0; mask < total; mask++) {
+      const hypo = {}; let x = mask;
+      for (let i = 0; i < rem.length; i++) { hypo[rem[i].n] = OUTCOMES[['h', 'd', 'a'][x % 3]]; x = Math.floor(x / 3); }
+      const pp = standingsFor(g, false, hypo)[2].Pts;
+      if (pp > mx) mx = pp; if (pp < mn) mn = pp;
+    }
+    band[g] = { max: mx, min: mn, decided: false, pts };
+  }
+  const out = {};
+  for (const g of G) {
+    if (!band[g].decided) { out[g] = null; continue; }
+    const px = band[g].pts;
+    const canMatch = G.filter(h => h !== g && band[h].max >= px).length;   // worst case: thirds at or above me
+    const sureAbove = G.filter(h => h !== g && band[h].min > px).length;   // best case: thirds still above me
+    out[g] = canMatch <= 7 ? 'in' : sureAbove >= 8 ? 'out' : null;
+  }
+  return _third8Cache[key] = out;
 }
 // committed = what feeds the bracket: real order if the group is done; otherwise the
 // user's predicted order, but with any mathematically clinched slot overridden by reality
@@ -2570,6 +2615,7 @@ function renderBracket() {
 }
 function renderGroupsView() {
   let h = `<p class="brkHint">${t('hintGroups')}</p><div class="grpGrid">`;
+  const third3 = thirdAdvanceStatus();
   for (const g of Object.keys(GROUPS)) {
     const dec = groupDecided(g), ord = displayOrder(g), clinch = clinchedOrder(g);
     const real = dec ? ord : null;
@@ -2583,6 +2629,7 @@ function renderGroupsView() {
       let vb = '';
       if (dec && PRED.g[g] && i < 3) { const ok = PRED.g[g][i] === real[i]; vb = `<span class="vb ${ok ? 'ok' : 'no'}">${ok ? '✓' : '✗'}</span>`; }
       else if (dec && i < 2) vb = `<span class="vb ok" title="${t('qualified')}">✓</span>`;   // finished group, no pick to grade → mark the qualified top two
+      else if (i === 2 && third3[g] === 'in') vb = `<span class="vb ok" title="${t('thirdIn')}">✓</span>`;   // third has clinched a best-third spot (✗ for 'out' lives in the group drawer, where it can't be mistaken for a wrong pick)
       else if (!dec && clinch[i] === c) vb = `<span class="vb ok" title="${t('clinched')}">🔒</span>`;
       h += `<div class="grpRow ${cls}${lock ? ' locked' : ''}">
         <span class="rk">${i + 1}</span>
