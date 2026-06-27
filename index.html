@@ -159,6 +159,33 @@
   #followClear:hover{color:var(--ink); border-color:var(--gold);}
   #follow.on #followClear{display:grid;}
 
+  /* ── "¿Y si sí?" Mexico easter-egg banner ─── */
+  #ysisi{position:relative; margin-top:8px; padding:8px 30px 8px 13px; border-radius:12px;
+    background:var(--panel); border:1px solid var(--panel-border); border-left:3px solid var(--pitch);
+    backdrop-filter:blur(12px); box-shadow:0 6px 22px rgba(0,0,0,.4); max-width:340px;}
+  #ysisi[hidden]{display:none;}
+  #ysisi.show{display:block; animation:ysisiIn .22s ease;}
+  @keyframes ysisiIn{from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:none;}}
+  #ysisi .yphrase{font:800 15px 'Outfit',sans-serif; color:var(--gold); line-height:1.18;}
+  #ysisi .ygloss{font-size:11.5px; color:var(--ink-dim); margin-top:2px; line-height:1.2;}
+  #ysisi .yx{position:absolute; top:5px; right:7px; background:none; border:none; padding:2px;
+    color:var(--ink-dim); font-size:12px; line-height:1; cursor:pointer;}
+  #ysisi .yx:hover{color:var(--ink);}
+  /* escalation: copy grows + accent heats up as Mexico advances */
+  #ysisi.l3 .yphrase,#ysisi.l4 .yphrase,#ysisi.l5 .yphrase,#ysisi.l6 .yphrase,#ysisi.l7 .yphrase{font-size:17px;}
+  #ysisi.l4{border-left-color:var(--gold);} #ysisi.l4 .yphrase{color:#fff;}
+  #ysisi.l5{border-left-color:var(--hot);}
+  #ysisi.l6,#ysisi.l7{border-left-color:var(--hot); background:linear-gradient(120deg,rgba(255,93,143,.16),var(--panel));}
+  #ysisi.l6 .yphrase,#ysisi.l7 .yphrase{color:#fff; font-size:18px;}
+  #ysisi.l8{border-left-color:var(--ink-dim);} #ysisi.l8 .yphrase{color:var(--ink-dim);}
+  #ysisi.pulse{animation:ysisiPulse .6s ease;}
+  @keyframes ysisiPulse{0%{transform:scale(1);}30%{transform:scale(1.04);}100%{transform:scale(1);}}
+  #ysisi.l4.pulse{animation:ysisiFlash .9s ease;}   /* el quinto partido — the loudest jump */
+  @keyframes ysisiFlash{0%{box-shadow:0 6px 22px rgba(0,0,0,.4);}
+    22%{box-shadow:0 0 30px 7px rgba(255,209,102,.9); transform:scale(1.06);}
+    100%{box-shadow:0 6px 22px rgba(0,0,0,.4); transform:scale(1);}}
+  @media (max-width:760px){ #ysisi{max-width:none;} }
+
   /* ── side panel ─────────────────────────── */
   #panel{
     position:absolute; top:175px; left:14px; bottom:118px; width:380px; z-index:999;
@@ -671,6 +698,10 @@
   <div id="dayTitle"></div>
   <div id="dayMeta"></div>
   <div id="liveStrip"></div>
+  <div id="ysisi" role="status" aria-live="polite" hidden>
+    <button class="yx" type="button" aria-label="Dismiss" onclick="ysisiDismiss()">✕</button>
+    <div class="yphrase"></div><div class="ygloss"></div>
+  </div>
   <div id="journey"></div>
 </div>
 
@@ -1075,7 +1106,7 @@ const LS_KEY = 'wcviz.v1';
 const loadSaved = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch (e) { return {}; } };
 const SAVED = loadSaved();
 function saveState() {
-  try { localStorage.setItem(LS_KEY, JSON.stringify({follow, roadOn, roadPos, day: DAYS[dayIdx], sound: soundOn, notify: notifyOn})); }
+  try { localStorage.setItem(LS_KEY, JSON.stringify({follow, roadOn, roadPos, day: DAYS[dayIdx], sound: soundOn, notify: notifyOn, ysisiDismissed})); }
   catch (e) { /* storage unavailable (private mode / quota) — ignore */ }
 }
 
@@ -1086,6 +1117,7 @@ let follow = '';
 let roadOn = false, roadPos = 'W';
 let soundOn = SAVED.sound === true;   // goal sounds opt-in; default muted
 let notifyOn = SAVED.notify === true; // match alerts opt-in; needs Notification permission
+let ysisiDismissed = SAVED.ysisiDismissed != null ? SAVED.ysisiDismissed : -1;  // highest "¿Y si sí?" tier the user dismissed
 // ── group "What if?" scenario state ──
 let curGroup = null;                  // group currently shown in the drawer
 let scenarioOn = false;               // is What-if mode active for this drawer
@@ -1172,6 +1204,7 @@ function setDay(i, fly) {
   confettiToggle(rkey === 'Final');
   if (!playing) saveState();   // don't let playback clobber the visitor's chosen day
   layoutPanel();
+  updateYsisi();               // refresh the Mexico "¿Y si sí?" banner on every render beat
 }
 
 function updateMarkers(d) {
@@ -1566,6 +1599,87 @@ function clearFollow() {
   roadOn = false;
   sel.value = ''; sel.onchange();          // clears journey, arcs, day dots, highlights (+ persists via buildJourney→saveState)
   try { map.flyTo([37.5, -97], 4, { duration: .8 }); } catch (e) {}
+}
+
+// ── "¿Y si sí?" — Mexico-only escalation banner (easter egg, see YSISI spec) ──
+// Reads MEX results out of MATCHES and climbs a copy ladder as Mexico advances
+// through their road to the Final — peaking when they finally clear the Round of
+// 16 ("el quinto partido") — then resolves to "siempre la próxima" if they fall.
+// Pure derivation: no new data, no network. The phrase is always Spanish; only the
+// gloss localizes. Shows ONLY when following Mexico.
+const YSISI = {
+  picked:   {lvl:0, phrase:'Tranquilo… no te ilusiones.',    en:"Don't get your hopes up. 🤔",          es:'No te ilusiones. 🤔'},
+  w1:       {lvl:1, phrase:'¿Y si sí?',                       en:'…but what if? 👀',                     es:'…¿y si sí? 👀'},
+  group:    {lvl:2, phrase:'¿Y si SÍ?',                       en:"They're through. What if? 🇲🇽👀",       es:'Pasaron. ¿Y si sí? 🇲🇽👀'},
+  r32:      {lvl:3, phrase:'Ok ok… ¿y si SÍ se puede?',       en:'Okay… what if it can happen? 😬',       es:'¿Y si SÍ se puede? 😬'},
+  r16:      {lvl:4, phrase:'¡EL QUINTO PARTIDO! …¿Y SI SÍ?',  en:'The fifth game — finally. WHAT IF?! 😱🇲🇽', es:'¡Por fin el quinto partido! 😱🇲🇽'},
+  qf:       {lvl:5, phrase:'¿¡Y SI SÍ!?',                     en:'Semifinal. This is real. 🔮🔥',         es:'¡Semifinal! Esto es real. 🔮🔥'},
+  final:    {lvl:6, phrase:'¡¿Y SI SÍ, CARAJO?!',            en:'THE FINAL. WHAT IF?! 😭🏆',             es:'¡LA FINAL! 😭🏆'},
+  champion: {lvl:7, phrase:'SÍ. SÍ FUE.',                     en:'Yes. It happened. 😭🏆🇲🇽',              es:'Sí. Sí fue. 😭🏆🇲🇽'},
+  out:      {lvl:8, phrase:'…la próxima. Siempre la próxima.', en:'…next time. Always next time. 🥲🇲🇽',   es:'…la próxima. Siempre la próxima. 🥲🇲🇽'},
+};
+const _MX = 'MEX';
+const _MX_ROUNDS = ['Group Stage','Round of 32','Round of 16','Quarterfinal','Semifinal','Final'];
+const _mxMatches = () => MATCHES.filter(m => m.a === _MX || m.b === _MX);
+const _mxPlayed = m => m.s1 != null && m.s2 != null;       // played & scored (mirror of the goal-tally check)
+function _mxWon(m) {
+  if (!_mxPlayed(m)) return false;
+  const us = m.a === _MX ? m.s1 : m.s2, them = m.a === _MX ? m.s2 : m.s1;
+  if (us !== them) return us > them;
+  if (m.pens) { const p = m.pens.split(/[–—-]/).map(Number); return (m.a === _MX ? p[0] : p[1]) > (m.a === _MX ? p[1] : p[0]); }
+  return false;                                             // knockout draw, no shootout data yet → no bump
+}
+function ysisiTier() {
+  if (follow !== _MX) return null;
+  const ms = _mxMatches();
+  if (!ms.length) return 'picked';
+  const fin = ms.find(m => m.r === 'Final');
+  if (fin && _mxPlayed(fin)) return _mxWon(fin) ? 'champion' : 'out';
+  // eliminated in a knockout: most recent played knockout match (ignoring the 3rd-place game) was a loss
+  const playedKO = ms.filter(m => m.r !== 'Group Stage' && m.r !== 'Third Place' && _mxPlayed(m));
+  const lastKO = playedKO[playedKO.length - 1];
+  if (lastKO && !_mxWon(lastKO)) return 'out';
+  // group-stage elimination: all group games played and never reached the Round of 32
+  const group = ms.filter(m => m.r === 'Group Stage');
+  const groupDone = group.length > 0 && group.every(_mxPlayed);
+  const inR32 = ms.some(m => m.r === 'Round of 32');
+  if (groupDone && !inR32) return 'out';
+  // achievement tiers (entering round N ⇒ won round N-1); deepest round MEX appears in
+  let dr = -1; for (const m of ms) dr = Math.max(dr, _MX_ROUNDS.indexOf(m.r));
+  if (dr >= 5) return 'final';   // into the Final  ⇐ won the Semifinal
+  if (dr >= 4) return 'qf';      // into the Semi   ⇐ won the Quarterfinal
+  if (dr >= 3) return 'r16';     // into the QF     ⇐ won the Round of 16 (el quinto partido)
+  if (dr >= 2) return 'r32';     // into the R16    ⇐ won the Round of 32
+  if (inR32)   return 'group';   // qualified from the group
+  if (group.some(_mxWon)) return 'w1';
+  return 'picked';
+}
+let _ysisiShownLvl = -1, _ysisiChamp = false;
+function updateYsisi() {
+  const el = $id('ysisi'); if (!el) return;
+  const tier = ysisiTier();
+  if (!tier || YSISI[tier].lvl <= ysisiDismissed) {        // not Mexico, or dismissed at this tier
+    el.classList.remove('show'); el.hidden = true;
+    if (_ysisiChamp) { _ysisiChamp = false; try { confettiToggle(false); } catch (e) {} }
+    _ysisiShownLvl = tier ? YSISI[tier].lvl : -1;
+    return;
+  }
+  const info = YSISI[tier], lvl = info.lvl;
+  el.querySelector('.yphrase').textContent = info.phrase;
+  el.querySelector('.ygloss').textContent = LANG === 'es' ? info.es : info.en;
+  el.className = 'show l' + lvl;
+  el.hidden = false;
+  if (lvl > _ysisiShownLvl && _ysisiShownLvl !== -1) {     // a fresh climb → emphasis pulse
+    void el.offsetWidth; el.classList.add('pulse');
+    setTimeout(() => el.classList.remove('pulse'), 950);
+  }
+  if (tier === 'champion') { if (!_ysisiChamp) { _ysisiChamp = true; try { confettiToggle(true); } catch (e) {} } }
+  else if (_ysisiChamp) { _ysisiChamp = false; try { confettiToggle(false); } catch (e) {} }
+  _ysisiShownLvl = lvl;
+}
+function ysisiDismiss() {
+  ysisiDismissed = _ysisiShownLvl; saveState();
+  const el = $id('ysisi'); el.classList.remove('show'); el.hidden = true;
 }
 
 // ── live engine ──────────────────────────────────────────────────────────
