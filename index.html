@@ -1036,6 +1036,43 @@ const shortHTML = t => {
   const tm = teamMeta(t);
   return tm.code ? `<img src="${tm.flag}" alt=""> ${tm.code}` : tm.badge;
 };
+
+// ── live knockout seeding ─────────────────────────────────────────────────
+// The baked data.js resolves knockout slots only as far as the last data rebuild;
+// scores backfill at runtime but the bracket teams don't, so a slot stays stuck on
+// "Winner Group G" / "Winner Match 79" until the next redeploy. Resolve placeholder
+// slots from REAL results here, at render time — the bracket self-seeds the moment
+// the feeding games finish (group → R32 → R16 → …). Real results ONLY; the user's
+// predictions live in the separate predictor path. A still-pending slot keeps its tag.
+function liveTag(m, side) { return realSlot(m, side) || m[side]; }
+function realSlot(m, side) {
+  const tag = m[side];
+  if (TEAMS[tag]) return tag;                                        // pipeline already baked the real team in
+  const p = tag.slice(1); let mm;
+  if ((mm = p.match(/^W·(\w)$/)))        return groupDecided(mm[1]) ? standingsFor(mm[1])[0].c : null;
+  if ((mm = p.match(/^2nd·(\w)$/)))      return groupDecided(mm[1]) ? standingsFor(mm[1])[1].c : null;
+  // 3rd·… is deliberately NOT resolved here. We can rank the eight qualifying thirds,
+  // but WHICH third fills WHICH R32 slot follows FIFA's fixed allocation table, which
+  // the app only approximates (thirdSlotMap's bipartite match can put the right teams
+  // in the wrong slots). Rather than risk showing a wrong opponent, keep the "3rd Place
+  // …" placeholder until the data pipeline bakes the authoritative pairing in.
+  if (p.startsWith('3rd·'))              return null;
+  if ((mm = p.match(/^W Match (\d+)$/))) { const x = matchByN(+mm[1]); return x ? koResultWinner(x) : null; }
+  if ((mm = p.match(/^L Match (\d+)$/))) { const x = matchByN(+mm[1]); return x ? koResultLoser(x) : null; }
+  return null;
+}
+// winner / loser of a finished knockout match, resolving its own slots recursively
+function koResultWinner(m) {
+  if (m.s1 == null) return null;
+  const a = liveTag(m, 'a'), b = liveTag(m, 'b');
+  if (!TEAMS[a] || !TEAMS[b]) return null;                           // a feeding slot still pending
+  if (m.pens) { const pp = m.pens.split(/[–—-]/).map(Number); return pp[0] > pp[1] ? a : b; }
+  return m.s1 > m.s2 ? a : m.s2 > m.s1 ? b : null;
+}
+function koResultLoser(m) {
+  const w = koResultWinner(m); if (!w) return null;
+  return w === liveTag(m, 'a') ? liveTag(m, 'b') : liveTag(m, 'a');
+}
 function haversineMi(a, b) {
   const R = 3959, rad = x => x * Math.PI / 180;
   const dLat = rad(b[0] - a[0]), dLng = rad(b[1] - a[1]);
@@ -1274,7 +1311,7 @@ function renderPanel(d, dayMatches, quiet) {
           <div class="ko">${koHtml}</div>
           <div class="mn">${groupLink}${m.r !== 'Group Stage' ? roundName(m.r) + ' · ' : ''}${t('matchWord')} ${m.n}</div>
         </div>
-        <div class="teams">${teamHTML(m.a)}${mid}${teamHTML(m.b, true)}</div>
+        <div class="teams">${teamHTML(liveTag(m,'a'))}${mid}${teamHTML(liveTag(m,'b'), true)}</div>
         <div class="your">${yourLine}</div>
       </div>`;
     }
@@ -1294,7 +1331,7 @@ function openVenue(name) {
   let body;
   if (ms.length) {
     body = ms.map(m => {
-      const A = teamMeta(m.a), B = teamMeta(m.b);
+      const A = teamMeta(liveTag(m,'a')), B = teamMeta(liveTag(m,'b'));
       return `<div class="ppm"><span class="t">${fmt12(m.t)}</span>
         ${A.flag ? `<img src="${A.flag}">` : ''}${A.name || A.label}
         <span style="color:var(--ink-dim)">${t('vsWord')}</span>
@@ -1735,7 +1772,7 @@ function renderStrip() {
   if (live.length) {
     strip.className = '';
     strip.innerHTML = live.map(m => {
-      const A = teamMeta(m.a), B = teamMeta(m.b);
+      const A = teamMeta(liveTag(m,'a')), B = teamMeta(liveTag(m,'b'));
       return `<span class="reddot"></span><b>${t('live')}</b> · ${A.name || A.label}${m.s1 != null ? ` <b style="color:var(--gold)">${m.s1}–${m.s2}</b>` : ' ' + t('vsWord')} ${B.name || B.label} · ${VENUES[m.v][0]} · ${m.clock || '~' + Math.round((now - kickoffUTC(m)) / 60000) + '′'}`;
     }).join('<br>');
     strip.onclick = () => { stopPlay(); setDay(DAYS.indexOf(live[0].d)); openVenue(live[0].v); };
@@ -1744,7 +1781,7 @@ function renderStrip() {
       .sort((a, b) => kickoffUTC(a) - kickoffUTC(b))[0];
     strip.className = 'next';
     if (next) {
-      const A = teamMeta(next.a), B = teamMeta(next.b);
+      const A = teamMeta(liveTag(next,'a')), B = teamMeta(liveTag(next,'b'));
       strip.innerHTML = t('nextKickoff', fmtDur(kickoffUTC(next) - now), A.name || A.label, B.name || B.label, VENUES[next.v][0]);
       strip.onclick = () => { stopPlay(); setDay(DAYS.indexOf(next.d)); openVenue(next.v); };
     } else {
@@ -1956,7 +1993,7 @@ function playDay(i) {
       const ms = slots[keys[s]];
       const tLocal = new Date(keys[s]).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
       clockShow(`<span class="t">🕐 ${tLocal}</span>` + ms.map(m =>
-        `<span>${shortHTML(m.a)} <span class="sep">${t('vsWord')}</span> ${shortHTML(m.b)} <span class="sep">·</span> ${VENUES[m.v][0]}</span>`
+        `<span>${shortHTML(liveTag(m,'a'))} <span class="sep">${t('vsWord')}</span> ${shortHTML(liveTag(m,'b'))} <span class="sep">·</span> ${VENUES[m.v][0]}</span>`
       ).join('<span class="sep">|</span>'));
       ms.forEach(m => { const id = cssId(m.v); hotMarker(id, 1); hotList.push(id); });
       s++;
