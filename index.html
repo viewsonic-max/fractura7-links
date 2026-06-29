@@ -1833,7 +1833,16 @@ const sectionBlock = (text, sec) =>
 // page keeps only {{#lst:Article|SEC}}, so the inline |score= disappears. Chase it.
 async function matchBlock(m, pageText) {
   let block = sectionBlock(pageText, m.sec);
-  if (!block) return null;
+  if (!block) {
+    // No inline <section> markers: the match lives in a sub-article referenced by a
+    // BARE {{#lst:Article|SEC}} sitting directly in the page — e.g. every round-of-32
+    // game moved to the "round of 32" sub-article and is transcluded bare on the
+    // knockout page, so its score/penalties never appear here. Find the reference by
+    // this match's section label and pull the section from the sub-article instead.
+    const bare = pageText.match(new RegExp('\\{\\{\\s*#lst:\\s*([^|}]+?)\\s*\\|\\s*' + _secEsc(m.sec) + '\\s*\\}\\}', 'i'));
+    if (!bare) return null;
+    return sectionBlock(await fetchWikiText(bare[1].trim()), m.sec);
+  }
   const lst = block.match(/\{\{\s*#lst:\s*([^|}]+?)\s*\|\s*([^|}]+?)\s*\}\}/i);
   if (lst) {
     const art = await fetchWikiText(lst[1].trim());
