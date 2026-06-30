@@ -1735,6 +1735,27 @@ function ysisiTier() {
   if (group.some(_mxWon)) return 'w1';
   return 'picked';
 }
+// Juan Gabriel — "Hasta que te conocí" — the bittersweet sting for Mexico's two
+// resolutions: the title ('champion') or the inevitable "…la próxima" ('out'). Gated
+// behind the goal-sound toggle (never autoplays ungated), plays once per tier entry,
+// and stops the moment we leave that tier / unfollow / the banner is dismissed.
+// preload='none' so non-Mexico fans never download the 600KB clip.
+let _ysisiAudio = null, _ysisiSangTier = null;
+function ysisiSong(tier) {                                  // 'champion' | 'out' → maybe sing; anything else → stop
+  const active = (tier === 'champion' || tier === 'out') && soundOn;
+  if (!active) {
+    if (_ysisiAudio) { _ysisiAudio.pause(); _ysisiAudio.currentTime = 0; }
+    _ysisiSangTier = null;
+    return;
+  }
+  if (tier === _ysisiSangTier) return;                     // already playing for this tier — don't restart each render beat
+  _ysisiSangTier = tier;
+  try {
+    if (!_ysisiAudio) { _ysisiAudio = new Audio('./hasta_que_te_conoci.mp3'); _ysisiAudio.preload = 'none'; }
+    _ysisiAudio.currentTime = 0;
+    _ysisiAudio.play().catch(() => {});                    // blocked without a user gesture → stay silent, no throw
+  } catch (e) {}
+}
 let _ysisiShownLvl = -1, _ysisiChamp = false;
 function updateYsisi() {
   const el = $id('ysisi'); if (!el) return;
@@ -1742,6 +1763,7 @@ function updateYsisi() {
   if (!tier || YSISI[tier].lvl <= ysisiDismissed) {        // not Mexico, or dismissed at this tier
     el.classList.remove('show'); el.hidden = true;
     if (_ysisiChamp) { _ysisiChamp = false; try { confettiToggle(false); } catch (e) {} }
+    ysisiSong(null);                                        // hidden/dismissed → silence the clip
     _ysisiShownLvl = tier ? YSISI[tier].lvl : -1;
     return;
   }
@@ -1756,11 +1778,13 @@ function updateYsisi() {
   }
   if (tier === 'champion') { if (!_ysisiChamp) { _ysisiChamp = true; try { confettiToggle(true); } catch (e) {} } }
   else if (_ysisiChamp) { _ysisiChamp = false; try { confettiToggle(false); } catch (e) {} }
+  ysisiSong(tier);                                          // sing on champion / out, once per entry
   _ysisiShownLvl = lvl;
 }
 function ysisiDismiss() {
   ysisiDismissed = _ysisiShownLvl; saveState();
   const el = $id('ysisi'); el.classList.remove('show'); el.hidden = true;
+  ysisiSong(null);                                          // dismissing the moment also stops the song
 }
 
 // ── live engine ──────────────────────────────────────────────────────────
