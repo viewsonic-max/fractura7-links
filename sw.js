@@ -3,7 +3,7 @@
 // clients pick up new HTML/JS. Network-first for navigations (fresh app when
 // online, cached shell when offline); cache-first for the static shell assets;
 // runtime cache for cross-origin CDN assets (Leaflet, fonts, flags).
-const CACHE = 'wcviz-v16';
+const CACHE = 'wcviz-v17';
 const SHELL = [
   './',
   './index.html',
@@ -31,6 +31,11 @@ self.addEventListener('fetch', e => {
 
   // Never cache live data APIs — always hit the network.
   if (/wikipedia\.org|espn\.com/.test(url.hostname)) return;
+
+  // Media (the Mexico easter-egg clip): bypass the SW entirely. Audio seeking sends
+  // Range requests the Cache API can't store (206 partials throw on cache.put), and
+  // there's no reason to precache a one-off clip — let the browser handle it natively.
+  if (/\.(mp3|m4a|ogg|wav)$/i.test(url.pathname)) return;
 
   // Navigations: network-first, fall back to the cached app shell when offline.
   if (req.mode === 'navigate') {
