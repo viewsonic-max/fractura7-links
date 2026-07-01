@@ -430,6 +430,8 @@
     padding:3px 8px; border-radius:9px; background:rgba(11,17,32,.93); border:1px solid var(--gold);
     color:var(--gold); font:800 12px 'Outfit',sans-serif; box-shadow:0 4px 14px rgba(0,0,0,.55); pointer-events:none;}
   .ballSay[hidden]{display:none;}
+  .ballSay.flip{left:auto; right:17px;}   /* ball on the right edge → speak to the left */
+  @media (max-width:760px){ .ballSay{white-space:normal; width:max-content; max-width:190px; line-height:1.15;} }
   .ballSay.say-pop{animation:sayPop .5s ease;}
   @keyframes sayPop{0%{transform:translateY(-50%) scale(.5); opacity:0;}60%{transform:translateY(-50%) scale(1.14);}100%{transform:translateY(-50%) scale(1); opacity:1;}}
   .ballSay.l4{color:#fff; font-size:13px; background:linear-gradient(120deg,rgba(255,209,102,.34),rgba(11,17,32,.93)); box-shadow:0 0 16px rgba(255,209,102,.6);}
@@ -1362,6 +1364,7 @@ function clearJourney() {
   if (journeyLayer) { map.removeLayer(journeyLayer); journeyLayer = null; }
   if (ballTimer) { clearInterval(ballTimer); ballTimer = null; }
   if (playTimer) { clearInterval(playTimer); playTimer = null; }
+  jPlaying = false;   // a rebuild mid-play must not leave ▶ locked out
   jAnim = null;
 }
 function arcPoints(a, b) {
@@ -1520,7 +1523,7 @@ function buildJourney() {
   if (fullPath.length > 1) {
     const ball = L.marker(fullPath[0], {
       icon: L.divIcon({className:'', html:'<div class="ballWrap"><span class="ballIcon">⚽</span><span class="ballSay" hidden></span></div>', iconSize:[20,20], iconAnchor:[10,10]}),
-      interactive: false, zIndexOffset: 3000,
+      interactive: false, zIndexOffset: 6000,   // above venue markers AND the followed-team tag — the speech bubble must never hide behind them
     }).addTo(journeyLayer);
     let idx = 0;
     if (!reduceMotion) ballTimer = setInterval(() => { idx = (idx + 1) % fullPath.length; ball.setLatLng(fullPath[idx]); }, 30);
@@ -1542,10 +1545,14 @@ function setBallSay(stopI) {
   const el = ballSayEl(); if (!el || !jAnim || !jAnim.says) return;
   const say = jAnim.says[stopI];
   if (!say) { el.hidden = true; el.removeAttribute('data-s'); return; }
+  // keep the bubble on-screen: speak leftward once the ball is on the right side
+  const flip = map.latLngToContainerPoint(jAnim.ball.getLatLng()).x > map.getSize().x * 0.55;
+  el.classList.toggle('flip', flip);
   if (el.dataset.s === String(say.lvl)) return;          // same phrase already up
   el.dataset.s = String(say.lvl);
-  el.textContent = say.phrase;
-  el.className = 'ballSay l' + say.lvl;
+  // on narrow screens the bubble wraps — but only at phrase seams (after ! ? …), never mid-clause
+  el.textContent = say.phrase.replace(/ /g, '\u00A0').replace(/([!?…])\u00A0/g, '$1 ');
+  el.className = 'ballSay l' + say.lvl + (flip ? ' flip' : '');
   el.hidden = false;
   if (!reduceMotion) { void el.offsetWidth; el.classList.add('say-pop'); setTimeout(() => el && el.classList.remove('say-pop'), 520); }
 }
@@ -1574,10 +1581,11 @@ function playJourney() {
     if (i >= path.length - 1 || nextStop >= stopIdx.length) {
       clearInterval(playTimer); playTimer = null; jPlaying = false;
       if (odo) odo.textContent = nfmt(Math.round(total));
-      if (says) setTimeout(hideBallSay, 2200);           // let the Final line land, then clear
-      // resume gentle idle loop from the start
-      let k = 0;
-      ballTimer = setInterval(() => { k = (k + 1) % path.length; ball.setLatLng(path[k]); }, 30);
+      // resume the gentle idle loop — but if a phrase is up, let the ball REST at the
+      // Final while the line lands, then clear it and loop (skipped if the journey was
+      // rebuilt or replayed in the meantime)
+      const resume = () => { if (jPlaying || !jAnim || ballTimer) return; let k = 0; ballTimer = setInterval(() => { k = (k + 1) % path.length; ball.setLatLng(path[k]); }, 30); };
+      if (says) setTimeout(() => { hideBallSay(); resume(); }, 2200); else resume();
     }
   };
   if (playTimer) clearInterval(playTimer);
@@ -1702,7 +1710,9 @@ const ROAD_TIER = {'Group Stage':'w1', 'Round of 32':'group', 'Round of 16':'r32
 const _MX = 'MEX';
 const _MX_ROUNDS = ['Group Stage','Round of 32','Round of 16','Quarterfinal','Semifinal','Final'];
 const _mxMatches = () => MATCHES.filter(m => m.a === _MX || m.b === _MX);
-const _mxPlayed = m => m.s1 != null && m.s2 != null;       // played & scored (mirror of the goal-tally check)
+// finished & scored — a LIVE partial score must not move the ladder (a 0-0 at
+// minute 15 is not an elimination), so require the match window to be over
+const _mxPlayed = m => m.s1 != null && m.s2 != null && stateOf(m, Date.now()) === 'ft';
 function _mxWon(m) {
   if (!_mxPlayed(m)) return false;
   const us = m.a === _MX ? m.s1 : m.s2, them = m.a === _MX ? m.s2 : m.s1;
@@ -1725,8 +1735,11 @@ function ysisiTier() {
   const groupDone = group.length > 0 && group.every(_mxPlayed);
   const inR32 = ms.some(m => m.r === 'Round of 32');
   if (groupDone && !inR32) return 'out';
-  // achievement tiers (entering round N ⇒ won round N-1); deepest round MEX appears in
+  // achievement tiers (entering round N ⇒ won round N-1); deepest round MEX appears in.
+  // A knockout WIN counts as entering the next round immediately — the data pipeline
+  // bakes MEX into that match hours later, and the celebration can't wait for it.
   let dr = -1; for (const m of ms) dr = Math.max(dr, _MX_ROUNDS.indexOf(m.r));
+  for (const m of playedKO) if (_mxWon(m)) dr = Math.max(dr, _MX_ROUNDS.indexOf(m.r) + 1);
   if (dr >= 5) return 'final';   // into the Final  ⇐ won the Semifinal
   if (dr >= 4) return 'qf';      // into the Semi   ⇐ won the Quarterfinal
   if (dr >= 3) return 'r16';     // into the QF     ⇐ won the Round of 16 (el quinto partido)
