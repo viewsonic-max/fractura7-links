@@ -171,13 +171,14 @@
   #ysisi .yx{position:absolute; top:5px; right:7px; background:none; border:none; padding:2px;
     color:var(--ink-dim); font-size:12px; line-height:1; cursor:pointer;}
   #ysisi .yx:hover{color:var(--ink);}
-  /* escalation: copy grows + accent heats up as Mexico advances */
-  #ysisi.l3 .yphrase,#ysisi.l4 .yphrase,#ysisi.l5 .yphrase,#ysisi.l6 .yphrase,#ysisi.l7 .yphrase{font-size:17px;}
+  /* escalation: copy grows + accent heats up as Mexico advances
+     (l4 quinto booked · l5 quinto won · l6 semi · l7 final · l8 champion · l9 out) */
+  #ysisi.l3 .yphrase,#ysisi.l4 .yphrase,#ysisi.l5 .yphrase,#ysisi.l6 .yphrase,#ysisi.l7 .yphrase,#ysisi.l8 .yphrase{font-size:17px;}
   #ysisi.l4{border-left-color:var(--gold);} #ysisi.l4 .yphrase{color:#fff;}
-  #ysisi.l5{border-left-color:var(--hot);}
-  #ysisi.l6,#ysisi.l7{border-left-color:var(--hot); background:linear-gradient(120deg,rgba(255,93,143,.16),var(--panel));}
-  #ysisi.l6 .yphrase,#ysisi.l7 .yphrase{color:#fff; font-size:18px;}
-  #ysisi.l8{border-left-color:var(--ink-dim);} #ysisi.l8 .yphrase{color:var(--ink-dim);}
+  #ysisi.l5,#ysisi.l6{border-left-color:var(--hot);} #ysisi.l6 .yphrase{color:#fff;}
+  #ysisi.l7,#ysisi.l8{border-left-color:var(--hot); background:linear-gradient(120deg,rgba(255,93,143,.16),var(--panel));}
+  #ysisi.l7 .yphrase,#ysisi.l8 .yphrase{color:#fff; font-size:18px;}
+  #ysisi.l9{border-left-color:var(--ink-dim);} #ysisi.l9 .yphrase{color:var(--ink-dim);}
   #ysisi.pulse{animation:ysisiPulse .6s ease;}
   @keyframes ysisiPulse{0%{transform:scale(1);}30%{transform:scale(1.04);}100%{transform:scale(1);}}
   #ysisi.l4.pulse{animation:ysisiFlash .9s ease;}   /* el quinto partido — the loudest jump */
@@ -434,9 +435,10 @@
   @media (max-width:760px){ .ballSay{white-space:normal; width:max-content; max-width:190px; line-height:1.15;} }
   .ballSay.say-pop{animation:sayPop .5s ease;}
   @keyframes sayPop{0%{transform:translateY(-50%) scale(.5); opacity:0;}60%{transform:translateY(-50%) scale(1.14);}100%{transform:translateY(-50%) scale(1); opacity:1;}}
-  .ballSay.l4{color:#fff; font-size:13px; background:linear-gradient(120deg,rgba(255,209,102,.34),rgba(11,17,32,.93)); box-shadow:0 0 16px rgba(255,209,102,.6);}
-  .ballSay.l5{color:#fff; border-color:var(--hot);}
-  .ballSay.l6{color:#fff; font-size:13px; border-color:var(--hot); background:linear-gradient(120deg,rgba(255,93,143,.4),rgba(11,17,32,.95)); box-shadow:0 0 18px rgba(255,93,143,.6);}
+  .ballSay.l4{color:#fff; font-size:13px; background:linear-gradient(120deg,rgba(255,209,102,.34),rgba(11,17,32,.93)); box-shadow:0 0 16px rgba(255,209,102,.6);}   /* el quinto — at the Azteca */
+  .ballSay.l5,.ballSay.l6{color:#fff; border-color:var(--hot);}
+  .ballSay.l6{font-size:13px;}
+  .ballSay.l7{color:#fff; font-size:13px; border-color:var(--hot); background:linear-gradient(120deg,rgba(255,93,143,.4),rgba(11,17,32,.95)); box-shadow:0 0 18px rgba(255,93,143,.6);}
 
   /* ── popup ──────────────────────────────── */
   .leaflet-popup-content-wrapper{
@@ -1479,8 +1481,10 @@ function buildJourney() {
   const merged = [];
   for (const s of all) {
     const p = merged[merged.length - 1];
-    if (p && p.v === s.v) { p.label += ' · ' + s.label; p.r = s.r; }   // same venue → keep the deeper (later) round
-    else merged.push({...s});
+    // same venue → one stop; keep the deeper (later) round but remember every round
+    // that happens here, so the speech bubble can cycle through all of them
+    if (p && p.v === s.v) { p.label += ' · ' + s.label; p.r = s.r; p.rounds.push(s.r); }
+    else merged.push({...s, rounds: [s.r]});
   }
 
   journeyLayer = L.layerGroup().addTo(map);
@@ -1508,26 +1512,27 @@ function buildJourney() {
     }).addTo(journeyLayer);
   });
   // Mexico easter egg: an escalating "¿Y si sí?" that rides the ball up the road to
-  // the Final — one phrase per stop, climbing the YSISI ladder (peaks at the QF =
-  // winning the Round of 16, "el quinto partido"). Only on Mexico's hypothetical road.
+  // the Final — at each stop it cycles one line per match played there (the Azteca
+  // hosts MD3 → R32 → R16, so the ball works up to the peak instead of jumping to it).
+  // The R16 *is* "el quinto partido" in 2026's format (game 5 = 3 group + R32 + R16).
+  // Only on Mexico's hypothetical road. says[stop] = [{phrase,lvl}, …], ladder-monotone.
   let says = null;
   if (follow === _MX && road.length) {
     let last = null;
-    says = merged.map(s => {
-      const tier = ROAD_TIER[s.r];
+    says = merged.map(s => s.rounds.map(r => {
+      const tier = ROAD_TIER[r];
       const here = tier ? { phrase: YSISI[tier].phrase, lvl: YSISI[tier].lvl } : null;
       if (here && (!last || here.lvl >= last.lvl)) last = here;   // never step backward
       return last;
-    });
+    }).filter(Boolean).filter((x, i, a) => !i || x !== a[i - 1]));   // drop repeats within a stop
   }
   if (fullPath.length > 1) {
     const ball = L.marker(fullPath[0], {
       icon: L.divIcon({className:'', html:'<div class="ballWrap"><span class="ballIcon">⚽</span><span class="ballSay" hidden></span></div>', iconSize:[20,20], iconAnchor:[10,10]}),
       interactive: false, zIndexOffset: 6000,   // above venue markers AND the followed-team tag — the speech bubble must never hide behind them
     }).addTo(journeyLayer);
-    let idx = 0;
-    if (!reduceMotion) ballTimer = setInterval(() => { idx = (idx + 1) % fullPath.length; ball.setLatLng(fullPath[idx]); }, 30);
     jAnim = {ball, path: fullPath, stopIdx, stopMarkers, cumMiles, total: cumMiles[cumMiles.length - 1], says};
+    startIdleLoop();
   }
   journeyVenues = new Set(merged.map(s => s.v));
   updateMarkers(DAYS[dayIdx]);
@@ -1541,15 +1546,14 @@ let jPlaying = false;
 function badgeEl(marker) { const e = marker.getElement && marker.getElement(); return e ? e.querySelector('.stopBadge') : null; }
 // the "¿Y si sí?" speech bubble that rides the ball (Mexico road easter egg)
 function ballSayEl() { const e = jAnim && jAnim.ball.getElement && jAnim.ball.getElement(); return e ? e.querySelector('.ballSay') : null; }
-function setBallSay(stopI) {
-  const el = ballSayEl(); if (!el || !jAnim || !jAnim.says) return;
-  const say = jAnim.says[stopI];
+function setBallSay(say) {                               // say = {phrase, lvl}
+  const el = ballSayEl(); if (!el || !jAnim) return;
   if (!say) { el.hidden = true; el.removeAttribute('data-s'); return; }
   // keep the bubble on-screen: speak leftward once the ball is on the right side
   const flip = map.latLngToContainerPoint(jAnim.ball.getLatLng()).x > map.getSize().x * 0.55;
   el.classList.toggle('flip', flip);
-  if (el.dataset.s === String(say.lvl)) return;          // same phrase already up
-  el.dataset.s = String(say.lvl);
+  if (el.dataset.s === say.phrase) return;               // same line already up
+  el.dataset.s = say.phrase;
   // on narrow screens the bubble wraps — but only at phrase seams (after ! ? …), never mid-clause
   el.textContent = say.phrase.replace(/ /g, '\u00A0').replace(/([!?…])\u00A0/g, '$1 ');
   el.className = 'ballSay l' + say.lvl + (flip ? ' flip' : '');
@@ -1557,6 +1561,37 @@ function setBallSay(stopI) {
   if (!reduceMotion) { void el.offsetWidth; el.classList.add('say-pop'); setTimeout(() => el && el.classList.remove('say-pop'), 520); }
 }
 function hideBallSay() { const el = ballSayEl(); if (el) { el.hidden = true; el.removeAttribute('data-s'); } }
+// idle cruise: the ball rolls the road and RESTS at every stop — on Mexico's road the
+// rest cycles one "¿Y si sí?" line per match played at that stadium (the Azteca gets
+// the MD3 → R32 → quinto climb), holding each long enough to read
+const IDLE_DWELL = 1300, IDLE_DWELL_END = 2200, IDLE_DWELL_PLAIN = 450;   // ms
+function startIdleLoop() {
+  if (!jAnim || ballTimer || jPlaying || reduceMotion) return;
+  const {ball, path, stopIdx, says} = jAnim;
+  let k = 0, wait = 0, q = [];
+  const ticks = ms => Math.round(ms / 30);
+  const next = atLast => {                               // show the stop's next line
+    setBallSay(q.shift());
+    wait = ticks(atLast && !q.length ? IDLE_DWELL_END : IDLE_DWELL);   // the road's very last line lingers
+  };
+  const rest = s => {                                    // arrived at stop s: queue its lines
+    q = says ? says[s].slice() : [];
+    if (q.length) next(s === stopIdx.length - 1);
+    else wait = ticks(IDLE_DWELL_PLAIN);                 // no lines here — just a breather
+  };
+  ball.setLatLng(path[0]);                               // loop starts from the top of the road
+  if (says) rest(0);                                     // open on the first stop's line(s)
+  ballTimer = setInterval(() => {
+    if (wait > 0) {                                      // resting at a stop
+      if (--wait === 0) { if (q.length) next(k === path.length - 1); else if (says) hideBallSay(); }
+      return;
+    }
+    k = (k + 1) % path.length;
+    ball.setLatLng(path[k]);
+    const s = stopIdx.indexOf(k);
+    if (s >= 0) rest(s);
+  }, 30);
+}
 function playJourney() {
   if (!jAnim || jPlaying || jAnim.path.length < 2) return;
   jPlaying = true;
@@ -1564,11 +1599,31 @@ function playJourney() {
   const {ball, path, stopIdx, stopMarkers, cumMiles, total, says} = jAnim;
   const odo = $id('jOdo');
   stopMarkers.forEach((m, i) => { const b = badgeEl(m); if (b) b.classList.toggle('dim', i > 0); });
-  let i = 0, nextStop = 1;
+  let i = 0, nextStop = 1, hold = 0, q = [];
+  const HOLD = Math.round(1100 / 26);                    // rest per line — long enough to read it
+  const HOLD_END = Math.round(2200 / 26);                // the road's very last line lingers
   const arrive = s => { const b = badgeEl(stopMarkers[s]); if (b) { b.classList.remove('dim'); b.classList.add('pop'); setTimeout(() => b && b.classList.remove('pop'), 600); } };
+  const atEnd = () => i >= path.length - 1;
+  const next = () => { setBallSay(q.shift()); hold = atEnd() && !q.length ? HOLD_END : HOLD; };   // show the stop's next line
+  const rest = s => { q = says ? says[s].slice() : []; if (q.length) next(); else hold = HOLD; };
+  const finish = () => {
+    clearInterval(playTimer); playTimer = null; jPlaying = false;
+    if (odo) odo.textContent = nfmt(Math.round(total));
+    if (says) hideBallSay();
+    startIdleLoop();                                     // hand back to the idle cruise
+  };
   arrive(0);
-  if (says) setBallSay(0); else hideBallSay();
+  if (says) rest(0); else hideBallSay();
   const tick = () => {
+    if (hold > 0) {                                      // resting at a stop while its line(s) land
+      if (--hold === 0) {
+        if (q.length) { next(); return; }
+        if (atEnd()) { finish(); return; }               // last line has landed at the last stop
+        if (says) hideBallSay();
+      }
+      return;
+    }
+    if (atEnd()) { finish(); return; }                   // no lines were queued at the last stop
     i++;
     ball.setLatLng(path[i]);
     // interpolate miles between the last reached stop and the next
@@ -1576,16 +1631,10 @@ function playJourney() {
     const a = stopIdx[nextStop - 1], b = stopIdx[nextStop];
     const frac = b > a ? (i - a) / (b - a) : 1;
     if (odo) odo.textContent = nfmt(Math.round(segFrom + (segTo - segFrom) * Math.min(1, Math.max(0, frac))));
-    if (i >= stopIdx[nextStop]) { arrive(nextStop); nextStop++; }
-    if (says) setBallSay(nextStop - 1);                  // the bubble climbs as the ball reaches each round
-    if (i >= path.length - 1 || nextStop >= stopIdx.length) {
-      clearInterval(playTimer); playTimer = null; jPlaying = false;
-      if (odo) odo.textContent = nfmt(Math.round(total));
-      // resume the gentle idle loop — but if a phrase is up, let the ball REST at the
-      // Final while the line lands, then clear it and loop (skipped if the journey was
-      // rebuilt or replayed in the meantime)
-      const resume = () => { if (jPlaying || !jAnim || ballTimer) return; let k = 0; ballTimer = setInterval(() => { k = (k + 1) % path.length; ball.setLatLng(path[k]); }, 30); };
-      if (says) setTimeout(() => { hideBallSay(); resume(); }, 2200); else resume();
+    if (i >= stopIdx[nextStop]) {                        // reached a stop: pop the badge, cycle its lines, rest
+      arrive(nextStop);
+      rest(nextStop);
+      nextStop++;
     }
   };
   if (playTimer) clearInterval(playTimer);
@@ -1689,8 +1738,10 @@ function clearFollow() {
 
 // ── "¿Y si sí?" — Mexico-only escalation banner (easter egg, see YSISI spec) ──
 // Reads MEX results out of MATCHES and climbs a copy ladder as Mexico advances
-// through their road to the Final — peaking when they finally clear the Round of
-// 16 ("el quinto partido") — then resolves to "siempre la próxima" if they fall.
+// through their road to the Final — the biggest jump lands when they book "el
+// quinto partido" (in the 2026 48-team format that's the ROUND OF 16: 3 group
+// games + R32 + R16 = game five) — then resolves to "siempre la próxima" if they
+// fall. NOTE: the spec predates the format math; the ladder here is the corrected one.
 // Pure derivation: no new data, no network. The phrase is always Spanish; only the
 // gloss localizes. Shows ONLY when following Mexico.
 const YSISI = {
@@ -1698,15 +1749,19 @@ const YSISI = {
   w1:       {lvl:1, phrase:'¿Y si sí?',                       en:'…but what if? 👀',                     es:'…¿y si sí? 👀'},
   group:    {lvl:2, phrase:'¿Y si SÍ?',                       en:"They're through. What if? 🇲🇽👀",       es:'Pasaron. ¿Y si sí? 🇲🇽👀'},
   r32:      {lvl:3, phrase:'Ok ok… ¿y si SÍ se puede?',       en:'Okay… what if it can happen? 😬',       es:'¿Y si SÍ se puede? 😬'},
-  r16:      {lvl:4, phrase:'¡EL QUINTO PARTIDO! …¿Y SI SÍ?',  en:'The fifth game — finally. WHAT IF?! 😱🇲🇽', es:'¡Por fin el quinto partido! 😱🇲🇽'},
-  qf:       {lvl:5, phrase:'¿¡Y SI SÍ!?',                     en:'Semifinal. This is real. 🔮🔥',         es:'¡Semifinal! Esto es real. 🔮🔥'},
-  final:    {lvl:6, phrase:'¡¿Y SI SÍ, CARAJO?!',            en:'THE FINAL. WHAT IF?! 😭🏆',             es:'¡LA FINAL! 😭🏆'},
-  champion: {lvl:7, phrase:'SÍ. SÍ FUE.',                     en:'Yes. It happened. 😭🏆🇲🇽',              es:'Sí. Sí fue. 😭🏆🇲🇽'},
-  out:      {lvl:8, phrase:'…la próxima. Siempre la próxima.', en:'…next time. Always next time. 🥲🇲🇽',   es:'…la próxima. Siempre la próxima. 🥲🇲🇽'},
+  // 2026 counting: 3 group games + R32 + R16 — the ROUND OF 16 *is* el quinto partido
+  // (at the Azteca, no less). Winning the R32 books it; that's the biggest jump.
+  quinto:   {lvl:4, phrase:'¡EL QUINTO PARTIDO! …¿Y SI SÍ?',  en:'The fifth game — finally. WHAT IF?! 😱🇲🇽', es:'¡Por fin el quinto partido! 😱🇲🇽'},
+  qf:       {lvl:5, phrase:'¿¡Y SI SÍ!?',                     en:'They WON the fifth game. What if?! 🔮🔥', es:'¡Ganaron el quinto! ¿¡Y si sí!? 🔮🔥'},
+  sf:       {lvl:6, phrase:'NO MANCHES. ¿¡Y SI SÍ!?',         en:'Semifinal. This is real. 😳🔥',          es:'¡Semifinal! Esto es real. 😳🔥'},
+  final:    {lvl:7, phrase:'¡¿Y SI SÍ, CARAJO?!',            en:'THE FINAL. WHAT IF?! 😭🏆',             es:'¡LA FINAL! 😭🏆'},
+  champion: {lvl:8, phrase:'SÍ. SÍ FUE.',                     en:'Yes. It happened. 😭🏆🇲🇽',              es:'Sí. Sí fue. 😭🏆🇲🇽'},
+  out:      {lvl:9, phrase:'…la próxima. Siempre la próxima.', en:'…next time. Always next time. 🥲🇲🇽',   es:'…la próxima. Siempre la próxima. 🥲🇲🇽'},
 };
-// which "¿Y si sí?" tier rides the ball as it reaches each round on the Road to the
-// Final (arriving at a round ⇒ you're playing it). Peaks at the QF stop = won the R16.
-const ROAD_TIER = {'Group Stage':'w1', 'Round of 32':'group', 'Round of 16':'r32', 'Quarterfinal':'r16', 'Semifinal':'qf', 'Final':'final'};
+// which "¿Y si sí?" line rides the ball as it reaches each round on the Road to the
+// Final (arriving at a round ⇒ you're playing it). The R16 stop — the Azteca — is
+// el quinto partido, the emotional peak of the road.
+const ROAD_TIER = {'Group Stage':'w1', 'Round of 32':'r32', 'Round of 16':'quinto', 'Quarterfinal':'qf', 'Semifinal':'sf', 'Final':'final'};
 const _MX = 'MEX';
 const _MX_ROUNDS = ['Group Stage','Round of 32','Round of 16','Quarterfinal','Semifinal','Final'];
 const _mxMatches = () => MATCHES.filter(m => m.a === _MX || m.b === _MX);
@@ -1741,9 +1796,9 @@ function ysisiTier() {
   let dr = -1; for (const m of ms) dr = Math.max(dr, _MX_ROUNDS.indexOf(m.r));
   for (const m of playedKO) if (_mxWon(m)) dr = Math.max(dr, _MX_ROUNDS.indexOf(m.r) + 1);
   if (dr >= 5) return 'final';   // into the Final  ⇐ won the Semifinal
-  if (dr >= 4) return 'qf';      // into the Semi   ⇐ won the Quarterfinal
-  if (dr >= 3) return 'r16';     // into the QF     ⇐ won the Round of 16 (el quinto partido)
-  if (dr >= 2) return 'r32';     // into the R16    ⇐ won the Round of 32
+  if (dr >= 4) return 'sf';      // into the Semi   ⇐ won the Quarterfinal
+  if (dr >= 3) return 'qf';      // into the QF     ⇐ WON el quinto partido
+  if (dr >= 2) return 'quinto';  // into the R16    ⇐ won the R32: the fifth game is booked
   if (inR32)   return 'group';   // qualified from the group
   if (group.some(_mxWon)) return 'w1';
   return 'picked';
