@@ -2892,6 +2892,9 @@ const playedSig = () => {
     a + m.n + ':' + m.s1 + '-' + m.s2 + (m.pens ? 'p' + m.pens : '') + (stateOf(m, now) === 'ft' ? 'f' : 'l') + ';', '');
 };
 const fmtPct = p => p <= 0 ? '0%' : p < 0.001 ? '<0.1%' : (p * 100 < 9.95 ? (p * 100).toFixed(1) : Math.round(p * 100)) + '%';
+// Final/Semi sub-stats always get one decimal — integer rounding made genuinely
+// different teams look identical (e.g. reach-final 6.97% vs 6.47% both as "7%")
+const fmtPct1 = p => p <= 0 ? '0%' : p < 0.001 ? '<0.1%' : (p * 100).toFixed(1) + '%';
 function runOdds(total) {
   cancelAnimationFrame(oddsRAF); total = total || ODDS_TOTAL;
   fitRatings();                                         // refit attack/defence to current results first
@@ -2922,7 +2925,7 @@ function paintOdds() {
       <span class="oNm">${teamName(c)}</span>
       <span class="oBarWrap"><span class="oBar" style="width:${w}%"></span></span>
       <span class="oPct">${fmtPct(p)}</span>
-      <span class="oSub">${t('oddsSub', fmtPct((ODDS.fin[c] || 0) / n), fmtPct((ODDS.semi[c] || 0) / n))}</span>
+      <span class="oSub">${t('oddsSub', fmtPct1((ODDS.fin[c] || 0) / n), fmtPct1((ODDS.semi[c] || 0) / n))}</span>
     </div>`;
   }).join('') : `<div class="brkHint">${t('oddsNone')}</div>`;
   const prog = $id('oddsProg'); if (prog) prog.style.width = Math.round(ODDS.n / ODDS._total * 100) + '%';
