@@ -2770,10 +2770,13 @@ function fitRatings() {
   played.forEach(m => { mp[m.a]++; mp[m.b]++; });
   Object.keys(TEAMS).forEach(c => RSIG[c] = SIG0 / Math.sqrt(1 + mp[c]));
   if (!played.length) return;
-  const eta = 0.015, reg = 0.05, EPOCHS = 14;
+  const eta = 0.015, reg = 0.05, EPOCHS = 14, FIT_CAP = 2;
   for (let e = 0; e < EPOCHS; e++) {
     for (const m of played) {
-      const vc = venCountry(m), L = lambdas(m.a, m.b, vc, venAlt(m)), da = m.s1 - L[0], db = m.s2 - L[1];
+      const vc = venCountry(m), L = lambdas(m.a, m.b, vc, venAlt(m));
+      // margin cap (Elo-style): a rout is at most ±2 goals of evidence per side —
+      // scorelines flatter; a 5-0 says little more about strength than a 3-0
+      const da = Math.max(-FIT_CAP, Math.min(FIT_CAP, m.s1 - L[0])), db = Math.max(-FIT_CAP, Math.min(FIT_CAP, m.s2 - L[1]));
       ATK[m.a] += eta * da; DEF[m.b] -= eta * da;       // a out-scoring λ → a more attacking, b leakier
       ATK[m.b] += eta * db; DEF[m.a] -= eta * db;
     }
