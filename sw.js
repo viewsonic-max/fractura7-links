@@ -1,9 +1,10 @@
 // World Cup 26 — Match Day Map · service worker
-// App-shell caching for offline + installability. Bump CACHE on each deploy so
-// clients pick up new HTML/JS. Network-first for navigations (fresh app when
-// online, cached shell when offline); cache-first for the static shell assets;
-// runtime cache for cross-origin CDN assets (Leaflet, fonts, flags).
-const CACHE = 'wcviz-v23';
+// App-shell caching for offline + installability. Network-first for navigations
+// and for data.js (fresh app + fresh match data when online, cached fallback
+// offline); cache-first for the other static shell assets (icons, manifest) —
+// bump CACHE when THOSE change; runtime cache for cross-origin CDN assets
+// (Leaflet, fonts, flags).
+const CACHE = 'wcviz-v24';
 const SHELL = [
   './',
   './index.html',
@@ -44,6 +45,18 @@ self.addEventListener('fetch', e => {
         caches.open(CACHE).then(c => c.put('./index.html', res.clone()));
         return res;
       }).catch(() => caches.match('./index.html').then(r => r || caches.match('./')))
+    );
+    return;
+  }
+
+  // data.js: network-first (revalidate) so score/time edits reach clients on a
+  // normal reload without a CACHE bump; fall back to the cached copy when offline.
+  if (url.origin === self.location.origin && url.pathname.endsWith('/data.js')) {
+    e.respondWith(
+      fetch(req, { cache: 'no-cache' }).then(res => {
+        if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
+        return res;
+      }).catch(() => caches.match(req))
     );
     return;
   }
