@@ -541,6 +541,39 @@
   .oPct{font-weight:900; font-size:13px; text-align:right;}
   .oSub{font-size:10px; color:var(--ink-dim); font-weight:700; white-space:nowrap; text-align:right;}
   @media (max-width:560px){ .oddRow{grid-template-columns:18px 24px 1fr 46px; gap:7px;} .oBarWrap,.oSub{display:none;} }
+  /* odds history — "how the odds evolved" chart */
+  .histSec{margin-top:16px; border-top:1px solid var(--panel-border); padding-top:11px;}
+  .histHead{display:flex; justify-content:space-between; align-items:center; width:100%; padding:7px 11px;
+    border-radius:9px; border:1px solid var(--panel-border); background:#16203a; color:var(--ink);
+    font:800 12.5px 'Outfit',sans-serif; cursor:pointer;}
+  .histHead:hover{filter:brightness(1.25);}
+  .histCtl{display:flex; align-items:center; gap:8px; margin:9px 2px 5px; flex-wrap:wrap;}
+  .histCtl .vBtn{padding:3px 10px; border-radius:7px; border:1px solid var(--panel-border); background:none;
+    color:var(--ink-dim); font:800 10.5px 'Outfit',sans-serif; cursor:pointer;}
+  .histCtl .vBtn.on{background:#16203a; color:var(--ink);}
+  .histStat{font-size:10.5px; color:var(--ink-dim); font-weight:700; margin-left:auto;}
+  .histBox{position:relative;}
+  .histBox svg{display:block; width:100%; height:auto;}
+  .histTip{position:absolute; z-index:5; pointer-events:none; background:rgba(13,20,38,.96); border:1px solid var(--panel-border);
+    border-radius:9px; padding:7px 9px; font-size:10.5px; min-width:130px; box-shadow:0 8px 22px rgba(0,0,0,.45);}
+  .histTip .tD{font-weight:900; color:var(--ink); margin-bottom:4px;}
+  .histTip .tR{display:flex; align-items:center; gap:5px; color:var(--ink-dim); font-weight:700; line-height:1.6;}
+  .histTip .tR img{width:14px; height:9px; border-radius:2px; object-fit:cover;}
+  .histTip .tR .tv{margin-left:auto; color:var(--ink); font-weight:800; padding-left:9px; font-variant-numeric:tabular-nums;}
+  .histLegend{display:flex; flex-wrap:wrap; gap:5px; margin-top:8px;}
+  .histChip{display:flex; align-items:center; gap:5px; padding:3px 8px; border-radius:99px; border:1px solid var(--panel-border);
+    background:rgba(255,255,255,.03); color:var(--ink-dim); font:800 10px 'Outfit',sans-serif; cursor:pointer;}
+  .histChip img{width:14px; height:9px; border-radius:2px; object-fit:cover;}
+  .histChip .dot{width:7px; height:7px; border-radius:99px;}
+  .histChip.on{border-color:var(--ink-dim); color:var(--ink); background:rgba(255,255,255,.08);}
+  .histChip:hover{background:rgba(255,255,255,.07);}
+  .histTblWrap{overflow-x:auto; margin-top:6px; border:1px solid var(--panel-border); border-radius:9px;}
+  .histTbl{border-collapse:collapse; font-size:10px; white-space:nowrap;}
+  .histTbl th,.histTbl td{padding:4px 7px; text-align:right; border-bottom:1px solid rgba(255,255,255,.05); font-variant-numeric:tabular-nums;}
+  .histTbl th{color:var(--ink-dim); font-weight:800;}
+  .histTbl td:first-child,.histTbl th:first-child{text-align:left; position:sticky; left:0; background:#101a30;}
+  .histTbl .tm{display:flex; align-items:center; gap:5px; font-weight:800;}
+  .histTbl .tm img{width:14px; height:9px; border-radius:2px; object-fit:cover;}
   .brkToast{position:absolute; bottom:22px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,#ffe9a8,var(--gold)); color:#3a2c00; font:800 12px 'Outfit',sans-serif; padding:9px 16px; border-radius:999px; box-shadow:0 8px 28px rgba(0,0,0,.5); animation:chipin .2s ease;}
 
   /* ── help / tutorial ────────────────────────────── */
@@ -872,6 +905,13 @@ const STR = {
     oddsRunning: (n, tot) => `Simulating… ${n} / ${tot}`,
     oddsDone: n => `Based on ${n} simulations`,
     oddsSub: (f, s) => `Final ${f} · Semi ${s}`,
+    histTitle: '📈 How the odds evolved',
+    histHint: 'Same model, replayed: for each match day the ratings are re-fitted and the tournament re-simulated using only the results known that evening. ✕ marks an elimination.',
+    histRunning: (k, n) => `Replaying match days… ${k} / ${n}`,
+    histDone: n => `${n} sims per day`,
+    histPre: 'Pre-tournament', histPreShort: 'pre',
+    histChart: 'Chart', histTable: 'Table',
+    histRd: { 'Group Stage': 'Groups', 'Round of 32': 'R32', 'Round of 16': 'R16', 'Quarterfinal': 'QF', 'Semifinal': 'SF', 'Third Place': '3rd', 'Final': 'Final' },
     autoLabel: '⚡ Auto', randomLabel: '🎲 Random',
     tAuto: 'Seed undecided groups from current standings (ties broken at random); keeps groups you set by hand',
     tRandom: 'Shuffle undecided groups at random, ignoring standings; keeps groups you set by hand',
@@ -962,6 +1002,13 @@ const STR = {
     oddsRunning: (n, tot) => `Simulando… ${n} / ${tot}`,
     oddsDone: n => `Basado en ${n} simulaciones`,
     oddsSub: (f, s) => `Final ${f} · Semi ${s}`,
+    histTitle: '📈 Cómo evolucionó el pronóstico',
+    histHint: 'El mismo modelo, reproducido: para cada jornada se reajustan las calificaciones y se re-simula el torneo usando solo los resultados conocidos esa noche. ✕ marca una eliminación.',
+    histRunning: (k, n) => `Reproduciendo jornadas… ${k} / ${n}`,
+    histDone: n => `${n} sims por jornada`,
+    histPre: 'Antes del torneo', histPreShort: 'antes',
+    histChart: 'Gráfica', histTable: 'Tabla',
+    histRd: { 'Group Stage': 'Grupos', 'Round of 32': '16avos', 'Round of 16': 'Octavos', 'Quarterfinal': 'Cuartos', 'Semifinal': 'Semis', 'Third Place': '3er', 'Final': 'Final' },
     autoLabel: '⚡ Auto', randomLabel: '🎲 Al azar',
     tAuto: 'Siembra los grupos indecisos según la tabla actual (empates al azar); conserva los grupos que ordenaste a mano',
     tRandom: 'Revuelve los grupos indecisos al azar, ignorando la tabla; conserva los grupos que ordenaste a mano',
@@ -2758,13 +2805,9 @@ function lambdas(a, b, vc, alt) {                      // expected goals [λa, �
 // regularised toward the prior so sparse early data can't overfit. Cached by the
 // played-results signature, so it only recomputes when a new result lands.
 let _fitSig = -1;
-function fitRatings() {
-  const sig = playedSig(); if (sig === _fitSig) return; _fitSig = sig;
+function fitCore(played) {                       // fit ATK/DEF/RSIG to exactly this list of matches
   // zero the sim shocks so leftovers from a previous run can't bias the fit
   Object.keys(TEAMS).forEach(c => { ATK[c] = ATK0[c]; DEF[c] = DEF0[c]; RSHOCK[c] = 0; });
-  // fit full-time results only — a live match's partial score isn't evidence yet
-  const now = Date.now();
-  const played = MATCHES.filter(m => m.s1 != null && TEAMS[m.a] && TEAMS[m.b] && stateOf(m, now) === 'ft');
   // per-team rating SD shrinks with the number of that team's matches we've seen
   const mp = {}; Object.keys(TEAMS).forEach(c => mp[c] = 0);
   played.forEach(m => { mp[m.a]++; mp[m.b]++; });
@@ -2782,6 +2825,12 @@ function fitRatings() {
     }
     Object.keys(TEAMS).forEach(c => { ATK[c] += reg * (ATK0[c] - ATK[c]); DEF[c] += reg * (DEF0[c] - DEF[c]); });
   }
+}
+function fitRatings() {
+  const sig = playedSig(); if (sig === _fitSig) return; _fitSig = sig;
+  // fit full-time results only — a live match's partial score isn't evidence yet
+  const now = Date.now();
+  fitCore(MATCHES.filter(m => m.s1 != null && TEAMS[m.a] && TEAMS[m.b] && stateOf(m, now) === 'ft'));
 }
 
 // Poisson sample (Knuth).
@@ -2812,10 +2861,30 @@ function simWinnerKO(a, b, vc, alt, s0, rem) {          // 90' → extra time �
   return Math.random() < 0.5 + (share - 0.5) * 0.3 ? a : b;
 }
 
-// the eight R32 third-place slots and which groups can feed each
+// Original knockout slot tags — the bracket topology before any result resolved.
+// The data pipeline bakes real teams over these placeholders as Wikipedia fills
+// them in (right for display, wrong for replay): once "W Match 74" becomes "PAR",
+// a simulated GER win of match 74 has nowhere to flow and GER's odds go to a false
+// hard zero. The odds-history replay resolves hidden matches through these instead.
+// Recovered from the pre-knockout data.js (deploy repo commit c14b41f9, June 11).
+const KO_TAGS = {
+  73: ['?2nd·A', '?2nd·B'], 74: ['?W·E', '?3rd·A/B/C/D/F'], 75: ['?W·F', '?2nd·C'], 76: ['?W·C', '?2nd·F'],
+  77: ['?W·I', '?3rd·C/D/F/G/H'], 78: ['?2nd·E', '?2nd·I'], 79: ['?W·A', '?3rd·C/E/F/H/I'], 80: ['?W·L', '?3rd·E/H/I/J/K'],
+  81: ['?W·D', '?3rd·B/E/F/I/J'], 82: ['?W·G', '?3rd·A/E/H/I/J'], 83: ['?2nd·K', '?2nd·L'], 84: ['?W·H', '?2nd·J'],
+  85: ['?W·B', '?3rd·E/F/G/I/J'], 86: ['?W·J', '?2nd·H'], 87: ['?W·K', '?3rd·D/E/I/J/L'], 88: ['?2nd·D', '?2nd·G'],
+  89: ['?W Match 74', '?W Match 77'], 90: ['?W Match 73', '?W Match 75'], 91: ['?W Match 76', '?W Match 78'],
+  92: ['?W Match 79', '?W Match 80'], 93: ['?W Match 83', '?W Match 84'], 94: ['?W Match 81', '?W Match 82'],
+  95: ['?W Match 86', '?W Match 88'], 96: ['?W Match 85', '?W Match 87'],
+  97: ['?W Match 89', '?W Match 90'], 98: ['?W Match 93', '?W Match 94'], 99: ['?W Match 91', '?W Match 92'],
+  100: ['?W Match 95', '?W Match 96'], 101: ['?W Match 97', '?W Match 98'], 102: ['?W Match 99', '?W Match 100'],
+  103: ['?L Match 101', '?L Match 102'], 104: ['?W Match 101', '?W Match 102'],
+};
+const origTag = (m, side) => KO_TAGS[m.n] ? KO_TAGS[m.n][side === 'a' ? 0 : 1] : m[side];
+// the eight R32 third-place slots and which groups can feed each (from original tags,
+// so the map still exists after the pipeline bakes real teams into the R32)
 const THIRD_SLOTS = KO_MATCHES
-  .filter(m => (m.a + m.b).indexOf('3rd·') >= 0)
-  .map(m => { const side = m.a.indexOf('3rd·') >= 0 ? 'a' : 'b'; return { n: m.n, groups: m[side].split('3rd·')[1].split('/') }; });
+  .filter(m => (origTag(m, 'a') + origTag(m, 'b')).indexOf('3rd·') >= 0)
+  .map(m => { const side = origTag(m, 'a').indexOf('3rd·') >= 0 ? 'a' : 'b'; return { n: m.n, groups: origTag(m, side).split('3rd·')[1].split('/') }; });
 // Match the 8 qualifying third-place groups to the 8 slots (bipartite matching on
 // the candidate lists). Memoised by the qualifying-group set — only 12-choose-8 keys.
 const _thirdCache = {};
@@ -2836,15 +2905,18 @@ function thirdSlotMap(qualGroups) {
   return _thirdCache[key] = out;
 }
 
-// one full tournament → { champ, fin:[2], semi:[4] }
-function simTournament() {
+// one full tournament → { champ, fin:[2], semi:[4] }. With `asOf` (a date string),
+// results after that day are hidden and re-simulated — the odds-history replay
+// asks "what did the model believe that evening?" without touching MATCHES.
+function simTournament(asOf) {
   for (const c of Object.keys(TEAMS)) RSHOCK[c] = gauss() * (RSIG[c] || SIG0);   // draw this sim's rating shocks
   const now = Date.now();
+  const hid = m => !!asOf && m.s1 != null && (m.d > asOf || stateOf(m, now) !== 'ft');
   const orders = {}, thirds = [];
   for (const g of Object.keys(GROUPS)) {
     const hypo = {};
     for (const m of MATCHES) if (m.g === g) {
-      if (m.s1 == null) { const L = lambdas(m.a, m.b, venCountry(m), venAlt(m)); hypo[m.n] = dcGoals(L[0], L[1]); }
+      if (m.s1 == null || hid(m)) { const L = lambdas(m.a, m.b, venCountry(m), venAlt(m)); hypo[m.n] = dcGoals(L[0], L[1]); }
       else if (stateOf(m, now) !== 'ft') {               // live: play out the remainder from the current score
         const f = remFrac(m), L = lambdas(m.a, m.b, venCountry(m), venAlt(m)), r = dcGoals(L[0] * f, L[1] * f);
         hypo[m.n] = [m.s1 + r[0], m.s2 + r[1]];
@@ -2861,7 +2933,11 @@ function simTournament() {
 
   const win = {}, teams = {};
   const resolve = (m, side) => {
-    const tag = m[side]; if (TEAMS[tag]) return tag; const p = tag.slice(1); let mm;
+    // history replay: a match not locked to a real, already-known result resolves
+    // through the original bracket topology, not the baked-in real teams — a hidden
+    // result's simulated winner must flow onward or its odds collapse to zero
+    const tag = (asOf && !(m.s1 != null && !hid(m))) ? origTag(m, side) : m[side];
+    if (TEAMS[tag]) return tag; const p = tag.slice(1); let mm;
     if ((mm = p.match(/^W·(\w)$/))) return orders[mm[1]][0];
     if ((mm = p.match(/^2nd·(\w)$/))) return orders[mm[1]][1];
     if (p.indexOf('3rd·') === 0) return thirdAt[m.n] || null;
@@ -2871,11 +2947,11 @@ function simTournament() {
   };
   for (const m of KO_SORTED) {
     const a = resolve(m, 'a'), b = resolve(m, 'b'); teams[m.n] = [a, b];
-    if (m.s1 != null && stateOf(m, now) === 'ft') {    // real full-time result wins and locks
+    if (m.s1 != null && !hid(m) && stateOf(m, now) === 'ft') {    // real full-time result wins and locks
       if (m.pens) { const pp = m.pens.split(/[–—-]/).map(Number); win[m.n] = pp[0] > pp[1] ? a : b; }
       else if (m.s1 !== m.s2) win[m.n] = m.s1 > m.s2 ? a : b;
       else { const L = lambdas(a, b, venCountry(m), venAlt(m)); win[m.n] = Math.random() < L[0] / (L[0] + L[1]) ? a : b; }
-    } else if (m.s1 != null) win[m.n] = simWinnerKO(a, b, venCountry(m), venAlt(m), [m.s1, m.s2], remFrac(m));   // live KO: resume from the current score
+    } else if (m.s1 != null && !hid(m)) win[m.n] = simWinnerKO(a, b, venCountry(m), venAlt(m), [m.s1, m.s2], remFrac(m));   // live KO: resume from the current score
     else win[m.n] = simWinnerKO(a, b, venCountry(m), venAlt(m));
   }
   return { champ: win[104], fin: teams[104] || [], semi: [...(teams[101] || []), ...(teams[102] || [])] };
@@ -2934,15 +3010,230 @@ function paintOdds() {
 }
 function renderOddsView() {
   const fresh = ODDS && ODDS._sig === playedSig();
-  setTimeout(() => { if (fresh && !oddsRunning) paintOdds(); else if (!oddsRunning) runOdds(ODDS_TOTAL); }, 0);
+  setTimeout(() => { if (fresh && !oddsRunning) paintOdds(); else if (!oddsRunning) runOdds(ODDS_TOTAL); ensureHist(); }, 0);
   return `<p class="brkHint">${t('oddsIntro')}</p>
     <div class="oddsTop">
       <button class="oddsRun" onclick="runOdds(${ODDS_TOTAL})">${t('oddsRerun')}</button>
       <span id="oddsStat" class="brkScore"></span>
       <span class="oddsProgWrap"><span id="oddsProg" class="oddsProgBar"></span></span>
     </div>
-    <div id="oddsList" class="oddsList"></div>`;
+    <div id="oddsList" class="oddsList"></div>
+    <div class="histSec">
+      <button type="button" class="histHead" onclick="toggleHist()"><span>${t('histTitle')}</span><span>${histOn ? '▾' : '▸'}</span></button>
+      ${histOn ? `<p class="brkHint" style="margin-top:9px">${t('histHint')}</p>
+      <div class="histCtl">
+        <button type="button" id="histVc" class="vBtn${histTable ? '' : ' on'}" onclick="histView(false)">${t('histChart')}</button>
+        <button type="button" id="histVt" class="vBtn${histTable ? ' on' : ''}" onclick="histView(true)">${t('histTable')}</button>
+        <span id="histStat" class="histStat"></span>
+      </div>
+      <div id="histBox" class="histBox"></div>` : ''}
+    </div>`;
 }
+
+// ── odds history: how the forecast evolved, day by day ────────────────────
+// The sim is deterministic given results, so the past is recomputable: for each
+// finished match day, re-fit the ratings to only the results known that evening
+// (fitCore on the truncated list) and re-run the tournament with later results
+// hidden (simTournament(asOf)). No stored history, no backend — just replay.
+let HIST = null, histRAF = 0, histRunning = false, histOn = false, histSel = null, histTable = false, _histGeo = null;
+const HIST_SIMS = 2500;                          // per cutoff — drawing a trend line, not the headline number
+const HIST_KEY = 'wcviz.hist.v1';
+// FT-only results signature: unlike playedSig it ignores live scores, so a cached
+// history stays valid during a match and refreshes when one goes full-time
+const histSig = () => {
+  const now = Date.now();
+  return MATCHES.reduce((a, m) => (m.s1 == null || stateOf(m, now) !== 'ft') ? a :
+    a + m.n + ':' + m.s1 + '-' + m.s2 + (m.pens ? 'p' + m.pens : '') + ';', '');
+};
+function histCuts() {                            // pre-tournament + every day with a full-time result
+  const now = Date.now();
+  const days = [...new Set(MATCHES.filter(m => m.s1 != null && stateOf(m, now) === 'ft').map(m => m.d))].sort();
+  return [{ d: null, rd: 'pre' }].concat(days.map(d => {
+    const ms = MATCHES.filter(m => m.d === d);
+    return { d, rd: ms[ms.length - 1].r };
+  }));
+}
+function runHist(sims) {
+  cancelAnimationFrame(histRAF); sims = sims || HIST_SIMS;
+  const H = HIST = { sig: histSig(), sims, cuts: histCuts(), series: {}, k: 0, n: 0, done: false, _fits: [], _counts: null };
+  histRunning = true;
+  const step = () => {
+    if (HIST !== H) return;                                             // superseded by a fresh run
+    if (oddsRunning) { histRAF = requestAnimationFrame(step); return; } // never share ATK/DEF with a live odds run
+    const cut = H.cuts[H.k], now = Date.now();
+    if (!H._fits[H.k]) {                                                // first frame at this cutoff: fit to what was known then
+      fitCore(cut.d ? MATCHES.filter(m => m.s1 != null && TEAMS[m.a] && TEAMS[m.b] && stateOf(m, now) === 'ft' && m.d <= cut.d) : []);
+      H._fits[H.k] = { atk: Object.assign({}, ATK), def: Object.assign({}, DEF), sig: Object.assign({}, RSIG) };
+      H._counts = {}; H.n = 0;
+    } else {                                                            // later frames: restore this cutoff's fit
+      Object.assign(ATK, H._fits[H.k].atk); Object.assign(DEF, H._fits[H.k].def); Object.assign(RSIG, H._fits[H.k].sig);
+    }
+    const end = Math.min(H.n + 150, sims);
+    for (; H.n < end; H.n++) { const r = simTournament(cut.d || '0000'); if (r.champ) H._counts[r.champ] = (H._counts[r.champ] || 0) + 1; }
+    _fitSig = -1;                                                       // module ratings ≠ live fit now — force a refit on the next live run
+    if (H.n >= sims) {
+      for (const c of Object.keys(H._counts)) (H.series[c] = H.series[c] || [])[H.k] = H._counts[c] / sims;
+      H.k++;
+      if (H.k >= H.cuts.length) { H.done = true; histRunning = false; histSave(H); paintHist(); return; }
+    }
+    paintHist();
+    histRAF = requestAnimationFrame(step);
+  };
+  histRAF = requestAnimationFrame(step);
+}
+function histSave(H) { try { localStorage.setItem(HIST_KEY, JSON.stringify({ sig: H.sig, sims: H.sims, cuts: H.cuts, series: H.series })); } catch (e) {} }
+function histLoad() {
+  try {
+    const j = JSON.parse(localStorage.getItem(HIST_KEY) || 'null');
+    if (j && j.sig === histSig() && j.cuts && j.series) return { sig: j.sig, sims: j.sims, cuts: j.cuts, series: j.series, k: j.cuts.length, n: j.sims, done: true };
+  } catch (e) {}
+  return null;
+}
+function toggleHist() { histOn = !histOn; renderBracket(); }
+function ensureHist() {
+  if (!histOn) return;
+  if (HIST && HIST.sig === histSig() && (HIST.done || histRunning)) { paintHist(); return; }
+  const c = histLoad();
+  if (c) { HIST = c; histRunning = false; paintHist(); return; }
+  runHist();
+}
+function histPick(c) { histSel = histSel === c ? null : c; paintHist(); }
+function histView(tbl) { histTable = tbl; paintHist(); }
+// series colors: the app's accent hues stepped darker for chart marks — the neon
+// UI accents fail the series lightness band; these pass CVD ΔE≥17 + ≥3:1 on the panel
+const HIST_COLORS = ['#2f9dd0', '#c98500', '#9085e9', '#0ea35a', '#d55181', '#d95926'];
+const HIST_GRAY = 'rgba(148,163,196,.5)';
+const histDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString(LANG === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+function histDrawn() {                           // which teams get lines + their colors (peak order — stable per dataset)
+  const H = HIST, kAv = H.done ? H.cuts.length : H.k;
+  const peak = c => { let p = 0; const s = H.series[c]; for (let i = 0; i < kAv; i++) p = Math.max(p, s[i] || 0); return p; };
+  return Object.keys(H.series).map(c => ({ c, pk: peak(c) }))
+    .filter(x => x.pk >= 0.025)
+    .sort((a, b) => b.pk - a.pk || (a.c < b.c ? -1 : 1)).slice(0, 14)
+    .map((x, i) => ({ c: x.c, col: i < HIST_COLORS.length ? HIST_COLORS[i] : HIST_GRAY, big: i < HIST_COLORS.length }));
+}
+function histTableHTML(drawn, kAv) {
+  const H = HIST;
+  const rows = drawn.slice().sort((a, b) => (H.series[b.c][kAv - 1] || 0) - (H.series[a.c][kAv - 1] || 0));
+  let h = `<div class="histTblWrap"><table class="histTbl"><tr><th></th>`;
+  for (let i = 0; i < kAv; i++) h += `<th>${H.cuts[i].d ? histDate(H.cuts[i].d) : t('histPreShort')}</th>`;
+  h += `</tr>`;
+  for (const dn of rows) {
+    h += `<tr><td><span class="tm"><img src="${flagURL(dn.c)}" alt="">${dn.c}</span></td>`;
+    for (let i = 0; i < kAv; i++) { const v = H.series[dn.c][i] || 0; h += `<td>${v ? fmtPct1(v) : '–'}</td>`; }
+    h += `</tr>`;
+  }
+  return h + `</table></div>`;
+}
+function paintHist() {
+  const box = $id('histBox'); if (!box || !HIST) return;
+  const H = HIST, kAv = H.done ? H.cuts.length : H.k;
+  const stat = $id('histStat');
+  if (stat) stat.textContent = H.done ? t('histDone', nfmt(H.sims)) : t('histRunning', Math.min(H.k + 1, H.cuts.length), H.cuts.length);
+  const vc = $id('histVc'), vt = $id('histVt');
+  if (vc) vc.className = 'vBtn' + (histTable ? '' : ' on');
+  if (vt) vt.className = 'vBtn' + (histTable ? ' on' : '');
+  if (kAv < 1) { box.innerHTML = `<div class="brkHint">${t('oddsNone')}</div>`; return; }
+  const drawn = histDrawn();
+  if (histTable) { _histGeo = null; box.innerHTML = histTableHTML(drawn, kAv); return; }
+  const N = H.cuts.length;
+  const w = Math.max(300, box.clientWidth || 640), narrow = w < 480;
+  const ml = narrow ? 30 : 36, mr = narrow ? 58 : 92, mt = 20, mb = 22;
+  const h = Math.max(190, Math.min(300, Math.round(w * 0.4)));
+  const pw = w - ml - mr, ph = h - mt - mb;
+  const X = i => ml + (N <= 1 ? 0 : pw * i / (N - 1));
+  let pMax = 0; drawn.forEach(dn => { const sr = H.series[dn.c]; for (let i = 0; i < kAv; i++) pMax = Math.max(pMax, sr[i] || 0); });
+  pMax = Math.max(0.15, Math.ceil(pMax * 1.15 * 20) / 20);
+  const Y = p => mt + ph * (1 - p / pMax);
+  let s = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${t('histTitle')}">`;
+  // grid + y labels
+  const gstep = pMax > 0.3 ? 0.1 : 0.05;
+  for (let v = gstep; v <= pMax + 1e-9; v += gstep) {
+    s += `<line x1="${ml}" y1="${Y(v)}" x2="${w - mr + 16}" y2="${Y(v)}" stroke="rgba(255,255,255,.07)"/>`;
+    s += `<text x="${ml - 5}" y="${Y(v) + 3}" text-anchor="end" font-size="9" fill="var(--ink-dim)">${Math.round(v * 100)}%</text>`;
+  }
+  s += `<line x1="${ml}" y1="${Y(0)}" x2="${w - mr + 16}" y2="${Y(0)}" stroke="rgba(255,255,255,.16)"/>`;
+  // round bands: separators + labels where the round changes
+  const spans = [];
+  for (let i = 0; i < N; i++) { const rd = H.cuts[i].rd; if (spans.length && spans[spans.length - 1].rd === rd) spans[spans.length - 1].b = i; else spans.push({ rd, a: i, b: i }); }
+  spans.forEach((sp, j) => {
+    if (j) { const bx = (X(sp.a) + X(sp.a - 1)) / 2; s += `<line x1="${bx}" y1="${mt - 6}" x2="${bx}" y2="${Y(0)}" stroke="rgba(255,255,255,.07)" stroke-dasharray="2 4"/>`; }
+    const lab = (t('histRd') || {})[sp.rd] || '';
+    if (lab && X(sp.b) - X(sp.a) + 24 > lab.length * 7) s += `<text x="${(X(sp.a) + X(sp.b)) / 2}" y="${mt - 9}" text-anchor="middle" font-size="8.5" fill="var(--ink-dim)" letter-spacing="1">${lab.toUpperCase()}</text>`;
+  });
+  // x ticks: pre, first day of each round, last — thinned to avoid collisions
+  const cand = [0]; spans.forEach(sp => { if (H.cuts[sp.a].d && cand.indexOf(sp.a) < 0) cand.push(sp.a); }); if (cand.indexOf(N - 1) < 0) cand.push(N - 1);
+  cand.sort((a, b) => a - b);
+  const kept = [];
+  for (const i of cand) if (!kept.length || X(i) - X(kept[kept.length - 1]) >= 46) kept.push(i);
+  if (kept[kept.length - 1] !== N - 1) { while (kept.length && X(N - 1) - X(kept[kept.length - 1]) < 46) kept.pop(); kept.push(N - 1); }
+  kept.forEach(i => { s += `<text x="${X(i)}" y="${h - 8}" text-anchor="middle" font-size="9" fill="var(--ink-dim)">${H.cuts[i].d ? histDate(H.cuts[i].d) : t('histPreShort')}</text>`; });
+  // lines
+  const geo = { ml, mr, mt, mb, w, h, N, kAv, pMax, drawn: [] };
+  let lines = '', marks = '';
+  const labels = [];
+  drawn.forEach(dn => {
+    const sr = H.series[dn.c]; let lastNZ = -1;
+    for (let i = 0; i < kAv; i++) if ((sr[i] || 0) > 0) lastNZ = i;
+    if (lastNZ < 0) return;
+    const kEnd = Math.min(lastNZ + 1, kAv - 1);            // run one point into the zero tail (the elimination drop)
+    const out = kEnd > lastNZ;
+    const pts = []; for (let i = 0; i <= kEnd; i++) pts.push([X(i), Y(sr[i] || 0)]);
+    const sel = histSel === dn.c, dim = histSel && !sel;
+    const col = sel && !dn.big ? '#c7d3f0' : dn.col;
+    lines += `<polyline points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="${sel ? 3 : dn.big ? 2 : 1.3}" opacity="${dim ? 0.18 : (dn.big || sel) ? 1 : 0.55}" stroke-linejoin="round" stroke-linecap="round"/>`;
+    if (out && !dim) marks += `<text x="${pts[kEnd][0].toFixed(1)}" y="${(pts[kEnd][1] + 3.5).toFixed(1)}" text-anchor="middle" font-size="9" fill="var(--ink-dim)">✕</text>`;
+    labels.push({ c: dn.c, big: dn.big, sel, dim, x: pts[kEnd][0], y: pts[kEnd][1], v: sr[out ? lastNZ + 1 : kEnd] || 0, out });
+    geo.drawn.push({ c: dn.c, col: dn.col, big: dn.big });
+  });
+  // right-edge labels for alive teams, nudged apart; eliminated teams get a flag at their ✕
+  const alive = labels.filter(l => !l.out && !l.dim).sort((a, b) => a.y - b.y);
+  let prevY = -1e9;
+  alive.forEach(l => { const y = Math.max(l.y, prevY + 12); prevY = y; l.ly = y; });
+  alive.forEach(l => {
+    marks += `<image href="${flagURL(l.c)}" x="${(l.x + 5).toFixed(1)}" y="${(l.ly - 5).toFixed(1)}" width="15" height="10"/>`;
+    marks += `<text x="${(l.x + 23).toFixed(1)}" y="${(l.ly + 3.5).toFixed(1)}" font-size="${l.big || l.sel ? 9.5 : 8.5}" font-weight="800" fill="${l.big || l.sel ? 'var(--ink)' : 'var(--ink-dim)'}">${narrow ? fmtPct(l.v) : l.c + ' ' + fmtPct1(l.v)}</text>`;
+  });
+  const byX = {};
+  labels.filter(l => l.out && !l.dim).forEach(l => { const k = Math.round(l.x); (byX[k] = byX[k] || []).push(l); });
+  Object.keys(byX).forEach(k => byX[k].forEach((l, i) => { marks += `<image href="${flagURL(l.c)}" x="${(l.x - 7.5).toFixed(1)}" y="${(l.y - 17 - i * 12).toFixed(1)}" width="15" height="10" opacity=".8"/>`; }));
+  s += lines + marks;
+  s += `<line id="histX" x1="0" y1="${mt - 4}" x2="0" y2="${Y(0)}" stroke="rgba(255,255,255,.25)" visibility="hidden"/>`;
+  s += `<rect x="0" y="0" width="${w}" height="${h}" fill="transparent" style="touch-action:pan-y" onpointermove="histMove(event)" onpointerdown="histMove(event)" onpointerleave="histLeave()"/>`;
+  s += `</svg>`;
+  const legend = `<div class="histLegend">` + geo.drawn.map(dn =>
+    `<button type="button" class="histChip${histSel === dn.c ? ' on' : ''}" title="${teamName(dn.c)}" onclick="histPick('${dn.c}')"><span class="dot" style="background:${dn.big ? dn.col : HIST_GRAY}"></span><img src="${flagURL(dn.c)}" alt="">${dn.c}</button>`).join('') + `</div>`;
+  _histGeo = geo;
+  box.innerHTML = s + `<div id="histTip" class="histTip" hidden></div>` + legend;
+}
+function histMove(ev) {
+  const g = _histGeo, H = HIST; if (!g || !H) return;
+  const svg = ev.currentTarget.ownerSVGElement, box = $id('histBox');
+  const r = svg.getBoundingClientRect();
+  const px = (ev.clientX - r.left) * (g.w / (r.width || g.w));
+  const pw = g.w - g.ml - g.mr;
+  let i = Math.round((px - g.ml) / pw * (g.N - 1));
+  i = Math.max(0, Math.min(g.kAv - 1, i));
+  const x = g.ml + (g.N <= 1 ? 0 : pw * i / (g.N - 1));
+  const xl = $id('histX');
+  if (xl) { xl.setAttribute('x1', x); xl.setAttribute('x2', x); xl.setAttribute('visibility', 'visible'); }
+  const tip = $id('histTip'); if (!tip) return;
+  const rows = g.drawn.map(dn => ({ c: dn.c, v: H.series[dn.c][i] || 0 }))
+    .filter(z => z.v > 0 || z.c === histSel).sort((a, b) => b.v - a.v).slice(0, 7);
+  const cut = H.cuts[i], rd = (t('histRd') || {})[cut.rd] || '';
+  tip.innerHTML = `<div class="tD">${cut.d ? histDate(cut.d) : t('histPre')}${rd ? ' · ' + rd : ''}</div>` +
+    rows.map(z => `<div class="tR"><img src="${flagURL(z.c)}" alt="">${teamName(z.c)}<span class="tv">${fmtPct1(z.v)}</span></div>`).join('');
+  tip.hidden = false;
+  const bw = box.clientWidth || g.w, tw = tip.offsetWidth || 140;
+  const cx = x * ((r.width || g.w) / g.w);
+  tip.style.left = Math.max(0, Math.min(cx + 12, bw - tw - 2)) + 'px';
+  tip.style.top = '4px';
+}
+function histLeave() {
+  const tip = $id('histTip'); if (tip) tip.hidden = true;
+  const xl = $id('histX'); if (xl) xl.setAttribute('visibility', 'hidden');
+}
+window.addEventListener('resize', () => { if (histOn && HIST && !histTable) paintHist(); });
 
 // ── rendering ──
 function renderBracket() {
