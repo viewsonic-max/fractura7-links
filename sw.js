@@ -4,7 +4,7 @@
 // offline); cache-first for the other static shell assets (icons, manifest) —
 // bump CACHE when THOSE change; runtime cache for cross-origin CDN assets
 // (Leaflet, fonts, flags).
-const CACHE = 'wcviz-v24';
+const CACHE = 'wcviz-v25';   // v25: odds-history "how the odds evolved" chart
 const SHELL = [
   './',
   './index.html',
