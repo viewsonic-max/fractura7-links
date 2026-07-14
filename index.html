@@ -612,6 +612,34 @@
     #help{padding:0;}
     .helpCard{width:100vw; height:100%; max-height:100vh; border-radius:0;}
   }
+  /* 📸 My World Cup — wrapped share card */
+  #wrap{position:absolute; inset:0; z-index:1655; display:none; background:rgba(7,11,22,.86); backdrop-filter:blur(6px); padding:18px;}
+  #wrap.open{display:flex; justify-content:center; align-items:center;}
+  .wrapCard{
+    width:min(430px,94vw); max-height:calc(100vh - 40px); position:relative;
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:18px;
+    box-shadow:0 20px 60px rgba(0,0,0,.6); display:flex; flex-direction:column; overflow:hidden;
+    animation:pop .3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .wrapCard .wh{display:flex; align-items:center; gap:10px; padding:13px 16px; border-bottom:1px solid var(--panel-border);}
+  .wrapCard .wh h2{font-size:16px; font-weight:900;}
+  .wrapCard .wh h2 .pc{background:linear-gradient(92deg,var(--pitch),var(--sky) 55%,var(--hot)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .wrapCard .wx{margin-left:auto; background:none; border:none; color:var(--ink-dim); font-size:18px; cursor:pointer;}
+  .wrapCard .wx:hover{color:var(--ink);}
+  .wrapBody{overflow-y:auto; padding:12px 14px 4px; display:flex; justify-content:center; scrollbar-width:thin; scrollbar-color:#33415e transparent;}
+  #wrapCanvas{max-width:100%; max-height:62vh; width:auto; height:auto; border-radius:12px; border:1px solid var(--panel-border); background:#0b1120;}
+  .wrapStat{font:600 11.5px 'Outfit',sans-serif; color:var(--ink-dim); text-align:center; padding:6px 14px 0; min-height:16px;}
+  .wrapFoot{padding:11px 14px; display:flex; gap:9px; justify-content:center;}
+  .wrapFoot button{flex:1; max-width:170px; padding:10px 12px; border-radius:10px; border:none; cursor:pointer; font:800 13px 'Outfit',sans-serif;}
+  #wrapShareBtn{background:linear-gradient(135deg,var(--pitch),var(--pitch-deep)); color:#04150c;}
+  #wrapShareBtn:hover{filter:brightness(1.1);}
+  #wrapSaveBtn{background:rgba(255,255,255,.08); border:1px solid var(--panel-border); color:var(--ink);}
+  #wrapSaveBtn:hover{border-color:var(--ink-dim);}
+  @media (max-width:760px){
+    #wrap{padding:0;}
+    .wrapCard{width:100vw; height:100%; max-height:100vh; border-radius:0; justify-content:center;}
+    #wrapCanvas{max-height:66vh;}
+  }
   /* top scorers panel (reuses .helpCard) */
   #scorers{position:absolute; inset:0; z-index:1660; display:none; background:rgba(7,11,22,.86); backdrop-filter:blur(6px); padding:18px;}
   #scorers.open{display:flex; justify-content:center; align-items:center;}
@@ -772,6 +800,7 @@
 <div id="bracket" role="dialog" aria-modal="true" aria-label="Bracket predictor"><div id="bracketInner"></div></div>
 <div id="help" role="dialog" aria-modal="true" aria-label="How to use this app"><div class="helpCard"></div></div>
 <div id="scorers" role="dialog" aria-modal="true" aria-label="Top scorers" onclick="if(event.target===this)closeScorers()"><div class="helpCard"></div></div>
+<div id="wrap" role="dialog" aria-modal="true" aria-label="My World Cup share card" onclick="if(event.target===this)wrapClose()"><div class="wrapCard"></div></div>
 <div id="clockChip"></div>
 
 <div id="tl">
@@ -781,6 +810,7 @@
   <button class="tlBtn small" id="soundBtn" title="Goal sounds">🔇</button>
   <button class="tlBtn small" id="notifyBtn" title="Match alerts">🔕</button>
   <button class="tlBtn small" id="predBtn" title="Bracket predictor">🔮</button>
+  <button class="tlBtn small" id="wrapBtn" title="My World Cup — share card">📸</button>
   <button class="tlBtn small" id="helpBtn" title="How to use this app">?</button>
   <div id="days"></div>
 </div>
@@ -925,6 +955,25 @@ const STR = {
     koTitles: {'Round of 32':'Round of 32','Round of 16':'Round of 16','Quarterfinal':'Quarterfinals','Semifinal':'Semifinals','Final':'Final','Third Place':'3rd Place'},
     thirdSlot: x => `🃏 3rd ${x} ▾`,
     helpTitle: '👋 How to use the Match Day Map', helpGotIt: 'Got it ⚽', igFollow: 'Follow on Instagram',
+    tWrap: 'My World Cup — share card',
+    wrapTitle: 'My World Cup',
+    wrapShare: '📤 Share', wrapSave: '⬇ Save image',
+    wrapCrunch: (k, n) => `Replaying the odds… ${k} / ${n}`,
+    wrapReady: 'Long-press the image, or use the buttons below.',
+    wrapShareText: 'My World Cup 26 —',
+    wcTitle: 'MY WORLD CUP', wcDates: 'June 11 – July 19, 2026',
+    wcChampion: 'WORLD CHAMPIONS', wcFinalist: 'FINALISTS', wcInFinal: 'IN THE FINAL',
+    wcThird: 'THIRD PLACE', wcFourth: 'FOURTH PLACE',
+    wcAlive: r => `STILL ALIVE · ${r.toUpperCase()}`,
+    wcOut: r => `RUN ENDED · ${r.toUpperCase()}`,
+    wcRec: (w, d, l) => `${w}W · ${d}D · ${l}L`,
+    wcGF: (f, a) => `GF ${f} · GA ${a}`,
+    wcJourney: (m, c, mi) => `${m} matches · ${c} ${c === 1 ? 'city' : 'cities'} · ${mi} mi`,
+    wcPicksLbl: 'MY BRACKET', wcPicks: (c, tt) => `${c}/${tt} calls right`,
+    wcPickLbl: 'MY CHAMPION PICK',
+    wcPickedAt: (p, pre) => `${p} title odds ${pre ? 'pre-tournament' : 'when I picked them'}`,
+    wcOddsTitle: 'TITLE ODDS · DAY BY DAY',
+    wcStGoals: 'GOALS', wcStAvg: 'PER MATCH', wcStSO: 'SHOOTOUTS',
     helpRows: [
       ['🗺️','<b>The map.</b> Every marker is a stadium. Idle ones show a dot &amp; next-match countdown; active ones pulse with the day’s match count; the Final bounces a 🏆. Click any marker for its fixtures &amp; capacity.'],
       ['📅','<b>Pick a day.</b> Tap a date on the timeline, use <span class="k">◀</span> <span class="k">▶</span>, or the <span class="k">←</span> <span class="k">→</span> keys. Chip colors mark the round — group → R32 → R16 → … → Final.'],
@@ -937,6 +986,7 @@ const STR = {
       ['🔊','<b>Goal sounds.</b> Toggle 🔊 in the timeline bar for a fanfare when a goal goes in (off by default).'],
       ['🔔','<b>Match alerts.</b> Tap 🔔 to get a notification for your followed team’s kickoffs and goals. Install the app to your home screen for the full experience. Alerts ping while the app is open.'],
       ['🔮','<b>Bracket predictor.</b> Open 🔮 to order the groups, tap winners through the knockouts, assign third-place wildcards, and share your bracket. Real results lock in and grade your picks ✓/✗.'],
+      ['📸','<b>My World Cup card.</b> Tap 📸 for a personal tournament recap — your team’s run, your bracket score, the odds story — as an image ready to share or save.'],
       ['🔗','<b>Share the view.</b> The URL remembers your day, followed team and bracket — copy it to share exactly what you’re looking at.'],
     ],
   },
@@ -1022,6 +1072,25 @@ const STR = {
     koTitles: {'Round of 32':'16avos','Round of 16':'Octavos','Quarterfinal':'Cuartos','Semifinal':'Semis','Final':'Final','Third Place':'3er Lugar'},
     thirdSlot: x => `🃏 3º ${x} ▾`,
     helpTitle: '👋 Cómo usar el Mapa de Partidos', helpGotIt: '¡Entendido! ⚽', igFollow: 'Sígueme en Instagram',
+    tWrap: 'Mi Mundial — tarjeta para compartir',
+    wrapTitle: 'Mi Mundial',
+    wrapShare: '📤 Compartir', wrapSave: '⬇ Guardar imagen',
+    wrapCrunch: (k, n) => `Reproduciendo la probabilidad… ${k} / ${n}`,
+    wrapReady: 'Mantén presionada la imagen, o usa los botones.',
+    wrapShareText: 'Mi Mundial 26 —',
+    wcTitle: 'MI MUNDIAL', wcDates: '11 de junio – 19 de julio de 2026',
+    wcChampion: 'CAMPEONES DEL MUNDO', wcFinalist: 'FINALISTAS', wcInFinal: '¡EN LA FINAL!',
+    wcThird: 'TERCER LUGAR', wcFourth: 'CUARTO LUGAR',
+    wcAlive: r => `SIGUEN VIVOS · ${r.toUpperCase()}`,
+    wcOut: r => `HASTA AQUÍ · ${r.toUpperCase()}`,
+    wcRec: (w, d, l) => `${w}G · ${d}E · ${l}P`,
+    wcGF: (f, a) => `GF ${f} · GC ${a}`,
+    wcJourney: (m, c, mi) => `${m} partidos · ${c} ciudad${c === 1 ? '' : 'es'} · ${mi} mi`,
+    wcPicksLbl: 'MI CUADRO', wcPicks: (c, tt) => `${c}/${tt} aciertos`,
+    wcPickLbl: 'MI CAMPEÓN',
+    wcPickedAt: (p, pre) => `${p} de prob. ${pre ? 'antes del torneo' : 'cuando lo elegí'}`,
+    wcOddsTitle: 'PROBABILIDAD DEL TÍTULO · DÍA A DÍA',
+    wcStGoals: 'GOLES', wcStAvg: 'POR PARTIDO', wcStSO: 'PENALES',
     helpRows: [
       ['🗺️','<b>El mapa.</b> Cada marcador es un estadio. Los inactivos muestran un punto y la cuenta regresiva al próximo partido; los activos laten con el número de partidos del día; la Final hace rebotar un 🏆. Haz clic en cualquier marcador para ver sus partidos y capacidad.'],
       ['📅','<b>Elige un día.</b> Toca una fecha en la línea de tiempo, usa <span class="k">◀</span> <span class="k">▶</span>, o las teclas <span class="k">←</span> <span class="k">→</span>. Los colores de las fichas marcan la ronda — grupos → 16avos → 8vos → … → Final.'],
@@ -1034,6 +1103,7 @@ const STR = {
       ['🔊','<b>Sonidos de gol.</b> Activa 🔊 en la barra de tiempo para una fanfarria cuando cae un gol (desactivado por defecto).'],
       ['🔔','<b>Alertas de partido.</b> Toca 🔔 para recibir una notificación de los arranques y goles del equipo que sigues. Instala la app en tu pantalla de inicio para la experiencia completa. Las alertas suenan mientras la app está abierta.'],
       ['🔮','<b>Predictor del cuadro.</b> Abre 🔮 para ordenar los grupos, enviar ganadores por las eliminatorias, asignar los comodines de tercer lugar y compartir tu cuadro. Los resultados reales se fijan y califican tus pronósticos ✓/✗.'],
+      ['📸','<b>Tarjeta Mi Mundial.</b> Toca 📸 para un resumen personal del torneo — el camino de tu equipo, tus aciertos del cuadro y la historia de la probabilidad — en una imagen lista para compartir o guardar.'],
       ['🔗','<b>Comparte la vista.</b> La URL recuerda tu día, equipo seguido y cuadro — cópiala para compartir exactamente lo que ves.'],
     ],
   },
@@ -2248,7 +2318,7 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => {});
 }
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { if (scorersOn) return closeScorers(); if (helpOn) return helpClose(); if (predOn) return predClose(); return closeDrawer(); }
+  if (e.key === 'Escape') { if (wrapOn) return wrapClose(); if (scorersOn) return closeScorers(); if (helpOn) return helpClose(); if (predOn) return predClose(); return closeDrawer(); }
   if (predOn || helpOn) return;   // a modal owns the keyboard while open
   if (e.key === 'ArrowLeft') { stopPlay(); stepDay(-1); }
   if (e.key === 'ArrowRight') { stopPlay(); stepDay(1); }
@@ -2507,7 +2577,7 @@ const KO_MATCHES = MATCHES.filter(m => m.src === 'knockout' || m.src === 'final'
 const GROUP_SIZE = 6;   // round-robin matches per 4-team group
 
 const PRED_KEY = 'wcviz.pred.v1';
-const normalizePred = o => ({g:(o&&o.g)||{}, third:(o&&o.third)||{}, win:(o&&o.win)||{}, manual:(o&&o.manual)||{}});
+const normalizePred = o => ({g:(o&&o.g)||{}, third:(o&&o.third)||{}, win:(o&&o.win)||{}, manual:(o&&o.manual)||{}, t:(o&&o.t)||{}});
 
 // ── compact share codec ─────────────────────────────────────────────────────
 // The bracket structure is fixed and known to the app, so a share only needs the
@@ -2695,7 +2765,7 @@ function prunePred() {
     changed = false;
     for (const n of Object.keys(PRED.win)) {
       const m = matchByN(+n), a = m && slotTeam(m,'a'), b = m && slotTeam(m,'b');
-      if (!m || (PRED.win[n] !== a && PRED.win[n] !== b)) { delete PRED.win[n]; changed = true; }
+      if (!m || (PRED.win[n] !== a && PRED.win[n] !== b)) { delete PRED.win[n]; if (PRED.t) delete PRED.t[n]; changed = true; }
     }
     for (const sec of Object.keys(PRED.third)) {
       const m = KO_MATCHES.find(x => x.sec === sec);
@@ -2718,7 +2788,9 @@ function predMove(g, idx, dir) {
 }
 function predPickWinner(n, code) {
   if (matchByN(n).s1 != null) return;               // locked to reality
-  if (PRED.win[n] === code) delete PRED.win[n]; else PRED.win[n] = code;
+  PRED.t = PRED.t || {};
+  if (PRED.win[n] === code) { delete PRED.win[n]; delete PRED.t[n]; }
+  else { PRED.win[n] = code; PRED.t[n] = TODAY; }   // date stamps feed the 📸 wrapped card
   prunePred(); savePred(); renderBracket();
 }
 function predCycleThird(sec) {
@@ -2734,7 +2806,7 @@ const fyShuffle = arr => { const a = arr.slice(); for (let i = a.length - 1; i >
 // standings entirely and shuffle. Both skip groups locked by reality or hand-arranged with ▲▼.
 function predAutoFill() { for (const g of Object.keys(GROUPS)) if (!groupDecided(g) && !PRED.manual[g]) PRED.g[g] = standingsFor(g, true).map(r => r.c); savePred(); renderBracket(); }
 function predRandom() { for (const g of Object.keys(GROUPS)) if (!groupDecided(g) && !PRED.manual[g]) PRED.g[g] = fyShuffle(GROUPS[g]); savePred(); renderBracket(); }
-function predReset() { if (!confirm(t('confirmClear'))) return; PRED = {g:{}, third:{}, win:{}, manual:{}}; savePred(); renderBracket(); }
+function predReset() { if (!confirm(t('confirmClear'))) return; PRED = {g:{}, third:{}, win:{}, manual:{}, t:{}}; savePred(); renderBracket(); }
 function predSetView(v) { predView = v; renderBracket(); }
 function predOpen() { predOn = true; $id('bracket').classList.add('open'); $id('predBtn').classList.add('on'); renderBracket(); }
 function predClose() { predOn = false; $id('bracket').classList.remove('open'); $id('predBtn').classList.remove('on'); }
@@ -3327,6 +3399,360 @@ function renderKnockoutView() {
 }
 $id('predBtn').onclick = () => predOn ? predClose() : predOpen();
 
+// ── 📸 My World Cup — wrapped share card ────────────────────────────────────
+// A 1080×1920 story-format canvas recap rendered on demand: the followed team's
+// run (record, goals, miles), the user's bracket score + champion pick, the
+// title-odds story (cached odds history when available, else a quick 500-sim
+// replay), and tournament totals. Exported via the Web Share API (files) with a
+// download fallback. Flags load with crossOrigin so the canvas never taints —
+// a failed CORS load falls back to a code chip, never a tainted drawImage.
+const WRAP_URL = 'https://viewsonic-max.github.io/fractura7-links/';
+let wrapOn = false, _wrapRAF = 0, _wrapTok = null, _wrapData = null;
+const _wrapFlags = {};                     // code -> Promise<Image|null>
+function wrapFlag(code) {
+  if (_wrapFlags[code]) return _wrapFlags[code];
+  return _wrapFlags[code] = new Promise(res => {
+    const im = new Image();
+    im.crossOrigin = 'anonymous';
+    const to = setTimeout(() => res(null), 2500);
+    im.onload = () => { clearTimeout(to); res(im); };
+    im.onerror = () => { clearTimeout(to); res(null); };
+    im.src = `https://flagcdn.com/w160/${TEAMS[code][1]}.png`;
+  });
+}
+const ROUND_NEXT = {'Group Stage':'Round of 32','Round of 32':'Round of 16','Round of 16':'Quarterfinal','Quarterfinal':'Semifinal','Semifinal':'Final'};
+function wrapStats() {
+  const now = Date.now();
+  const fin = m => m.s1 != null && stateOf(m, now) === 'ft';
+  let team = null;
+  if (follow && TEAMS[follow]) {
+    const gm = MATCHES.filter(m => (m.a === follow || m.b === follow) && fin(m)).sort((x, y) => x.d.localeCompare(y.d));
+    let w = 0, d = 0, l = 0, gf = 0, ga = 0, mi = 0;
+    for (const m of gm) {
+      gf += m.a === follow ? m.s1 : m.s2; ga += m.a === follow ? m.s2 : m.s1;
+      const rw = realWinner(m);
+      if (rw === follow) w++; else if (rw) l++; else d++;
+    }
+    for (let i = 0; i < gm.length - 1; i++) {
+      const A = VENUES[gm[i].v], B = VENUES[gm[i + 1].v];
+      mi += haversineMi([A[2], A[3]], [B[2], B[3]]);
+    }
+    const last = gm[gm.length - 1];
+    let status = ['alive', 'Group Stage'];
+    if (last) {
+      const won = realWinner(last) === follow;
+      if (last.n === 104) status = [won ? 'champion' : 'finalist'];
+      else if (last.n === 103) status = [won ? 'third' : 'fourth'];
+      else if (last.r !== 'Group Stage') {
+        if (!won) status = ['out', last.r];
+        else if (last.r === 'Semifinal') status = ['final'];
+        else status = ['alive', ROUND_NEXT[last.r]];
+      } else if (!groupDecided(groupOf(follow))) status = ['alive', 'Group Stage'];
+      else status = KO_MATCHES.some(m => m.a === follow || m.b === follow) ? ['alive', 'Round of 32'] : ['out', 'Group Stage'];
+    }
+    team = { code: follow, name: teamName(follow), played: gm.length, w, d, l, gf, ga,
+             mi: Math.round(mi), cities: new Set(gm.map(m => m.v)).size, status };
+  }
+  const { g, p } = totalGoals();
+  const so = MATCHES.filter(m => m.pens && fin(m)).length;
+  const sc = predScore();
+  const pick = TEAMS[PRED.win[104]] ? PRED.win[104] : null;
+  const pickDate = (pick && PRED.t && PRED.t[104]) || null;
+  const fm = matchByN(104);
+  const finalists = [TEAMS[fm.a] ? fm.a : null, TEAMS[fm.b] ? fm.b : null];
+  const champ = fin(fm) ? realWinner(fm) : null;
+  let codes = [...new Set([team && team.code, pick].filter(Boolean))];
+  if (!codes.length) codes = finalists.filter(Boolean).slice(0, 2);
+  return { team, goals: g, played: p, so, sc, pick, pickDate, finalists, champ, codes, final: fm };
+}
+// Title-odds series for the card: reuse the full odds-history cache when it's
+// current; otherwise replay one cutoff per frame at 500 sims — enough for a
+// trend line. Same fit/sim machinery and the same _fitSig=-1 handshake as
+// runHist so a later live odds run always refits.
+function wrapSeries(codes, onDone, onProg) {
+  cancelAnimationFrame(_wrapRAF);
+  const cached = (HIST && HIST.done && HIST.sig === histSig()) ? HIST : histLoad();
+  if (cached) { onDone({ cuts: cached.cuts, series: cached.series }); return; }
+  const cuts = histCuts(), S = {}; codes.forEach(c => S[c] = []);
+  const SIMS = 500;
+  let k = 0;
+  const step = () => {
+    if (!wrapOn) return;
+    if (oddsRunning || histRunning) { _wrapRAF = requestAnimationFrame(step); return; }   // never share ATK/DEF mid-run
+    const cut = cuts[k], now = Date.now();
+    fitCore(cut.d ? MATCHES.filter(m => m.s1 != null && TEAMS[m.a] && TEAMS[m.b] && stateOf(m, now) === 'ft' && m.d <= cut.d) : []);
+    const counts = {};
+    for (let i = 0; i < SIMS; i++) { const r = simTournament(cut.d || '0000'); if (r.champ) counts[r.champ] = (counts[r.champ] || 0) + 1; }
+    codes.forEach(c => S[c][k] = (counts[c] || 0) / SIMS);
+    _fitSig = -1;
+    k++; if (onProg) onProg(k, cuts.length);
+    if (k >= cuts.length) { onDone({ cuts, series: S }); return; }
+    _wrapRAF = requestAnimationFrame(step);
+  };
+  _wrapRAF = requestAnimationFrame(step);
+}
+function wrapOpen() {
+  wrapOn = true;
+  document.querySelector('#wrap .wrapCard').innerHTML = `
+    <div class="wh"><h2>📸 <span class="pc">${t('wrapTitle')}</span></h2><button class="wx" onclick="wrapClose()" title="${t('tClose')}">✕</button></div>
+    <div class="wrapBody"><canvas id="wrapCanvas" width="1080" height="1920"></canvas></div>
+    <div class="wrapStat" id="wrapStat"></div>
+    <div class="wrapFoot">
+      <button id="wrapShareBtn" onclick="wrapShare()">${t('wrapShare')}</button>
+      <button id="wrapSaveBtn" onclick="wrapSave()">${t('wrapSave')}</button>
+    </div>`;
+  $id('wrap').classList.add('open');
+  $id('wrapBtn').classList.add('on');
+  wrapBuild();
+}
+function wrapClose() { wrapOn = false; _wrapTok = null; cancelAnimationFrame(_wrapRAF); $id('wrap').classList.remove('open'); $id('wrapBtn').classList.remove('on'); }
+async function wrapBuild() {
+  const tok = _wrapTok = {};
+  const st = wrapStats();
+  _wrapData = { st, flags: {}, hist: null };
+  try { if (document.fonts && document.fonts.load) await Promise.all(['900 108px Outfit', '800 46px Outfit', '700 34px Outfit', '600 34px Outfit'].map(f => document.fonts.load(f))); } catch (e) {}
+  if (_wrapTok !== tok) return;
+  drawWrap();
+  const need = [...new Set([st.team && st.team.code, st.pick, st.champ, ...st.finalists, ...st.codes].filter(Boolean))];
+  Promise.all(need.map(c => wrapFlag(c).then(im => [c, im]))).then(es => {
+    if (_wrapTok !== tok || !wrapOn) return;
+    es.forEach(([c, im]) => { if (im) _wrapData.flags[c] = im; });
+    drawWrap();
+  });
+  const stat = $id('wrapStat');
+  if (st.codes.length) {
+    wrapSeries(st.codes,
+      out => { if (_wrapTok !== tok || !wrapOn) return; _wrapData.hist = out; drawWrap(); if (stat) stat.textContent = t('wrapReady'); },
+      (k, n) => { if (stat && _wrapTok === tok) stat.textContent = t('wrapCrunch', k, n); });
+  } else if (stat) stat.textContent = t('wrapReady');
+}
+// ── canvas painting ──
+const _wf = (wt, px) => `${wt} ${px}px Outfit,system-ui,sans-serif`;
+function _rr(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function _wFlag(ctx, code, img, x, y, w, h, r) {
+  ctx.save(); _rr(ctx, x, y, w, h, r); ctx.clip();
+  if (img) ctx.drawImage(img, x, y, w, h);
+  else {
+    ctx.fillStyle = '#1c2947'; ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = '#eef2ff'; ctx.font = _wf(900, Math.round(h * 0.4)); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(code, x + w / 2, y + h / 2);
+    ctx.textBaseline = 'alphabetic';
+  }
+  ctx.restore();
+  _rr(ctx, x, y, w, h, r); ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.lineWidth = 3; ctx.stroke();
+}
+function drawWrap() {
+  const cv = $id('wrapCanvas'); if (!cv || !_wrapData) return;
+  const { st, flags, hist } = _wrapData;
+  const ctx = cv.getContext('2d'), W = 1080, H = 1920;
+  // backdrop
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#111b38'); bg.addColorStop(.45, '#0b1120'); bg.addColorStop(1, '#0a0f1e');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(76,201,240,.06)'; ctx.lineWidth = 3;
+  for (const [cx, cy, r] of [[W / 2, -280, 520], [W / 2, H + 320, 580], [-200, 760, 440]]) { ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.stroke(); }
+  const CONF = ['#22e07c', '#4cc9f0', '#ffd166', '#ff5d8f', '#b388ff'];
+  for (let i = 0; i < 40; i++) {                       // deterministic golden-angle confetti, upper band
+    const x = ((i * 267) % W + 20) % W, y = 34 + (i * 97) % 320;
+    ctx.fillStyle = CONF[i % 5] + '3d';
+    ctx.beginPath(); ctx.arc(x, y, 4 + (i % 3) * 3, 0, 7); ctx.fill();
+  }
+  // header
+  ctx.textAlign = 'center'; ctx.letterSpacing = '10px';
+  ctx.fillStyle = '#4cc9f0'; ctx.font = _wf(800, 40);
+  ctx.fillText('WORLD CUP 26', W / 2, 152);
+  ctx.letterSpacing = '2px';
+  const tg = ctx.createLinearGradient(W * .2, 0, W * .8, 0);
+  tg.addColorStop(0, '#22e07c'); tg.addColorStop(.55, '#4cc9f0'); tg.addColorStop(1, '#ff5d8f');
+  ctx.fillStyle = tg; ctx.font = _wf(900, 106);
+  ctx.fillText(t('wcTitle'), W / 2, 270);
+  ctx.letterSpacing = '0px';
+  ctx.fillStyle = '#94a3c4'; ctx.font = _wf(600, 33);
+  ctx.fillText(t('wcDates'), W / 2, 332);
+  // hero
+  const STATUS_COL = { champion: '#ffd166', final: '#ffd166', alive: '#22e07c', third: '#22e07c', finalist: '#94a3c4', fourth: '#94a3c4', out: '#94a3c4' };
+  if (st.team) {
+    const tm = st.team, skey = tm.status[0];
+    if (skey === 'champion' || skey === 'final') {     // golden aura for the big moments
+      const au = ctx.createRadialGradient(W / 2, 520, 40, W / 2, 520, 420);
+      au.addColorStop(0, 'rgba(255,209,102,.24)'); au.addColorStop(1, 'rgba(255,209,102,0)');
+      ctx.fillStyle = au; ctx.fillRect(0, 100, W, 860);
+    }
+    _wFlag(ctx, tm.code, flags[tm.code], W / 2 - 170, 402, 340, 227, 26);
+    ctx.fillStyle = '#eef2ff'; ctx.font = _wf(900, 74);
+    ctx.fillText(tm.name.toUpperCase(), W / 2, 742);
+    ctx.fillStyle = STATUS_COL[skey] || '#94a3c4'; ctx.font = _wf(800, 45); ctx.letterSpacing = '4px';
+    const sl = skey === 'champion' ? t('wcChampion') : skey === 'finalist' ? t('wcFinalist')
+      : skey === 'final' ? t('wcInFinal') : skey === 'third' ? t('wcThird') : skey === 'fourth' ? t('wcFourth')
+      : skey === 'alive' ? t('wcAlive', roundName(tm.status[1])) : t('wcOut', roundName(tm.status[1]));
+    ctx.fillText(sl, W / 2, 814);
+    ctx.letterSpacing = '0px';
+    ctx.fillStyle = '#94a3c4'; ctx.font = _wf(600, 36);
+    ctx.fillText(`${t('wcRec', tm.w, tm.d, tm.l)}   ·   ${t('wcGF', tm.gf, tm.ga)}`, W / 2, 872);
+    ctx.fillText(t('wcJourney', tm.played, tm.cities, nfmt(tm.mi)), W / 2, 924);
+  } else {
+    // neutral hero: the champion once crowned, else the final matchup
+    ctx.fillStyle = '#ffd166'; ctx.font = _wf(800, 46); ctx.letterSpacing = '5px';
+    ctx.fillText(t('theFinal').replace(' 🏆', ''), W / 2, 452);
+    ctx.letterSpacing = '0px';
+    if (st.champ) {
+      _wFlag(ctx, st.champ, flags[st.champ], W / 2 - 170, 490, 340, 227, 26);
+      ctx.fillStyle = '#eef2ff'; ctx.font = _wf(900, 74);
+      ctx.fillText(teamName(st.champ).toUpperCase(), W / 2, 812);
+      ctx.fillStyle = '#ffd166'; ctx.font = _wf(800, 45); ctx.letterSpacing = '4px';
+      ctx.fillText(t('wcChampion'), W / 2, 878); ctx.letterSpacing = '0px';
+    } else {
+      const [fa, fb] = st.finalists;
+      _wFlag(ctx, fa || '?', fa ? flags[fa] : null, 130, 496, 300, 200, 22);
+      _wFlag(ctx, fb || '?', fb ? flags[fb] : null, W - 130 - 300, 496, 300, 200, 22);
+      ctx.fillStyle = '#94a3c4'; ctx.font = _wf(800, 48);
+      ctx.fillText(t('vsWord'), W / 2, 612);
+      ctx.fillStyle = '#eef2ff'; ctx.font = _wf(800, 42);
+      ctx.fillText(fa ? teamName(fa) : '—', 280, 762);
+      ctx.fillText(fb ? teamName(fb) : '—', W - 280, 762);
+      ctx.fillStyle = '#94a3c4'; ctx.font = _wf(600, 36);
+      ctx.fillText(`${VENUES[st.final.v][0]} · ${histDate(st.final.d)}`, W / 2, 872);
+    }
+  }
+  // bracket panel
+  const hasPred = st.sc.t > 0 || st.pick;
+  if (hasPred) {
+    _rr(ctx, 70, 980, 940, 190, 26);
+    ctx.fillStyle = 'rgba(13,20,37,.9)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.09)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.08)';
+    ctx.beginPath(); ctx.moveTo(W / 2, 1010); ctx.lineTo(W / 2, 1140); ctx.stroke();
+    ctx.fillStyle = '#94a3c4'; ctx.font = _wf(700, 27); ctx.letterSpacing = '3px';
+    ctx.fillText(t('wcPicksLbl'), 305, 1040);
+    ctx.fillText(t('wcPickLbl'), 775, 1040);
+    ctx.letterSpacing = '0px';
+    ctx.fillStyle = '#22e07c'; ctx.font = _wf(900, 62);
+    ctx.fillText(st.sc.t ? `${st.sc.c}/${st.sc.t} ✓` : '—', 305, 1128);
+    if (st.pick) {
+      _wFlag(ctx, st.pick, flags[st.pick], 620, 1064, 96, 64, 12);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#eef2ff'; ctx.font = _wf(900, 58);
+      ctx.fillText(st.pick, 736, 1118);
+      ctx.textAlign = 'center';
+      // odds as they stood BEFORE the pick date — falls back to the pre-tournament number
+      if (hist && hist.series[st.pick]) {
+        let idx = 0;
+        if (st.pickDate) hist.cuts.forEach((c, i) => { if (c.d && c.d < st.pickDate) idx = i; });
+        const v = hist.series[st.pick][idx] || 0;
+        ctx.fillStyle = '#ffd166'; ctx.font = _wf(700, 30);
+        ctx.fillText(t('wcPickedAt', fmtPct1(v), idx === 0), 775, 1158);
+      }
+    } else { ctx.fillStyle = '#94a3c4'; ctx.font = _wf(900, 62); ctx.fillText('—', 775, 1122); }
+  }
+  // odds story chart
+  const cy0 = hasPred ? 1210 : 1000, ch = hasPred ? 420 : 630;
+  _rr(ctx, 70, cy0, 940, ch, 26);
+  ctx.fillStyle = 'rgba(13,20,37,.9)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.09)'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = '#94a3c4'; ctx.font = _wf(700, 27); ctx.letterSpacing = '3px';
+  ctx.textAlign = 'left';
+  ctx.fillText(t('wcOddsTitle'), 110, cy0 + 56);
+  ctx.letterSpacing = '0px';
+  if (hist && st.codes.length) {
+    const n = hist.cuts.length;
+    const px0 = 128, px1 = 830, py0 = cy0 + 100, py1 = cy0 + ch - 64;
+    let mx = 0.02;
+    for (const c of st.codes) { const s = hist.series[c] || []; for (let i = 0; i < n; i++) mx = Math.max(mx, s[i] || 0); }
+    const ymax = Math.min(1, Math.max(0.25, Math.ceil(mx * 1.15 * 10) / 10));
+    const X = i => px0 + (n === 1 ? 0 : (px1 - px0) * i / (n - 1));
+    const Y = v => py1 - (py1 - py0) * v / ymax;
+    // grid + y labels
+    const gstep = ymax > .5 ? .2 : ymax > .25 ? .1 : .05;
+    ctx.font = _wf(600, 24); ctx.textAlign = 'right';
+    for (let v = gstep; v <= ymax + 1e-9; v += gstep) {
+      ctx.strokeStyle = 'rgba(255,255,255,.06)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(px0, Y(v)); ctx.lineTo(px1, Y(v)); ctx.stroke();
+      ctx.fillStyle = '#94a3c4'; ctx.fillText(Math.round(v * 100) + '%', px0 - 14, Y(v) + 8);
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.14)';
+    ctx.beginPath(); ctx.moveTo(px0, py1); ctx.lineTo(px1, py1); ctx.stroke();
+    // x tick labels: pre + two mid dates + last
+    ctx.textAlign = 'center'; ctx.fillStyle = '#94a3c4';
+    const ticks = [...new Set([0, Math.round((n - 1) / 3), Math.round(2 * (n - 1) / 3), n - 1])];
+    for (const i of ticks) ctx.fillText(hist.cuts[i].d ? histDate(hist.cuts[i].d) : t('histPreShort'), X(i), py1 + 40);
+    // series lines + end labels + elimination marks
+    const ends = [];
+    st.codes.forEach((c, ci) => {
+      const s = hist.series[c] || [], col = HIST_COLORS[ci] || HIST_COLORS[0];
+      ctx.strokeStyle = col; ctx.lineWidth = 6; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (let i = 0; i < n; i++) { const y = Y(s[i] || 0); i ? ctx.lineTo(X(i), y) : ctx.moveTo(X(i), y); }
+      ctx.stroke();
+      // elimination: series died and stayed dead
+      let ei = -1;
+      if (!(s[n - 1] > 0)) { let i = n - 1; while (i > 0 && !(s[i - 1] > 0)) i--; if (i > 0) ei = i; }
+      if (ei > 0) {
+        ctx.strokeStyle = col; ctx.lineWidth = 7;
+        const ex = X(ei), ey = py1 - 16;
+        ctx.beginPath(); ctx.moveTo(ex - 13, ey - 13); ctx.lineTo(ex + 13, ey + 13);
+        ctx.moveTo(ex + 13, ey - 13); ctx.lineTo(ex - 13, ey + 13); ctx.stroke();
+      }
+      ends.push({ c, col, v: s[n - 1] || 0, y: Y(s[n - 1] || 0), dead: ei > 0 });
+    });
+    ends.sort((a, b) => a.y - b.y);                    // de-collide end labels
+    for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 46) ends[i].y = ends[i - 1].y + 46;
+    ctx.textAlign = 'left';
+    for (const e of ends) {
+      _wFlag(ctx, e.c, flags[e.c], px1 + 16, e.y - 22, 52, 35, 7);
+      ctx.fillStyle = '#eef2ff'; ctx.font = _wf(800, 29);
+      ctx.fillText(e.dead ? `${e.c} ✕` : fmtPct1(e.v), px1 + 76, e.y + 10);
+    }
+  } else {
+    ctx.fillStyle = '#94a3c4'; ctx.font = _wf(600, 30); ctx.textAlign = 'center';
+    ctx.fillText('…', W / 2, cy0 + ch / 2);
+  }
+  // tournament totals
+  ctx.textAlign = 'center';
+  const sy = 1700, tiles = [
+    [nfmt(st.goals), t('wcStGoals')],
+    [st.played ? (st.goals / st.played).toFixed(1) : '—', t('wcStAvg')],
+    [String(st.so), t('wcStSO')],
+  ];
+  tiles.forEach(([v, lb], i) => {
+    const tx = 70 + i * 323;
+    _rr(ctx, tx, sy, 294, 150, 22);
+    ctx.fillStyle = 'rgba(13,20,37,.9)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.09)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#eef2ff'; ctx.font = _wf(900, 60);
+    ctx.fillText(v, tx + 147, sy + 84);
+    ctx.fillStyle = '#94a3c4'; ctx.font = _wf(700, 24); ctx.letterSpacing = '2px';
+    ctx.fillText(lb, tx + 147, sy + 126);
+    ctx.letterSpacing = '0px';
+  });
+  // footer
+  ctx.fillStyle = '#4cc9f0'; ctx.font = _wf(600, 30);
+  ctx.fillText('viewsonic-max.github.io/fractura7-links', W / 2, 1898);
+}
+function wrapShare() {
+  const cv = $id('wrapCanvas'); if (!cv) return;
+  cv.toBlob(async b => {
+    if (!b) return wrapSave();
+    const f = new File([b], 'my-world-cup-26.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) {
+      try { await navigator.share({ files: [f], text: `${t('wrapShareText')} ${WRAP_URL}` }); return; }
+      catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    wrapSave();                                        // desktop / no share sheet — download instead
+  }, 'image/png');
+}
+function wrapSave() {
+  const cv = $id('wrapCanvas'); if (!cv) return;
+  const a = document.createElement('a');
+  a.download = 'my-world-cup-26.png';
+  a.href = cv.toDataURL('image/png');
+  a.click();
+}
+$id('wrapBtn').onclick = () => wrapOn ? wrapClose() : wrapOpen();
+
 // ── help / tutorial ────────────────────────────────────────────────────────
 // ── top scorers / assists ───────────────────────────────────────────────────
 // Goals: aggregated from the ESPN scoreboard (same CORS-OK source as live scores),
@@ -3445,7 +3871,7 @@ function applyStaticText() {
   hdr.querySelector('.sub').innerHTML = t('sub');
   const lbl = $id('follow').querySelector('label'); if (lbl) lbl.textContent = t('followLabel');
   $id('prevBtn').title = t('tPrev'); $id('playBtn').title = t('tPlay'); $id('nextBtn').title = t('tNext');
-  $id('predBtn').title = t('tPred'); $id('helpBtn').title = t('tHelp');
+  $id('predBtn').title = t('tPred'); $id('helpBtn').title = t('tHelp'); $id('wrapBtn').title = t('tWrap');
   [$id('followClear'), $id('teamFabClear')].forEach(el => { if (el) { el.title = t('clearTeam'); el.setAttribute('aria-label', t('clearTeam')); } });
 }
 function applyLanguage() {
@@ -3465,6 +3891,7 @@ function applyLanguage() {
   if (predOn) renderBracket();
   if (curGroup && $id('drawer').classList.contains('open')) renderGroup();
   if (helpOn) renderHelp();
+  if (wrapOn) wrapOpen();          // rebuild the share card in the new language
 }
 function setLang(l) {
   if (l === LANG || (l !== 'en' && l !== 'es')) return;
