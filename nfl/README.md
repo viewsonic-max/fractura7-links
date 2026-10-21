@@ -1,0 +1,108 @@
+# NFL 2026 — Season Map (nflviz)
+
+NFL retarget of the World Cup 26 "Match Day Map" (`../wcviz`). Same idea: an
+interactive map of every game of the 2026 NFL season (Sept 10, 2026 – Super Bowl LXI,
+Feb 14, 2027) across the 30 NFL stadiums plus the International Series venues.
+
+Status: **data layer + core app done** (map, week timeline, game cards, follow-a-team
+travel route, division standings drawer, live ESPN polling, PWA, en/es). Playoff
+predictor, odds model and the season-recap card are the next steps (see below).
+
+**To use: open `index.html` in a browser.** `node verify.js [desk|team|div|mobile|es]`
+runs a headless-Edge smoke test (uses `../wcviz/node_modules/playwright-core`) and
+writes `_shot-<scenario>.png`.
+
+## What the app does today
+
+- **Map** of all 38 venues on Esri's keyless World Dark Gray canvas (CARTO's free dark
+  tiles started watermarking "API KEY REQUIRED" in Oct 2026). Active stadiums pulse with
+  the week's game count; the Super Bowl bounces a 🏆; idle labels hide below zoom 5.
+- **Week timeline** — 22 chips (18 regular weeks + Wild Card, Divisional, Conference,
+  Super Bowl), colored by round, with the current week flagged NOW. `←`/`→`, ▶ plays the
+  season week by week flashing stadiums in kickoff order (the Sunday 1pm wave together).
+- **Game cards** grouped by the viewer's local calendar day: away @ home, logos, kickoff
+  in stadium-local and your time, broadcaster, division-game and International Series
+  tags, final score with OT, live clock. Week 18 / playoff games with unset times show TBD.
+- **Follow a team** (select grouped by division) → their weeks star on the timeline, the
+  bye week dims, and their season draws as flights out and back from home (round trips;
+  consecutive international games fly direct) with a live odometer and ▶ fly-through.
+  Journey card lists every week (vs/@ opponent, W/L underline) plus record, PF/PA.
+- **Division drawer** — standings (W-L-T, PCT, NET, DIV record) with first-cut NFL
+  tiebreakers (head-to-head → division → conference → net points) and every division game.
+- **Live** — ESPN scoreboard polled every 45 s during game windows (score, quarter/clock,
+  final), backfill on load for any kicked-off game missing a score, playoff pairings
+  picked up automatically once Week 18 ends. Score fanfare + confetti burst and
+  notifications for the followed team only (NFL scoring is too frequent for everyone).
+- **PWA** (`manifest.json`, `sw.js` cache `nflviz-v1`, generated 🏈 icons), **en/es**
+  toggle in the help overlay, deep links `?w=7`, `?d=2026-10-25`, `?team=KC`,
+  `?div=AFC West`, `?play=1`, `?sheet=1`.
+
+## Data pipeline
+
+One source, one script. ESPN's public scoreboard API carries the full schedule,
+venues, broadcasters, results, and live state, so there is no Wikipedia parsing.
+
+```
+node refresh.js            # fetch every week into raw/, build data.js + matches.json, run checks
+node refresh.js --offline  # rebuild from raw/ without touching the network
+```
+
+Endpoints used (all `site.api.espn.com`):
+
+- `/apis/site/v2/sports/football/nfl/scoreboard?dates=2026&seasontype=2&week=N` (N = 1..18)
+- `/apis/site/v2/sports/football/nfl/scoreboard?dates=2026&seasontype=3&week=N` (N = 1..4: Wild Card, Divisional, Conference, Super Bowl)
+- `/apis/site/v2/sports/football/nfl/teams` (names, colors, logo slugs)
+- `/apis/v2/sports/football/nfl/standings?season=2026&level=3` (conference → division → teams)
+
+ESPN exposes **no stadium coordinates**, so `refresh.js` carries a hand-maintained
+`VENUES` table keyed by ESPN venue id: display name, city, country, lat/lng, capacity,
+IANA timezone, state. An unknown venue id makes the script throw with the ESPN name
+so it can be added. Team logos: `https://a.espncdn.com/i/teamlogos/nfl/500/{slug}.png`
+(CDN sends `Access-Control-Allow-Origin: *`, so canvas use is safe).
+
+## `data.js` shape (`window.NFL`)
+
+```
+meta        { league, season, label, superBowl, final (game n of the Super Bowl), fetched }
+teams       { KC: { name, city, nick, slug, color, alt, conf, div, home } ... }
+divisions   { "AFC East": ["BUF","MIA","NE","NYJ"], ... }          (8 × 4)
+conferences { AFC: [16 codes], NFC: [16 codes] }
+venues      { "SoFi Stadium": [city, country, lat, lng, capacity, tz, indoor, state, espnId, espnName] }
+weeks       [ { w, label, st, pw, from, to, games, byes? } ... ]    (22: Week 1–18, then 19–22 playoffs)
+games       [ { n, id, d, t, utc, iso, de, a, b, v, w, r, st, pw, s1?, s2?, ot?, neutral?, div?, conf?, tv?, tbd?, live? } ... ]
+```
+
+Game fields follow `wcviz`'s match shape so the map/timeline/card code ports over:
+
+| field | meaning |
+|---|---|
+| `n` | 1..285 in kickoff order |
+| `id` | ESPN event id (string) — the live poller matches on this |
+| `d`, `t`, `utc` | kickoff date/time in the **venue's** zone, DST-correct per game, plus the offset in hours |
+| `iso` | kickoff instant, UTC |
+| `de` | kickoff date in US Eastern (NFL week calendar; Monday night is still "Monday") |
+| `a`, `b` | **away, home** — reads "A @ B". `null` + `tbd:true` for unresolved playoff games |
+| `v` | venue name, key into `venues`; `null` for TBD playoff games |
+| `w`, `r` | timeline week 1..22 and label ("Week 7", "Wild Card", "Divisional", "Conference", "Super Bowl") |
+| `st`, `pw` | ESPN season type (2 regular / 3 post) and ESPN week within it |
+| `s1`, `s2` | score for `a` and `b`, present only once FINAL (or `live:true`) |
+| `ot` | decided in overtime (ESPN period > 4) |
+| `neutral` | International Series / neutral site (ESPN still designates a home team for records) |
+| `div`, `conf` | the two teams share a division / conference (needed for NFL tiebreakers) |
+| `tv` | national broadcaster(s) |
+| `tt` | kickoff **time** not set yet (ESPN `timeValid:false`, parked at midnight ET): Week 18 and unresolved playoff games. Show the date only. |
+
+`check()` in `refresh.js` enforces: 272 regular + 13 postseason games, unique ESPN ids,
+17 games and exactly one bye (weeks 5–14) per team, 8 divisions × 4, every venue has
+coordinates and a timezone, scores only on games that have kicked off, Super Bowl at
+SoFi on 2027-02-14.
+
+## Next (per the plan)
+
+1. ~~Retarget `index.html`~~ — done 2026-10-21.
+2. Full NFL tiebreakers (add common games, strength of victory / schedule, conference
+   wild-card procedure) + a conference-wide playoff-picture view.
+3. Playoff seeding (7 per conference, 1-seed bye) + reseeding bracket predictor and a
+   road-to-the-Super-Bowl tracer on the journey card.
+4. Odds: points-margin model (rating + home field, normal margin, small tie prob) feeding the
+   Monte Carlo and the "how the odds evolved" week-by-week chart; then the season-recap share card.
