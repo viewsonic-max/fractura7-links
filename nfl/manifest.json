@@ -1,0 +1,17 @@
+{
+  "name": "NFL 2026 — Season Map",
+  "short_name": "NFL 26 Map",
+  "description": "Interactive 2026 NFL season map: every game on the map, live scores, division standings, and your team's travel route out and back from home.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b1120",
+  "theme_color": "#0b1120",
+  "categories": ["sports", "entertainment"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
