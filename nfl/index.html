@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>🏈 NFL 2026 — Season Map</title>
+<!-- Privacy-friendly analytics by Plausible — same site as the World Cup map (path-scoped domain) -->
+<script async src="https://plausible.io/js/pa-Txj97ihNklymU8S1v5Fpg.js"></script>
+<script>
+  window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+  plausible.init()
+</script>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b1120">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NFL 26 Map">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1120; --panel:rgba(13,20,38,.88); --panel-border:rgba(255,255,255,.09);
+    --ink:#eef2ff; --ink-dim:#94a3c4; --pitch:#22e07c; --pitch-deep:#0ea35a;
+    --gold:#ffd166; --hot:#ff5d8f; --sky:#4cc9f0; --violet:#b388ff; --orange:#ff9f43;
+    --live:#ff3b5c;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible,
+  [tabindex]:focus-visible, [role="button"]:focus-visible{
+    outline:3px solid var(--sky); outline-offset:2px; border-radius:6px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{
+      animation-duration:.01ms !important; animation-iteration-count:1 !important;
+      transition-duration:.01ms !important; scroll-behavior:auto !important;
+    }
+  }
+  html,body{height:100%; overflow:hidden;}
+  @supports (height:100dvh){ html,body{height:100dvh;} }
+  body{font-family:'Outfit',system-ui,sans-serif; background:var(--bg); color:var(--ink);}
+  #map{position:absolute; inset:0; background:#0b1120;}
+  .leaflet-container{font:inherit;}
+  /* tint Esri's neutral dark-gray canvas toward the app's navy */
+  .leaflet-tile-pane{filter:sepia(.4) hue-rotate(185deg) saturate(1.7) brightness(.6) contrast(1.08);}
+  /* team logos (ESPN CDN) — square, no crop, no flag chrome */
+  img.lg{width:26px; height:26px; object-fit:contain; flex-shrink:0; filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));}
+
+  /* ── header ─────────────────────────────── */
+  #hdr{
+    position:absolute; top:14px; left:14px; z-index:1000;
+    background:var(--panel); border:1px solid var(--panel-border);
+    backdrop-filter:blur(12px); border-radius:18px; padding:14px 20px 12px;
+    box-shadow:0 8px 32px rgba(0,0,0,.45); width:380px; max-width:calc(100vw - 28px);
+  }
+  #hdr .titleRow{display:flex; align-items:center; gap:10px;}
+  #hdr .titleRow h1{flex:1; min-width:0;}
+  .igHdr{
+    flex:none; width:30px; height:30px; border-radius:9px; display:inline-flex;
+    align-items:center; justify-content:center; color:#fff; text-decoration:none;
+    background:linear-gradient(135deg,#feda75,#d62976 45%,#962fbf 80%,#4f5bd5);
+    box-shadow:0 2px 8px rgba(214,41,118,.4); transition:transform .15s,filter .15s;
+  }
+  .igHdr:hover{filter:brightness(1.1); transform:scale(1.07);}
+  .igHdr svg{width:18px; height:18px;}
+  #hdr h1{
+    font-size:19px; font-weight:900; letter-spacing:.4px; line-height:1.1;
+    background:linear-gradient(92deg,var(--pitch) 0%,var(--sky) 45%,var(--hot) 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    display:flex; align-items:center; gap:8px;
+  }
+  #hdr h1 .ball{font-size:24px; -webkit-text-fill-color:initial; animation:wobble 3.2s ease-in-out infinite; display:inline-block; cursor:pointer;}
+  @keyframes wobble{0%,100%{transform:rotate(-14deg)} 50%{transform:rotate(14deg)}}
+  /* easter egg: tap the header ball 5× and it gets punted across the map */
+  #looseBall{position:fixed; left:14px; top:46px; font-size:40px; z-index:2000; pointer-events:none; will-change:transform; filter:drop-shadow(0 6px 8px rgba(0,0,0,.6)); animation:ballKick 2.6s cubic-bezier(.45,0,.55,1) forwards;}
+  @keyframes ballKick{
+    0%{transform:translate(0,0) rotate(0);}
+    35%{transform:translate(34vw,-30vh) rotate(380deg);}
+    70%{transform:translate(68vw,-8vh) rotate(760deg);}
+    100%{transform:translate(98vw,72vh) rotate(1140deg); opacity:0;}
+  }
+  #hdr .sub{font-size:11.5px; color:var(--ink-dim); margin-top:3px;}
+  #dayTitle{font-size:26px; font-weight:800; margin-top:10px; line-height:1;}
+  #dayMeta{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;}
+  .chip{font-size:11px; font-weight:600; padding:3px 10px; border-radius:999px;
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);}
+  .chip.round{color:#04150c;}
+  .chip.goals{color:var(--gold); border-color:rgba(255,209,102,.35); background:rgba(255,209,102,.08);}
+  .chip.bye{color:var(--ink-dim);}
+  .chip.intl{color:var(--sky); border-color:rgba(76,201,240,.4); background:rgba(76,201,240,.08); cursor:pointer;}
+  .chip.intl:hover{background:rgba(76,201,240,.18);}
+
+  /* ── live strip ─────────────────────────── */
+  #liveStrip{
+    margin-top:10px; padding:7px 11px; border-radius:10px; display:none; line-height:1.5;
+    background:rgba(255,59,92,.13); border:1px solid rgba(255,59,92,.4);
+    font-size:11.5px; font-weight:600; cursor:pointer;
+  }
+  #liveStrip:hover{filter:brightness(1.2);}
+  #liveStrip.next{background:rgba(76,201,240,.1); border-color:rgba(76,201,240,.3);}
+  .reddot{display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--live);
+    box-shadow:0 0 8px var(--live); margin-right:6px; animation:blink 1.2s ease infinite;}
+  @keyframes blink{50%{opacity:.25}}
+
+  /* ── journey card ───────────────────────── */
+  #journey{margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,.1); display:none;}
+  #journey .jhead{display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:800;}
+  #journey .jhead img.lg{width:24px; height:24px;}
+  .jstops{display:flex; flex-wrap:wrap; gap:4px; margin-top:7px; align-items:center;}
+  .jarrow{color:var(--ink-dim); font-size:10px;}
+  .jstop{
+    font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:8px; cursor:pointer;
+    background:rgba(34,224,124,.13); border:1px solid rgba(34,224,124,.4); transition:.12s;
+  }
+  .jstop.home{background:rgba(76,201,240,.1); border-color:rgba(76,201,240,.35); color:var(--sky);}
+  .jstop.bye{background:rgba(255,255,255,.04); border-color:rgba(255,255,255,.14); color:var(--ink-dim);}
+  .jstop.k{background:rgba(255,209,102,.12); border-color:rgba(255,209,102,.45); color:var(--gold);}
+  .jstop.w{box-shadow:inset 0 -2px 0 var(--pitch);} .jstop.l{box-shadow:inset 0 -2px 0 var(--live); opacity:.8;}
+  .jstop:hover{transform:translateY(-1px); filter:brightness(1.25);}
+  .jmiles{font-size:10.5px; color:var(--ink-dim); margin-top:7px; display:flex; align-items:center; gap:8px;}
+  .jmiles #jOdo{font-weight:800; color:var(--pitch); font-variant-numeric:tabular-nums;}
+  .jplay{margin-left:auto; flex:0 0 auto; width:26px; height:26px; border-radius:50%; cursor:pointer;
+    border:1px solid rgba(34,224,124,.5); background:rgba(34,224,124,.12); color:var(--pitch);
+    font-size:10px; line-height:1; display:flex; align-items:center; justify-content:center; padding-left:2px;}
+  .jplay:hover{background:var(--pitch); color:#04150c; border-color:transparent;}
+  .jrec{font-size:10.5px; color:var(--ink-dim); margin-top:5px;}
+  .jrec b{color:var(--ink);}
+  .groupLink{cursor:pointer; text-decoration:underline dotted;}
+  .groupLink:hover{color:var(--sky);}
+
+  /* ── follow team ────────────────────────── */
+  #follow{
+    position:absolute; top:14px; right:14px; z-index:1000;
+    background:var(--panel); border:1px solid var(--panel-border); backdrop-filter:blur(12px);
+    border-radius:14px; padding:10px 14px; box-shadow:0 8px 32px rgba(0,0,0,.45);
+    display:flex; align-items:center; gap:8px;
+  }
+  #follow label{font-size:12px; font-weight:600; color:var(--ink-dim); white-space:nowrap;}
+  #follow select{
+    background:#16203a; color:var(--ink); border:1px solid var(--panel-border);
+    border-radius:9px; padding:6px 8px; font:600 13px 'Outfit',sans-serif; max-width:190px; cursor:pointer;
+  }
+  #followFlag{width:28px; height:28px; object-fit:contain; display:none; filter:drop-shadow(0 0 3px var(--gold));}
+  #followClear{display:none; order:2; place-items:center; width:28px; height:30px; padding:0;
+    background:#16203a; color:var(--ink-dim); border:1px solid var(--panel-border);
+    border-radius:9px; font:700 13px 'Outfit',sans-serif; line-height:1; cursor:pointer;}
+  #followClear:hover{color:var(--ink); border-color:var(--gold);}
+  #follow.on #followClear{display:grid;}
+
+  /* ── side panel ─────────────────────────── */
+  #panel{
+    position:absolute; top:175px; left:14px; bottom:118px; width:380px; z-index:999;
+    display:flex; flex-direction:column; pointer-events:none;
+  }
+  #panelInner{
+    pointer-events:auto; overflow-y:auto; padding:4px 6px 12px 0;
+    scrollbar-width:thin; scrollbar-color:#33415e transparent;
+    mask-image:linear-gradient(#000 92%,transparent);
+  }
+  .venueHead{display:flex; align-items:center; gap:8px; margin:14px 2px 6px;}
+  .venueHead:first-child{margin-top:2px;}
+  .venueHead .dot{width:10px; height:10px; border-radius:50%; background:var(--pitch); box-shadow:0 0 10px var(--pitch);}
+  .venueHead .vn{font-size:13px; font-weight:800; letter-spacing:.3px;}
+  .venueHead .vc{font-size:11px; color:var(--ink-dim);}
+  .card{
+    pointer-events:auto; background:var(--panel); border:1px solid var(--panel-border);
+    backdrop-filter:blur(10px); border-radius:14px; padding:10px 14px; margin-bottom:8px;
+    box-shadow:0 4px 18px rgba(0,0,0,.35); cursor:pointer;
+    transition:transform .15s, border-color .15s, box-shadow .15s;
+    animation:pop .35s cubic-bezier(.34,1.56,.64,1) backwards;
+  }
+  .noanim .card{animation:none;}
+  .card:hover{transform:translateX(4px) scale(1.015); border-color:var(--pitch);}
+  .card.followed{border-color:var(--gold); box-shadow:0 0 0 1px var(--gold),0 4px 22px rgba(255,209,102,.25);}
+  .card.live{border-color:var(--live); box-shadow:0 0 0 1px var(--live),0 4px 24px rgba(255,59,92,.35);}
+  .card.done{opacity:.6;}
+  @keyframes pop{from{opacity:0; transform:translateY(14px) scale(.96)}}
+  .card .top{display:flex; justify-content:space-between; align-items:center; margin-bottom:7px; gap:8px;}
+  .card .ko{font-size:15px; font-weight:800; color:var(--pitch); white-space:nowrap;}
+  .card .ko small{font-weight:600; color:var(--ink-dim); font-size:10px; margin-left:4px;}
+  .card .mn{font-size:10px; color:var(--ink-dim); font-weight:600; text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .liveTag{display:inline-flex; align-items:center; font-size:12px; font-weight:900; color:#ff7a90;}
+  .ftTag{font-size:10px; font-weight:900; color:var(--ink-dim); background:rgba(255,255,255,.09);
+    padding:1px 7px; border-radius:7px; margin-left:6px; vertical-align:2px;}
+  .teams{display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px;}
+  .team{display:flex; align-items:center; gap:8px; min-width:0;}
+  .team.right{flex-direction:row-reverse; text-align:right;}
+  .team img.lg{width:30px; height:30px;}
+  .team .tbd{
+    width:30px; height:30px; border-radius:50%; flex-shrink:0; display:grid; place-items:center;
+    font-size:9px; font-weight:800; background:#222e4d; color:var(--sky); border:1px dashed #3c4f7e;
+  }
+  .team span{font-size:13.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .team span small{display:block; font-size:9.5px; color:var(--ink-dim); font-weight:600; line-height:1.1;}
+  .team.win span{color:var(--ink);} .team.loss span{color:var(--ink-dim);}
+  .vs{font-size:12px; font-weight:800; color:var(--ink-dim);}
+  .score{text-align:center; font-size:17px; font-weight:900; color:var(--gold); line-height:1.05; white-space:nowrap;}
+  .score small{display:block; font-size:8.5px; color:var(--ink-dim); font-weight:700;}
+  .card .your{font-size:10.5px; color:var(--ink-dim); margin-top:6px;}
+  .card .venueLine{font-size:10.5px; color:var(--ink-dim); margin-top:4px; display:flex; align-items:center; gap:5px;}
+  .card .venueLine .dot{width:7px; height:7px; border-radius:50%; flex-shrink:0;}
+  #noGames{
+    pointer-events:auto; background:var(--panel); border:1px solid var(--panel-border);
+    border-radius:14px; padding:18px; text-align:center; color:var(--ink-dim); font-size:14px;
+  }
+
+  /* ── division drawer ────────────────────── */
+  #drawer{
+    position:absolute; top:80px; bottom:118px; right:-380px; width:340px; z-index:1100;
+    background:var(--panel); border:1px solid var(--panel-border); backdrop-filter:blur(14px);
+    border-radius:18px; box-shadow:0 12px 40px rgba(0,0,0,.55); overflow:hidden;
+    transition:right .28s cubic-bezier(.4,1.4,.6,1); display:flex; flex-direction:column;
+  }
+  #drawer.open{right:14px;}
+  #drawerInner{display:flex; flex-direction:column; min-height:0;}
+  .dh{display:flex; justify-content:space-between; align-items:center; padding:14px 16px 10px;}
+  .dh h2{font-size:18px; font-weight:900;}
+  .dh h2 b{color:var(--pitch);}
+  .dx{background:none; border:none; color:var(--ink-dim); font-size:19px; cursor:pointer;}
+  .dx:hover{color:var(--ink);}
+  .db{overflow-y:auto; padding:0 14px 14px; scrollbar-width:thin; scrollbar-color:#33415e transparent;}
+  .divNav{display:flex; gap:4px; margin:0 0 8px; flex-wrap:wrap;}
+  .divNav button{flex:1 1 auto; padding:4px 6px; border-radius:7px; border:1px solid var(--panel-border); background:#16203a; color:var(--ink-dim); font:800 10px 'Outfit',sans-serif; cursor:pointer;}
+  .divNav button.on{border-color:var(--pitch); color:var(--pitch);}
+  .stTbl{width:100%; border-collapse:collapse; font-size:11.5px;}
+  .stTbl th{font-size:9px; font-weight:800; color:var(--ink-dim); letter-spacing:.5px; padding:3px 2px; text-align:center;}
+  .stTbl th.tl, .stTbl td.tl{text-align:left;}
+  .stTbl td{padding:5px 2px; text-align:center; font-weight:700; border-top:1px solid rgba(255,255,255,.06);}
+  .stTbl tbody tr{cursor:pointer;}
+  .stTbl tbody tr:hover{background:rgba(255,255,255,.07);}
+  .stTbl td.tl{font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px;}
+  .stTbl td.tl img.lg{width:20px; height:20px; vertical-align:-5px; margin-right:5px;}
+  .stTbl td.ps{font-weight:900; color:var(--ink-dim); width:18px;}
+  .stTbl tr.q td.ps{color:var(--pitch);}
+  .stTbl td.pts{font-weight:900; color:var(--gold);}
+  .stTbl tr.fol td{background:rgba(255,209,102,.08);}
+  .legend{font-size:9.5px; color:var(--ink-dim); margin:6px 2px 0;}
+  .gfix{margin-top:10px; border-top:1px solid rgba(255,255,255,.08); padding-top:8px;}
+  .gfixTitle{font-size:10px; font-weight:800; color:var(--ink-dim); letter-spacing:1px; margin:0 6px 4px;}
+  .gfx{display:flex; align-items:center; gap:6px; padding:6px; border-radius:9px; cursor:pointer; font-size:12px; font-weight:700;}
+  .gfx:hover{background:rgba(255,255,255,.07);}
+  .gfx .gd{color:var(--pitch); font-weight:800; min-width:34px; font-size:11px;}
+  .gfx img.lg{width:20px; height:20px;}
+  .gfx .gv{color:var(--ink-dim); margin-left:auto; font-size:10px; font-weight:600; text-align:right;}
+
+  /* ── timeline ───────────────────────────── */
+  #tl{
+    position:absolute; left:14px; right:14px; bottom:14px; z-index:1000;
+    background:var(--panel); border:1px solid var(--panel-border); backdrop-filter:blur(12px);
+    border-radius:18px; padding:10px 12px; box-shadow:0 8px 32px rgba(0,0,0,.45);
+    display:flex; align-items:center; gap:10px;
+  }
+  .tlBtn{
+    width:42px; height:42px; border-radius:50%; border:none; cursor:pointer; flex-shrink:0;
+    background:linear-gradient(135deg,var(--pitch),var(--pitch-deep)); color:#04150c;
+    font-size:17px; display:grid; place-items:center; transition:transform .12s;
+    box-shadow:0 4px 14px rgba(34,224,124,.35);
+  }
+  .tlBtn:hover{transform:scale(1.1);}
+  .tlBtn.small{width:34px; height:34px; font-size:13px; background:#222e4d; color:var(--ink); box-shadow:none;}
+  .tlBtn.small.on{color:var(--gold); box-shadow:0 0 0 1px var(--gold);}
+  #days{flex:1 1 0; min-width:0; display:flex; gap:6px; overflow-x:auto; scroll-behavior:smooth; padding:4px 2px; scrollbar-width:none;}
+  #days::-webkit-scrollbar{display:none;}
+  .day{
+    flex-shrink:0; width:58px; padding:6px 0 5px; border-radius:12px; cursor:pointer;
+    text-align:center; border:1px solid transparent; transition:all .15s; position:relative;
+    background:rgba(255,255,255,.04);
+  }
+  .day:hover{background:rgba(255,255,255,.1);}
+  .day .dw{font-size:9px; font-weight:600; color:var(--ink-dim); text-transform:uppercase; letter-spacing:.8px;}
+  .day .dn{font-size:18px; font-weight:800; line-height:1.15;}
+  .day .dn.txt{font-size:12px; line-height:1.6; letter-spacing:.3px;}
+  .day .dm{font-size:9px; color:var(--ink-dim); font-weight:600; white-space:nowrap;}
+  .day .cnt{
+    margin:3px auto 0; width:fit-content; min-width:17px; padding:0 4px; border-radius:8px;
+    font-size:9.5px; font-weight:800; color:#04150c; line-height:15px;
+  }
+  .day.active{background:rgba(34,224,124,.16); border-color:var(--pitch); transform:translateY(-2px);}
+  .day.active .dn{color:var(--pitch);}
+  .day .fdot{position:absolute; top:4px; right:5px; width:7px; height:7px; border-radius:50%; background:var(--gold); box-shadow:0 0 6px var(--gold); display:none;}
+  .day .today{
+    position:absolute; top:-9px; left:50%; transform:translateX(-50%);
+    font-size:7.5px; font-weight:900; letter-spacing:.5px; background:var(--hot); color:#fff;
+    padding:1.5px 6px; border-radius:6px; box-shadow:0 2px 8px rgba(255,93,143,.5);
+  }
+  /* following a team: weeks they don't play collapse to slivers; the bye week stays, dimmed */
+  #days .day.off{width:15px; opacity:.5;}
+  #days .day.off .dw, #days .day.off .dn, #days .day.off .dm,
+  #days .day.off .cnt, #days .day.off .today, #days .day.off .fdot{display:none;}
+  #days .day.off::after{
+    content:''; display:block; width:4px; height:30px; margin:2px auto;
+    border-radius:2px; background:rgba(255,255,255,.18);
+  }
+  #days .day.off.active{opacity:1;}
+  #days .day.off.active::after{background:var(--pitch);}
+  #days .day.bye{opacity:.55;}
+  #days .day.bye .cnt{background:rgba(255,255,255,.18) !important; color:var(--ink);}
+
+  /* ── clock chip (playback) ──────────────── */
+  #clockChip{
+    position:absolute; left:50%; bottom:122px; transform:translateX(-50%); z-index:1001;
+    background:var(--panel); border:1px solid var(--gold); border-radius:999px;
+    padding:8px 18px; display:none; align-items:center; gap:12px; white-space:nowrap;
+    font-size:12px; font-weight:700; box-shadow:0 8px 30px rgba(0,0,0,.55);
+    backdrop-filter:blur(12px); animation:chipin .25s cubic-bezier(.34,1.56,.64,1);
+    max-width:calc(100vw - 60px); overflow:hidden;
+  }
+  @keyframes chipin{from{opacity:0; transform:translateX(-50%) translateY(10px)}}
+  #clockChip .t{color:var(--gold); font-weight:900; font-size:14px;}
+  #clockChip img.lg{width:18px; height:18px; vertical-align:-4px;}
+  #clockChip .sep{color:var(--ink-dim);}
+
+  /* ── markers ────────────────────────────── */
+  .stadion{position:relative;}
+  .stadion .pin{
+    position:absolute; inset:0; border-radius:50%; display:grid; place-items:center;
+    font:800 14px 'Outfit',sans-serif; color:#04150c; transition:all .2s;
+    border:2.5px solid rgba(255,255,255,.85); box-shadow:0 4px 14px rgba(0,0,0,.5);
+  }
+  .stadion.live .pin{background:radial-gradient(circle at 30% 30%, #7dffb8, var(--pitch) 60%, var(--pitch-deep));}
+  .stadion.live .ring{
+    position:absolute; inset:-6px; border-radius:50%; border:2.5px solid var(--pitch);
+    animation:pulse 1.8s ease-out infinite;
+  }
+  .stadion.live .ring.r2{animation-delay:.9s;}
+  @keyframes pulse{0%{transform:scale(.7); opacity:.9} 100%{transform:scale(1.7); opacity:0}}
+  .stadion.idle .pin{background:#2a3553; color:#7787ab; border-color:rgba(255,255,255,.25); font-size:9px;}
+  .stadion.finale .pin{background:radial-gradient(circle at 30% 30%, #ffe9a8, var(--gold) 55%, #e0a93c); animation:bounce 1s ease infinite;}
+  .stadion.finale .ring{border-color:var(--gold);}
+  @keyframes bounce{0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)}}
+  .stadion.hot .pin{transform:scale(1.35); border-color:var(--gold); box-shadow:0 0 24px rgba(255,209,102,.8);}
+  .stadion.livenow .pin{background:radial-gradient(circle at 30% 30%, #ffb3bd, var(--live) 60%, #b01030); color:#fff;}
+  .stadion.livenow .ring{border-color:var(--live);}
+  .stadion.fav .pin{
+    background:radial-gradient(circle at 30% 30%, #ffe9a8, var(--gold) 55%, #e0a93c);
+    border-color:#fff; box-shadow:0 0 22px rgba(255,209,102,.85);
+  }
+  .stadion.fav .ring{border-color:var(--gold);}
+  .stadion.fav .lbl{border-color:var(--gold); color:var(--gold); font-weight:800;}
+  .favTag{
+    position:absolute; bottom:100%; left:50%; transform:translateX(-50%); margin-bottom:6px;
+    display:flex; align-items:center; gap:4px; padding:2px 7px; border-radius:9px;
+    background:linear-gradient(135deg,#ffe9a8,var(--gold)); color:#3a2c00;
+    font:900 10px 'Outfit',sans-serif; white-space:nowrap;
+    box-shadow:0 3px 12px rgba(255,209,102,.55); animation:bob 1.4s ease-in-out infinite;
+  }
+  .favTag img.lg{width:16px; height:16px; filter:none;}
+  @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-5px)}}
+  .stadion .lbl{
+    position:absolute; top:100%; left:50%; transform:translateX(-50%); margin-top:7px;
+    font:700 10px 'Outfit',sans-serif; color:var(--ink); white-space:nowrap;
+    background:rgba(11,17,32,.8); padding:2px 8px; border-radius:8px; backdrop-filter:blur(4px);
+    border:1px solid var(--panel-border); pointer-events:none;
+  }
+  .stadion.idle .lbl{color:#7787ab; opacity:.75;}
+  body.zlow .stadion.idle .lbl{display:none;}   /* 30 stadiums: idle labels only once zoomed in */
+  .stopBadge{
+    font:800 9.5px 'Outfit',sans-serif; background:rgba(34,224,124,.92); color:#04150c;
+    padding:2px 7px; border-radius:8px; white-space:nowrap; box-shadow:0 2px 8px rgba(0,0,0,.45);
+    width:fit-content; transition:opacity .25s, transform .25s;
+  }
+  .stopBadge.home{background:rgba(76,201,240,.95); color:#04293a;}
+  .stopBadge.k{background:linear-gradient(135deg,#ffe9a8,var(--gold)); color:#3a2c00;}
+  .stopBadge.dim{opacity:.28;}
+  .stopBadge.pop{animation:badgePop .55s ease;}
+  @keyframes badgePop{0%{transform:scale(1)}30%{transform:scale(1.45)}100%{transform:scale(1)}}
+  .ballWrap{position:relative; display:inline-block; line-height:1;}
+  .ballIcon{display:inline-block; font-size:17px; filter:drop-shadow(0 2px 5px rgba(0,0,0,.65)); animation:wobble 1.4s ease-in-out infinite;}
+
+  /* ── popup ──────────────────────────────── */
+  .leaflet-popup-content-wrapper{
+    background:var(--panel); color:var(--ink); border-radius:14px;
+    border:1px solid var(--panel-border); backdrop-filter:blur(12px);
+    box-shadow:0 10px 36px rgba(0,0,0,.55);
+  }
+  .leaflet-popup-tip{background:#16203a;}
+  .leaflet-popup-content{margin:13px 16px; font:inherit; min-width:230px;}
+  .pp h3{font-size:15px; font-weight:800;}
+  .pp .ppc{font-size:11px; color:var(--ink-dim); margin:1px 0 8px;}
+  .pp .ppm{display:flex; align-items:center; gap:6px; padding:5px 0; border-top:1px solid rgba(255,255,255,.07); font-size:12.5px; font-weight:600;}
+  .pp .ppm img.lg{width:22px; height:22px;}
+  .pp .ppm .t{color:var(--pitch); font-weight:800; min-width:62px;}
+  .pp .next{font-size:12px; color:var(--ink-dim); padding-top:6px; border-top:1px solid rgba(255,255,255,.07);}
+  .leaflet-popup-close-button{color:var(--ink-dim) !important;}
+  .leaflet-control-attribution{background:rgba(11,17,32,.7) !important; color:#5a6a8d !important;}
+  .leaflet-control-attribution a{color:#7787ab !important;}
+
+  /* ── help / tutorial ────────────────────────────── */
+  #help{position:absolute; inset:0; z-index:1650; display:none; background:rgba(7,11,22,.86); backdrop-filter:blur(6px); padding:18px;}
+  #help.open{display:flex; justify-content:center; align-items:center;}
+  .helpCard{
+    width:min(560px,94vw); max-height:calc(100vh - 40px); position:relative;
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:18px;
+    box-shadow:0 20px 60px rgba(0,0,0,.6); display:flex; flex-direction:column; overflow:hidden;
+    animation:pop .3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .helpCard .hh{display:flex; align-items:center; gap:10px; padding:15px 18px; border-bottom:1px solid var(--panel-border);}
+  .helpCard .hh h2{font-size:17px; font-weight:900;}
+  .helpCard .hh h2 .pc{background:linear-gradient(92deg,var(--pitch),var(--sky) 55%,var(--hot)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .helpCard .hx{margin-left:auto; background:none; border:none; color:var(--ink-dim); font-size:18px; cursor:pointer;}
+  .helpCard .hx:hover{color:var(--ink);}
+  .helpBody{overflow-y:auto; padding:4px 18px 8px; scrollbar-width:thin; scrollbar-color:#33415e transparent;}
+  .helpRow{display:flex; gap:12px; padding:11px 4px; border-bottom:1px solid rgba(255,255,255,.05); align-items:flex-start;}
+  .helpRow:last-child{border-bottom:none;}
+  .helpRow .hi{font-size:19px; flex-shrink:0; width:26px; text-align:center;}
+  .helpRow .ht{font-size:13px; line-height:1.5; color:var(--ink-dim);}
+  .helpRow .ht b{font-weight:800; color:var(--ink);}
+  .helpRow .ht .k{font:700 10.5px ui-monospace,monospace; background:rgba(255,255,255,.1); border:1px solid var(--panel-border); border-radius:5px; padding:1px 6px; color:var(--ink); white-space:nowrap;}
+  .helpFoot{padding:11px 18px; border-top:1px solid var(--panel-border); display:flex; justify-content:space-between; align-items:center; gap:12px;}
+  .helpFoot button{padding:9px 22px; border-radius:10px; border:none; cursor:pointer; font:800 13px 'Outfit',sans-serif; background:linear-gradient(135deg,var(--pitch),var(--pitch-deep)); color:#04150c;}
+  .helpFoot button:hover{filter:brightness(1.1);}
+  .helpFoot .igLink{display:inline-flex; align-items:center; gap:7px; padding:9px 14px; border-radius:10px; text-decoration:none; cursor:pointer; font:800 13px 'Outfit',sans-serif; color:#fff; background:linear-gradient(135deg,#feda75,#d62976 45%,#962fbf 80%,#4f5bd5); }
+  .helpFoot .igLink:hover{filter:brightness(1.08);}
+  .helpFoot .igLink svg{width:17px; height:17px; flex:none;}
+  .langPill{display:flex; margin-left:auto; align-self:center; border:1px solid var(--panel-border); border-radius:8px; overflow:hidden;}
+  .langPill button{background:none; border:none; color:var(--ink-dim); font:800 11px 'Outfit',sans-serif; padding:4px 10px; cursor:pointer; transition:background .15s,color .15s;}
+  .langPill button:hover{color:var(--ink);}
+  .langPill button.on{background:var(--pitch); color:#04150c;}
+  .helpCard .hh .langPill + .hx{margin-left:8px;}
+  @media (max-width:760px){
+    #help{padding:0;}
+    .helpCard{width:100vw; height:100%; max-height:100vh; border-radius:0;}
+  }
+
+  #confetti{position:absolute; inset:0; z-index:1500; pointer-events:none;}
+  #sheetBar{display:none;}
+  #fabRow{display:none;}
+
+  @media (max-width: 760px){
+    #hdr{top:8px; left:8px; right:8px; width:auto; max-width:none; padding:10px 14px 9px; border-radius:14px;}
+    #hdr h1{font-size:14.5px; gap:6px;}
+    #hdr h1 .ball{font-size:16px;}
+    #hdr .sub{display:none;}
+    #dayTitle{font-size:18px; margin-top:6px;}
+    #dayMeta{margin-top:6px; gap:4px;}
+    .chip{font-size:10px; padding:2px 8px;}
+    #liveStrip{font-size:10.5px; padding:6px 9px; margin-top:8px;}
+    #journey .jhead{font-size:11.5px;}
+    /* 18+ week chips: one swipeable row so the header doesn't swallow the screen */
+    .jstops{flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; -webkit-overflow-scrolling:touch;}
+    .jstops::-webkit-scrollbar{display:none;}
+    .jstop{font-size:9.5px; white-space:nowrap; flex:0 0 auto;}
+    .jmiles{font-size:9.5px;}
+    #follow{display:none;}
+    #panel{
+      left:8px; right:8px; width:auto; top:auto !important;
+      bottom:calc(72px + env(safe-area-inset-bottom));
+      max-height:46vh; z-index:1050; pointer-events:auto;
+      background:var(--panel); border:1px solid var(--panel-border); border-radius:16px;
+      backdrop-filter:blur(14px); box-shadow:0 -8px 32px rgba(0,0,0,.5);
+      padding:14px 10px 10px;
+      transform:translateY(calc(100% + 140px));
+      transition:transform .32s cubic-bezier(.4,1.2,.6,1);
+    }
+    #panel.open{transform:none;}
+    #panel::before{
+      content:''; position:absolute; top:6px; left:50%; transform:translateX(-50%);
+      width:36px; height:4px; border-radius:2px; background:rgba(255,255,255,.25);
+    }
+    #sheetBar{display:flex; align-items:center; gap:8px; padding:0 4px 7px;}
+    #sheetTitle{flex:1; font-size:12.5px; font-weight:800;}
+    #sheetClose{flex-shrink:0; width:30px; height:30px; border-radius:50%; border:1px solid var(--panel-border);
+      background:#16203a; color:var(--ink-dim); font-size:14px; line-height:1; cursor:pointer; display:grid; place-items:center;}
+    #sheetClose:active{background:#22304f; color:var(--ink);}
+    #panelInner{mask-image:none; padding-right:2px;}
+    #fabRow{
+      display:flex; align-items:center; gap:8px; position:absolute;
+      right:10px; bottom:calc(78px + env(safe-area-inset-bottom)); z-index:1049;
+    }
+    #fab{
+      display:flex; align-items:center; gap:6px;
+      border:none; border-radius:999px; padding:10px 16px; cursor:pointer;
+      background:linear-gradient(135deg,var(--pitch),var(--pitch-deep)); color:#04150c;
+      font:900 13px 'Outfit',sans-serif; box-shadow:0 6px 20px rgba(34,224,124,.45);
+    }
+    #teamFab{
+      position:relative; width:48px; height:37px; border-radius:999px;
+      background:var(--panel); border:1.5px solid rgba(255,255,255,.3);
+      display:grid; place-items:center; backdrop-filter:blur(8px);
+      box-shadow:0 6px 20px rgba(0,0,0,.45);
+    }
+    #teamFab.on{border-color:var(--gold); box-shadow:0 0 16px rgba(255,209,102,.55);}
+    #teamFabFace{font-size:16px; line-height:1;}
+    #teamFabFace img{width:27px; height:27px; display:block; object-fit:contain;}
+    #teamFab select{position:absolute; inset:0; width:100%; height:100%; opacity:0; font-size:16px;}
+    #teamFabClear{display:none; position:absolute; top:-7px; right:-7px; z-index:3;
+      width:21px; height:21px; border-radius:999px; background:#16203a; color:var(--ink);
+      border:1.5px solid var(--gold); font:700 11px/19px 'Outfit',sans-serif; text-align:center;
+      cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.5);}
+    #teamFab.on #teamFabClear{display:block;}
+    #tl{left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom)); padding:8px; gap:7px; border-radius:14px;}
+    .tlBtn{width:36px; height:36px; font-size:14px;}
+    .tlBtn.small{width:28px; height:28px; font-size:11px;}
+    .day{width:50px;}
+    .day .dn{font-size:15px;}
+    #clockChip{bottom:calc(80px + env(safe-area-inset-bottom)); font-size:10.5px; padding:6px 12px; gap:8px; max-width:calc(100vw - 20px);}
+    #drawer{
+      left:8px; right:8px; width:auto; top:auto; bottom:0; max-height:62vh;
+      border-radius:18px 18px 0 0;
+      transform:translateY(110%); transition:transform .3s cubic-bezier(.4,1.2,.6,1);
+    }
+    #drawer.open{transform:none; right:8px;}
+    .leaflet-control-zoom{display:none;}
+    .stadion .lbl{font-size:9px;}
+  }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<canvas id="confetti"></canvas>
+
+<div id="hdr">
+  <div class="titleRow">
+    <a class="igHdr" href="http://instagram.com/fractura07" target="_blank" rel="noopener noreferrer" title="Follow @fractura07 on Instagram" aria-label="Follow on Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>
+    <h1><span class="ball">🏈</span> NFL 2026 · SEASON MAP</h1>
+  </div>
+  <div class="sub">32 teams · 30 stadiums &nbsp;|&nbsp; Sept 10, 2026 – Super Bowl LXI, Feb 14, 2027</div>
+  <div id="dayTitle"></div>
+  <div id="dayMeta"></div>
+  <div id="liveStrip"></div>
+  <div id="journey"></div>
+</div>
+
+<div id="follow">
+  <img id="followFlag" alt="">
+  <label for="teamSel">⭐ Follow:</label>
+  <select id="teamSel"><option value="">— pick a team —</option></select>
+  <button id="followClear" type="button" title="Clear team · reset view" aria-label="Clear team and reset view" onclick="clearFollow()">✕</button>
+</div>
+
+<div id="panel">
+  <div id="sheetBar"><div id="sheetTitle"></div><button id="sheetClose" title="Close" aria-label="Close game list">✕</button></div>
+  <div id="panelInner"></div>
+</div>
+<div id="fabRow">
+  <button id="fab" aria-label="Toggle game list">📋</button>
+  <div id="teamFab" role="button" title="Follow a team" aria-label="Follow a team"><span id="teamFabFace">⭐</span><span id="teamFabClear" role="button" title="Clear team · reset view" aria-label="Clear team and reset view" onclick="event.stopPropagation(); clearFollow()">✕</span></div>
+</div>
+<div id="drawer" role="dialog" aria-modal="true" aria-label="Division standings"><div id="drawerInner"></div></div>
+<div id="help" role="dialog" aria-modal="true" aria-label="How to use this app"><div class="helpCard"></div></div>
+<div id="clockChip"></div>
+
+<div id="tl">
+  <button class="tlBtn small" id="prevBtn" title="Previous week (←)">◀</button>
+  <button class="tlBtn" id="playBtn" title="Play the season (space)">▶</button>
+  <button class="tlBtn small" id="nextBtn" title="Next week (→)">▶</button>
+  <button class="tlBtn small" id="soundBtn" title="Score sounds">🔇</button>
+  <button class="tlBtn small" id="notifyBtn" title="Game alerts">🔕</button>
+  <button class="tlBtn small" id="helpBtn" title="How to use this app">?</button>
+  <div id="days"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="data.js"></script>
+<script>
+if (new URLSearchParams(location.search).get('debug') === '1') {
+  window.onerror = (msg, src, line, col) => {
+    document.body.insertAdjacentHTML('beforeend',
+      `<div style="position:fixed;top:4px;left:420px;z-index:99999;background:#c00;color:#fff;font:14px monospace;padding:8px;max-width:700px">${msg} @ ${line}:${col}</div>`);
+  };
+}
+const {teams:TEAMS, venues:VENUES, divisions:DIVISIONS, conferences:CONFS, weeks:WEEKS, games:MATCHES, meta:META} = window.NFL;
+// games baked with a score are finals; the live poller flips `live`/`fin` at runtime
+MATCHES.forEach(m => { if (m.s1 != null && !m.live) m.fin = true; });
+
+// round key per game: reg | wc | div | conf | sb  (drives chip + marker colors)
+const rkeyOf = m => m.st === 2 ? 'reg' : ({1:'wc', 2:'div', 3:'conf', 4:'sb'})[m.pw] || 'wc';
+const ROUND_COLOR = { reg:'#22e07c', wc:'#4cc9f0', div:'#b388ff', conf:'#ff9f43', sb:'#ffd166' };
+
+// ── i18n: English + Mexican Spanish ─────────────────────────────────────────
+const LANG_KEY = 'nflviz.lang.v1';
+let LANG = (() => { try { const l = localStorage.getItem(LANG_KEY); if (l === 'en' || l === 'es') return l; } catch (e) {} return 'en'; })();
+const reduceMotion = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+const MONTHS_T = {
+  en: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+  es: ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'],
+};
+const DOW_T = {
+  en: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+  es: ['dom','lun','mar','mié','jue','vie','sáb'],
+};
+let MONTHS = MONTHS_T[LANG], DOW = DOW_T[LANG];
+const COUNTRY_T = {
+  en: { USA:'United States', MEX:'Mexico', GBR:'England', GER:'Germany', ESP:'Spain', FRA:'France', BRA:'Brazil', AUS:'Australia' },
+  es: { USA:'Estados Unidos', MEX:'México', GBR:'Inglaterra', GER:'Alemania', ESP:'España', FRA:'Francia', BRA:'Brasil', AUS:'Australia' },
+};
+const DIV_ES = { East:'Este', North:'Norte', South:'Sur', West:'Oeste' };
+const divName = d => LANG === 'es' ? d.replace(/East|North|South|West/, w => DIV_ES[w]) : d;
+const teamName = code => TEAMS[code] ? TEAMS[code].name : code;   // proper nouns — same in both languages
+const teamNick = code => TEAMS[code] ? TEAMS[code].nick : code;
+const nfmt = n => n.toLocaleString(LANG === 'es' ? 'es-MX' : 'en-US');
+
+const ROUND_T = {
+  en: { reg: w => `Week ${w}`, wc:'Wild Card', div:'Divisional Round', conf:'Conference Championships', sb:'Super Bowl LXI' },
+  es: { reg: w => `Semana ${w}`, wc:'Comodines', div:'Ronda Divisional', conf:'Finales de Conferencia', sb:'Super Bowl LXI' },
+};
+const ROUND_SHORT_T = {
+  en: { reg: w => 'W' + w, wc:'WC', div:'DIV', conf:'CONF', sb:'🏆 SB' },
+  es: { reg: w => 'S' + w, wc:'COM', div:'DIV', conf:'CONF', sb:'🏆 SB' },
+};
+const roundName = m => { const k = rkeyOf(m), v = ROUND_T[LANG][k]; return typeof v === 'function' ? v(m.pw) : v; };
+const roundShort = m => { const k = rkeyOf(m), v = ROUND_SHORT_T[LANG][k]; return typeof v === 'function' ? v(m.pw) : v; };
+const weekName = wk => { const v = ROUND_T[LANG][wk.st === 2 ? 'reg' : rkeyOf({st:3, pw:wk.pw})]; return typeof v === 'function' ? v(wk.pw) : v; };
+
+const STR = {
+  en: {
+    h1: '<span class="ball">🏈</span> NFL 2026 · SEASON MAP',
+    sub: '32 teams · 30 stadiums &nbsp;|&nbsp; Sept 10, 2026 – Super Bowl LXI, Feb 14, 2027',
+    followLabel: '⭐ Follow:', pickTeam: '— pick a team —',
+    tPrev: 'Previous week (←)', tPlay: 'Play the season (space)', tNext: 'Next week (→)', tHelp: 'How to use this app',
+    soundOn: 'Score sounds on — tap to mute', soundOff: 'Score sounds off — tap to enable',
+    alertsOn: 'Game alerts on — tap to mute', alertsOff: 'Game alerts off — tap to enable',
+    alertsUnsupported: 'Notifications aren’t supported on this browser.',
+    noteScoreTitle: '🏈 SCORE!',
+    noteKickTitle: team => `🔴 ${team} kick off!`,
+    noteOnTitle: '🔔 Game alerts on',
+    noteOnBody: 'You’ll get a ping for your team’s kickoffs and scores while this page is open.',
+    today: 'NOW', restDay: '😴 No games this week.',
+    games: n => `${n} game${n !== 1 ? 's' : ''}`,
+    cities: n => `${n} cit${n !== 1 ? 'ies' : 'y'}`,
+    byes: list => `😴 Bye: ${list}`,
+    intlChip: city => `🌍 ${city}`,
+    pointsTally: (p, avg) => `🏈 ${p} pts${avg ? ' · ' + avg + '/game' : ''}`,
+    pointsTitle: 'Total points scored this season',
+    live: 'LIVE', localLbl: 'local', ft: 'FINAL', at: '@', ot: 'OT', tbdTime: 'TBD', tbd: 'TBD', tbdLabel: 'To be determined',
+    playsHere: 'PLAYS HERE', capWord: 'capacity', seatsWord: 'seats', homeOf: 'Home of',
+    intl: 'International Series', divGame: 'Division game', dome: 'indoor',
+    yourTime: s => `🕒 Your time: ${s}`,
+    kicksIn: s => `⏳ kicks off in ${s}`,
+    underway: s => `🔴 Underway — kicked off ${s} ago`,
+    wasYourTime: s => `🕒 Was ${s} your time`,
+    timeTBD: '🕒 Kickoff time to be announced',
+    noMatchHere: (wd, tm) => `😴 No game here this week.<br>Next: <b style="color:var(--pitch)">${wd}</b> at ${tm}`,
+    noMoreHere: 'No more games at this stadium.',
+    journeyOf: name => `${name} — the season`,
+    travel: mi => `✈️ ${mi} mi of scheduled travel`,
+    travelHint: 'Round trips from home; back-to-back international games fly direct.',
+    playJourney: 'Fly the season',
+    rec: (w, l, t) => `${w}–${l}${t ? '–' + t : ''}`,
+    recLine: (rec, pf, pa) => `Record <b>${rec}</b> · PF ${pf} · PA ${pa}`,
+    byeShort: 'BYE', homeShort: 'HOME',
+    nextKickoff: (dur, a, b, v) => `⏳ Next kickoff in <b style="color:var(--sky)">${dur}</b> — ${a} @ ${b} · ${v}`,
+    moreLive: n => `+${n} more live`,
+    seasonDone: '🏆 Season complete — see you in September!',
+    thTeam: 'TEAM', thW: 'W', thL: 'L', thT: 'T', thPct: 'PCT', thPF: 'PF', thPA: 'PA', thNet: 'NET', thDiv: 'DIV',
+    clickFollow: 'Click to follow', clearTeam: 'Clear team · reset view',
+    legendPlayed: 'division leader is a playoff seed · tiebreaks: head-to-head → division → conference → net points · click a team to follow',
+    legendEmpty: 'no results yet — click a team to follow',
+    divGames: 'DIVISION GAMES',
+    helpTitle: '👋 How to use the Season Map', helpGotIt: 'Got it 🏈', igFollow: 'Follow on Instagram', tClose: 'Close (Esc)',
+    helpRows: [
+      ['🗺️','<b>The map.</b> Every marker is a stadium. Idle ones show a dot &amp; next-game countdown; active ones pulse with the week’s game count; the Super Bowl bounces a 🏆. Click any marker for its game, home team &amp; capacity.'],
+      ['📅','<b>Pick a week.</b> Tap a week on the timeline, use <span class="k">◀</span> <span class="k">▶</span>, or the <span class="k">←</span> <span class="k">→</span> keys. Chip colors mark the round — regular season → Wild Card → Divisional → Conference → Super Bowl.'],
+      ['▶️','<b>Play the season.</b> Hit <span class="k">▶</span> (or <span class="k">space</span>) for a week-by-week light show that flashes stadiums in kickoff order — the Sunday 1pm wave lights up at once.'],
+      ['🪧','<b>Game cards.</b> The side panel lists the week’s games by day, away @ home, with kickoff in <b>both</b> stadium-local and your own time zone. Live games glow red; finished ones dim and show the score.'],
+      ['⭐','<b>Follow a team.</b> Pick one to star their weeks, trace their <b>travel route</b> out and back from home, see their record, and gold-light every stadium they visit.'],
+      ['📊','<b>Divisions.</b> Click any division label for live standings and every division game. Tap a team there to follow it.'],
+      ['🔴','<b>Live scores.</b> On game days the scores and clock update on their own — no refresh needed.'],
+      ['🔊','<b>Score sounds.</b> Toggle 🔊 in the timeline bar for a fanfare when your team scores (off by default).'],
+      ['🔔','<b>Game alerts.</b> Tap 🔔 to get a notification for your followed team’s kickoffs and scores. Install the app to your home screen for the full experience. Alerts ping while the app is open.'],
+      ['🔗','<b>Share the view.</b> The URL remembers your week and followed team — copy it to share exactly what you’re looking at.'],
+    ],
+  },
+  es: {
+    h1: '<span class="ball">🏈</span> NFL 2026 · MAPA DE LA TEMPORADA',
+    sub: '32 equipos · 30 estadios &nbsp;|&nbsp; 10 de sept. de 2026 – Super Bowl LXI, 14 de feb. de 2027',
+    followLabel: '⭐ Sigue a:', pickTeam: '— elige un equipo —',
+    tPrev: 'Semana anterior (←)', tPlay: 'Reproduce la temporada (espacio)', tNext: 'Semana siguiente (→)', tHelp: 'Cómo usar la app',
+    soundOn: 'Sonidos de anotación activados — toca para silenciar', soundOff: 'Sonidos de anotación desactivados — toca para activar',
+    alertsOn: 'Alertas activadas — toca para silenciar', alertsOff: 'Alertas desactivadas — toca para activar',
+    alertsUnsupported: 'Las notificaciones no son compatibles con este navegador.',
+    noteScoreTitle: '🏈 ¡ANOTACIÓN!',
+    noteKickTitle: team => `🔴 ¡${team} arranca!`,
+    noteOnTitle: '🔔 Alertas activadas',
+    noteOnBody: 'Recibirás un aviso de los arranques y anotaciones de tu equipo mientras esta página esté abierta.',
+    today: 'AHORA', restDay: '😴 Sin juegos esta semana.',
+    games: n => `${n} juego${n !== 1 ? 's' : ''}`,
+    cities: n => `${n} ciudad${n !== 1 ? 'es' : ''}`,
+    byes: list => `😴 Descanso: ${list}`,
+    intlChip: city => `🌍 ${city}`,
+    pointsTally: (p, avg) => `🏈 ${p} pts${avg ? ' · ' + avg + '/juego' : ''}`,
+    pointsTitle: 'Puntos totales anotados esta temporada',
+    live: 'EN VIVO', localLbl: 'local', ft: 'FINAL', at: '@', ot: 'TE', tbdTime: 'Por definir', tbd: 'TBD', tbdLabel: 'Por definir',
+    playsHere: 'JUEGA AQUÍ', capWord: 'capacidad', seatsWord: 'asientos', homeOf: 'Casa de',
+    intl: 'Serie Internacional', divGame: 'Juego divisional', dome: 'techado',
+    yourTime: s => `🕒 Tu hora: ${s}`,
+    kicksIn: s => `⏳ inicia en ${s}`,
+    underway: s => `🔴 En curso — inició hace ${s}`,
+    wasYourTime: s => `🕒 Fue ${s} (tu hora)`,
+    timeTBD: '🕒 Hora de inicio por anunciar',
+    noMatchHere: (wd, tm) => `😴 Esta semana no hay juego aquí.<br>Próximo: <b style="color:var(--pitch)">${wd}</b> a las ${tm}`,
+    noMoreHere: 'No hay más juegos en este estadio.',
+    journeyOf: name => `${name} — la temporada`,
+    travel: mi => `✈️ ${mi} mi de viaje programado`,
+    travelHint: 'Viajes redondos desde casa; juegos internacionales consecutivos vuelan directo.',
+    playJourney: 'Volar la temporada',
+    rec: (w, l, t) => `${w}–${l}${t ? '–' + t : ''}`,
+    recLine: (rec, pf, pa) => `Marca <b>${rec}</b> · PF ${pf} · PC ${pa}`,
+    byeShort: 'DESCANSO', homeShort: 'CASA',
+    nextKickoff: (dur, a, b, v) => `⏳ Próximo inicio en <b style="color:var(--sky)">${dur}</b> — ${a} @ ${b} · ${v}`,
+    moreLive: n => `+${n} más en vivo`,
+    seasonDone: '🏆 Temporada terminada — ¡nos vemos en septiembre!',
+    thTeam: 'EQUIPO', thW: 'G', thL: 'P', thT: 'E', thPct: 'PCT', thPF: 'PF', thPA: 'PC', thNet: 'DIF', thDiv: 'DIV',
+    clickFollow: 'Clic para seguir', clearTeam: 'Quitar equipo · restablecer vista',
+    legendPlayed: 'el líder divisional es cabeza de serie · desempates: enfrentamientos directos → división → conferencia → diferencia de puntos · clic en un equipo para seguir',
+    legendEmpty: 'aún sin resultados — clic en un equipo para seguir',
+    divGames: 'JUEGOS DIVISIONALES',
+    helpTitle: '👋 Cómo usar el Mapa de la Temporada', helpGotIt: '¡Entendido! 🏈', igFollow: 'Sígueme en Instagram', tClose: 'Cerrar (Esc)',
+    helpRows: [
+      ['🗺️','<b>El mapa.</b> Cada marcador es un estadio. Los inactivos muestran un punto y la cuenta regresiva al próximo juego; los activos laten con el número de juegos de la semana; el Super Bowl hace rebotar un 🏆. Haz clic en cualquier marcador para ver su juego, equipo local y capacidad.'],
+      ['📅','<b>Elige una semana.</b> Toca una semana en la línea de tiempo, usa <span class="k">◀</span> <span class="k">▶</span>, o las teclas <span class="k">←</span> <span class="k">→</span>. Los colores marcan la ronda — temporada regular → Comodines → Divisional → Conferencia → Super Bowl.'],
+      ['▶️','<b>Reproduce la temporada.</b> Presiona <span class="k">▶</span> (o <span class="k">espacio</span>) para un espectáculo semana a semana que ilumina los estadios en orden de inicio — la ola dominical de la 1 pm se enciende de golpe.'],
+      ['🪧','<b>Tarjetas de juego.</b> El panel lateral lista los juegos de la semana por día, visitante @ local, con el inicio en <b>ambas</b> zonas horarias: la del estadio y la tuya. Los juegos en vivo brillan en rojo; los terminados se atenúan y muestran el marcador.'],
+      ['⭐','<b>Sigue a un equipo.</b> Elige uno para destacar sus semanas, trazar su <b>ruta de viaje</b> de ida y vuelta desde casa, ver su marca e iluminar en dorado cada estadio que visita.'],
+      ['📊','<b>Divisiones.</b> Haz clic en cualquier etiqueta de división para ver la tabla en vivo y todos los juegos divisionales. Toca un equipo ahí para seguirlo.'],
+      ['🔴','<b>Marcadores en vivo.</b> En días de juego, los marcadores y el reloj se actualizan solos — sin recargar.'],
+      ['🔊','<b>Sonidos de anotación.</b> Activa 🔊 en la barra de tiempo para una fanfarria cuando tu equipo anota (desactivado por defecto).'],
+      ['🔔','<b>Alertas de juego.</b> Toca 🔔 para recibir una notificación de los arranques y anotaciones del equipo que sigues. Instala la app en tu pantalla de inicio para la experiencia completa. Las alertas suenan mientras la app está abierta.'],
+      ['🔗','<b>Comparte la vista.</b> La URL recuerda tu semana y equipo seguido — cópiala para compartir exactamente lo que ves.'],
+    ],
+  },
+};
+const t = (k, ...a) => { const d = STR[LANG] || STR.en; let v = d[k]; if (v === undefined) v = STR.en[k]; if (v === undefined) return k; return typeof v === 'function' ? v(...a) : v; };
+const fmtWD = dt => LANG === 'es'
+  ? `${DOW[dt.getDay()]}, ${dt.getDate()} ${MONTHS[dt.getMonth()]}`
+  : `${DOW[dt.getDay()]}, ${MONTHS[dt.getMonth()]} ${dt.getDate()}`;
+const fmtMD = dt => LANG === 'es'
+  ? `${dt.getDate()} ${MONTHS[dt.getMonth()]}`
+  : `${MONTHS[dt.getMonth()]} ${dt.getDate()}`;
+// "Oct 22 – 26" / "Oct 30 – Nov 3" for a week's ET date span
+const fmtSpan = (a, b) => {
+  const A = dateObj(a), B = dateObj(b);
+  if (a === b) return fmtMD(A);
+  if (A.getMonth() === B.getMonth()) return LANG === 'es' ? `${A.getDate()}–${B.getDate()} ${MONTHS[A.getMonth()]}` : `${MONTHS[A.getMonth()]} ${A.getDate()}–${B.getDate()}`;
+  return `${fmtMD(A)} – ${fmtMD(B)}`;
+};
+
+// ── helpers ──────────────────────────────────────────────────────────────
+const $id = s => document.getElementById(s);
+const dateObj = d => new Date(d + 'T12:00:00');
+const fmt12 = t => {
+  let [h, m] = t.split(':').map(Number);
+  const ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${h}:${String(m).padStart(2,'0')} ${ap}`;
+};
+const kickoffUTC = m => Date.parse(m.iso);
+const yourTime = m => new Date(kickoffUTC(m)).toLocaleString([], {weekday:'short', hour:'numeric', minute:'2-digit'});
+const yourDay = m => new Date(kickoffUTC(m)).toLocaleDateString([], {weekday:'long', month:'short', day:'numeric'});
+const yourDayKey = m => { const d = new Date(kickoffUTC(m)); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const logoURL = code => `https://a.espncdn.com/i/teamlogos/nfl/500/${TEAMS[code].slug}.png`;
+const logoImg = code => `<img class="lg" src="${logoURL(code)}" alt="">`;
+const cssId = s => s.replace(/[^a-z0-9]/gi, '');
+const esc = s => s.replace(/'/g, "\\'");
+const divOf = code => TEAMS[code] ? TEAMS[code].div : null;
+const homeVenue = code => TEAMS[code] ? TEAMS[code].home : null;
+// "Inglewood, CA" / "Saint-Denis, France" — the stadium's own town (the map label is the metro: v[0])
+const venLoc = name => { const v = VENUES[name], town = v[10] || v[0]; return v[1] === 'USA' ? `${town}, ${v[7]}` : `${town}, ${COUNTRY_T[LANG][v[1]] || v[1]}`; };
+const venHomeTeams = name => Object.keys(TEAMS).filter(c => TEAMS[c].home === name);
+const MATCH_BY_N = {}, MATCH_BY_ID = {};
+MATCHES.forEach(m => { MATCH_BY_N[m.n] = m; MATCH_BY_ID[m.id] = m; });
+const matchByN = n => MATCH_BY_N[n];
+const sideOf = (m, c) => m.a === c ? 'a' : m.b === c ? 'b' : null;
+const winnerOf = m => m.s1 == null ? null : m.s1 > m.s2 ? m.a : m.s2 > m.s1 ? m.b : null;   // null = tie / unplayed
+
+function teamHTML(code, right) {
+  if (code && TEAMS[code]) return `<div class="team${right?' right':''}">${logoImg(code)}<span>${teamNick(code)}<small>${TEAMS[code].city}</small></span></div>`;
+  return `<div class="team${right?' right':''}"><span class="tbd">${t('tbd')}</span><span style="color:var(--ink-dim)">${t('tbdLabel')}</span></div>`;
+}
+const shortHTML = code => code && TEAMS[code] ? `${logoImg(code)} ${code}` : t('tbd');
+
+function haversineMi(a, b) {
+  const R = 3959, rad = x => x * Math.PI / 180;
+  const dLat = rad(b[0] - a[0]), dLng = rad(b[1] - a[1]);
+  const h = Math.sin(dLat/2)**2 + Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+function fmtDur(ms) {
+  const t = Math.max(0, Math.round(ms / 60000));
+  const d = Math.floor(t / 1440), h = Math.floor(t % 1440 / 60), mi = t % 60;
+  return d ? `${d}d ${h}h` : h ? `${h}h ${mi}m` : `${mi}m`;
+}
+// live state: pre / live / ft. ESPN state wins when the poller has seen the game;
+// otherwise a ~3h20 window after kickoff. A TBD-time game is never "live" by clock.
+const WINDOW_MS = 200 * 60000;
+const stateOf = (m, now) => m.fin ? 'ft' : m.live ? 'live' : m.tt ? 'pre'
+  : now < kickoffUTC(m) ? 'pre' : now < kickoffUTC(m) + WINDOW_MS ? 'live' : 'ft';
+
+// ── week list ────────────────────────────────────────────────────────────
+const byWeek = {};
+MATCHES.forEach(m => (byWeek[m.w] = byWeek[m.w] || []).push(m));
+const NWEEKS = WEEKS.length;                         // 22: 18 regular + 4 playoff rounds
+const _now0 = new Date();
+const TODAY = `${_now0.getFullYear()}-${String(_now0.getMonth()+1).padStart(2,'0')}-${String(_now0.getDate()).padStart(2,'0')}`;
+// "current" week = the first week that hasn't fully ended yet (Tue/Wed between weeks → the upcoming one)
+const CUR_WEEK_IDX = (() => { const i = WEEKS.findIndex(w => w.to >= TODAY); return i < 0 ? NWEEKS - 1 : i; })();
+const weekRkey = wk => wk.st === 2 ? 'reg' : rkeyOf({st:3, pw:wk.pw});
+
+// ── map ──────────────────────────────────────────────────────────────────
+const map = L.map('map', {zoomControl:false, attributionControl:true, minZoom:2, maxZoom:12, worldCopyJump:true})
+  .setView([38.5, -96.5], 4);
+L.control.zoom({position:'bottomright'}).addTo(map);
+// Basemap: Esri's World Dark Gray canvas, no API key needed (CARTO's dark_all tiles
+// started serving "API KEY REQUIRED" watermarks for keyless use in Oct 2026). Base
+// layer + Reference layer (place labels); the tile pane is CSS-tinted toward the
+// app's navy so the gray canvas sits under the glass UI.
+const ESRI_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_{l}/MapServer/tile/{z}/{y}/{x}';
+L.tileLayer(ESRI_TILES.replace('{l}', 'Base'), {
+  attribution:'Tiles &copy; <a href="https://www.esri.com/">Esri</a> · HERE · Garmin · <a href="https://www.openstreetmap.org/copyright">OSM</a> · Schedule &amp; scores: ESPN',
+  maxZoom:16,
+}).addTo(map);
+L.tileLayer(ESRI_TILES.replace('{l}', 'Reference'), { maxZoom:16, opacity:.85 }).addTo(map);
+const applyZoomClass = () => document.body.classList.toggle('zlow', map.getZoom() < 5);
+map.on('zoomend', applyZoomClass); applyZoomClass();
+
+const markers = {};
+for (const [name, v] of Object.entries(VENUES)) {
+  const mk = L.marker([v[2], v[3]], {icon: L.divIcon({className:'', html:'', iconSize:[40,40], iconAnchor:[20,20]})}).addTo(map);
+  mk.on('click', () => openVenue(name));
+  markers[name] = mk;
+}
+
+function iconFor(name, wkMatches, now) {
+  if (journeyVenues && !journeyVenues.has(name))
+    return L.divIcon({className:'', html:'', iconSize:[0, 0]});
+  const v = VENUES[name];
+  const n = wkMatches.length;
+  const isFinal = wkMatches.some(m => rkeyOf(m) === 'sb');
+  const isFav = follow && wkMatches.some(m => m.a === follow || m.b === follow);
+  const liveNow = wkMatches.some(m => stateOf(m, now) === 'live');
+  const cls = (n === 0 ? 'idle' : isFinal ? 'finale live' : 'live')
+    + (liveNow ? ' livenow' : '') + (isFav ? ' fav' : '');
+  const inner = n === 0 ? '·' : isFinal && !liveNow ? '🏆' : n;
+  const sz = n === 0 ? 22 : 40;
+  const favTag = isFav
+    ? `<div class="favTag">${logoImg(follow)}${teamNick(follow).toUpperCase()} ${t('playsHere')}</div>`
+    : '';
+  return L.divIcon({
+    className:'',
+    html:`<div class="stadion ${cls}" id="mk-${cssId(name)}" style="width:${sz}px;height:${sz}px">
+      ${n ? '<div class="ring"></div><div class="ring r2"></div>' : ''}
+      <div class="pin">${inner}</div>
+      ${favTag}
+      <div class="lbl">${v[0]}</div></div>`,
+    iconSize:[sz, sz], iconAnchor:[sz/2, sz/2],
+  });
+}
+
+// ── state ────────────────────────────────────────────────────────────────
+const _params = new URLSearchParams(location.search);
+const LS_KEY = 'nflviz.v1';
+const loadSaved = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch (e) { return {}; } };
+const SAVED = loadSaved();
+function saveState() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify({follow, week: WEEKS[dayIdx].w, sound: soundOn, notify: notifyOn})); }
+  catch (e) { /* storage unavailable — ignore */ }
+}
+// URL ?w=7 (week number) or ?d=2026-10-25 (a date → its week); else last session; else the current week
+const weekIdxOfDate = d => { const i = WEEKS.findIndex(w => d >= w.from && d <= w.to); return i >= 0 ? i : WEEKS.findIndex(w => w.from > d); };
+let dayIdx = (() => {
+  const qw = +_params.get('w'); if (qw >= 1 && qw <= NWEEKS) return WEEKS.findIndex(w => w.w === qw);
+  const qd = _params.get('d'); if (qd) { const i = weekIdxOfDate(qd); if (i >= 0) return i; }
+  if (SAVED.week) { const i = WEEKS.findIndex(w => w.w === SAVED.week); if (i >= 0) return i; }
+  return CUR_WEEK_IDX;
+})();
+let follow = '';
+let soundOn = SAVED.sound === true;
+let notifyOn = SAVED.notify === true;
+let curDiv = null;                       // division shown in the drawer
+
+// ── timeline chips (one per week) ────────────────────────────────────────
+const daysEl = $id('days');
+function buildDayChips() {
+  daysEl.innerHTML = '';
+  WEEKS.forEach((wk, i) => {
+    const el = document.createElement('div');
+    el.className = 'day'; el.id = 'dd' + i;
+    const rk = weekRkey(wk), reg = wk.st === 2;
+    el.innerHTML = `
+      ${i === CUR_WEEK_IDX ? `<span class="today">${t('today')}</span>` : ''}
+      <span class="fdot"></span>
+      <div class="dw">${reg ? (LANG === 'es' ? 'SEM' : 'WEEK') : (LANG === 'es' ? 'PLAYOFFS' : 'PLAYOFFS')}</div>
+      <div class="dn${reg ? '' : ' txt'}">${reg ? wk.pw : ROUND_SHORT_T[LANG][rk].replace('🏆 ', '')}</div>
+      <div class="dm">${fmtSpan(wk.from, wk.to)}</div>
+      <div class="cnt" style="background:${ROUND_COLOR[rk]}">${wk.games}</div>`;
+    el.onclick = () => { stopPlay(); setDay(i); };
+    daysEl.appendChild(el);
+  });
+}
+buildDayChips();
+function centerDayChip(i) {
+  const chip = $id('dd' + i);
+  if (!chip) return;
+  const c = chip.getBoundingClientRect(), d = daysEl.getBoundingClientRect();
+  const delta = (c.left - d.left) - (daysEl.clientWidth - c.width) / 2;
+  daysEl.scrollTo({ left: daysEl.scrollLeft + delta, behavior: 'smooth' });
+}
+
+// ── core render ──────────────────────────────────────────────────────────
+const mqMobile = matchMedia('(max-width: 760px)');
+function layoutPanel() {
+  const p = $id('panel');
+  if (mqMobile.matches) { p.style.top = ''; return; }
+  p.style.top = (14 + $id('hdr').offsetHeight + 10) + 'px';
+}
+function applyFormFactor() {
+  const s = $id('teamSel');
+  if (mqMobile.matches) $id('teamFab').appendChild(s);
+  else $id('follow').appendChild(s);
+  layoutPanel();
+}
+mqMobile.addEventListener('change', applyFormFactor);
+
+const totalPoints = () => { let g = 0, p = 0; for (const m of MATCHES) if (m.s1 != null && m.fin) { g += m.s1 + m.s2; p++; } return { g, p }; };
+function pointsChipHTML() { const { g, p } = totalPoints(); return `<span class="chip goals" id="goalsChip" title="${t('pointsTitle')}">${t('pointsTally', nfmt(g), p ? (g / p).toFixed(1) : '')}</span>`; }
+function updatePointsChip() { const el = $id('goalsChip'); if (el) el.outerHTML = pointsChipHTML(); }
+
+function setDay(i, fly) {
+  dayIdx = (i + NWEEKS) % NWEEKS;
+  const wk = WEEKS[dayIdx];
+  const wkMatches = byWeek[wk.w] || [];
+  const rk = weekRkey(wk);
+
+  $id('dayTitle').textContent = weekName(wk);
+  const cities = new Set(wkMatches.filter(m => m.v).map(m => VENUES[m.v][0]));
+  const intl = wkMatches.filter(m => m.neutral && m.v && VENUES[m.v][1] !== 'USA');
+  $id('dayMeta').innerHTML =
+    `<span class="chip round" style="background:${ROUND_COLOR[rk]}">${fmtSpan(wk.from, wk.to)}</span>
+     <span class="chip">${t('games', wkMatches.length)}</span>
+     <span class="chip">${t('cities', cities.size)}</span>
+     ${intl.map(m => `<span class="chip intl" onclick="openVenue('${esc(m.v)}')">${t('intlChip', VENUES[m.v][0])}</span>`).join('')}
+     ${wk.byes ? `<span class="chip bye">${t('byes', wk.byes.join(' · '))}</span>` : ''}
+     ${pointsChipHTML()}`;
+
+  document.querySelectorAll('.day').forEach((el, j) => el.classList.toggle('active', j === dayIdx));
+  centerDayChip(dayIdx);
+
+  $id('sheetTitle').textContent = `${weekName(wk)} — ${t('games', wkMatches.length)}`;
+  $id('fab').innerHTML = `📋 ${wkMatches.length}`;
+
+  updateMarkers(wk.w);
+  renderPanel(wk.w, wkMatches, false);
+  map.closePopup();
+  if (fly !== false) fitDay(wkMatches);
+  confettiToggle(rk === 'sb');
+  if (!playing) saveState();
+  layoutPanel();
+}
+
+function updateMarkers(w) {
+  const now = Date.now();
+  for (const name of Object.keys(VENUES)) {
+    const vm = (byWeek[w] || []).filter(m => m.v === name);
+    markers[name].setIcon(iconFor(name, vm, now));
+    const isFav = follow && vm.some(m => m.a === follow || m.b === follow);
+    markers[name].setZIndexOffset(isFav ? 2000 : vm.length ? 1000 : 0);
+  }
+}
+
+// fit the week's US stadiums (an overseas game would zoom the whole globe out — it gets a 🌍 chip instead);
+// while following a team, fit THEIR game(s) wherever they are
+function fitDay(wkMatches) {
+  let ms = wkMatches.filter(m => m.v);
+  if (follow) { const mine = ms.filter(m => m.a === follow || m.b === follow); if (mine.length) ms = mine; }
+  else { const us = ms.filter(m => VENUES[m.v][1] === 'USA'); if (us.length) ms = us; }
+  const pts = [...new Set(ms.map(m => m.v))].map(n => [VENUES[n][2], VENUES[n][3]]);
+  if (!pts.length) { map.flyTo([38.5, -96.5], 4, {duration: .9}); return; }
+  if (pts.length === 1) map.flyTo(pts[0], 6, {duration: .9});
+  else map.flyToBounds(L.latLngBounds(pts).pad(.25), {duration: .9, maxZoom: 5, paddingTopLeft: [mqMobile.matches ? 0 : 400, 0]});
+}
+
+// game cards, grouped by the VISITOR's local calendar day, kickoff order within
+function renderPanel(w, wkMatches, quiet) {
+  const inner = $id('panelInner');
+  inner.classList.toggle('noanim', !!quiet);
+  if (!wkMatches.length) { inner.innerHTML = `<div id="noGames">${t('restDay')}</div>`; return; }
+  const now = Date.now();
+  const sorted = wkMatches.slice().sort((x, y) => kickoffUTC(x) - kickoffUTC(y) || x.n - y.n);
+  const byDayL = {}, order = [];
+  sorted.forEach(m => { const k = m.tt ? 'tbd-' + m.de : yourDayKey(m); if (!byDayL[k]) { byDayL[k] = []; order.push(k); } byDayL[k].push(m); });
+  let html = '', k = 0;
+  for (const key of order) {
+    const ms = byDayL[key], first = ms[0];
+    const col = ROUND_COLOR[rkeyOf(first)];
+    html += `<div class="venueHead">
+      <div class="dot" style="background:${col};box-shadow:0 0 10px ${col}"></div>
+      <div><div class="vn">${first.tt ? fmtWD(dateObj(first.de)) : yourDay(first)}</div><div class="vc">${t('games', ms.length)}${first.tt ? ' · ' + t('tbdTime') : ''}</div></div>
+    </div>`;
+    for (const m of ms) html += cardHTML(m, now, k++);
+  }
+  inner.innerHTML = html;
+}
+function cardHTML(m, now, k) {
+  const fav = follow && (m.a === follow || m.b === follow);
+  const st = stateOf(m, now);
+  const ko = kickoffUTC(m);
+  const koHtml = st === 'live'
+    ? `<span class="liveTag"><span class="reddot"></span>${t('live')} ${m.clock || ''}</span>
+       <small>${fmt12(m.t)} ${t('localLbl')}</small>`
+    : m.tt ? `${t('tbdTime')}<small>${fmtWD(dateObj(m.de))}</small>`
+    : `${fmt12(m.t)}<small>${t('localLbl')} (UTC${m.utc >= 0 ? '+' : ''}${m.utc})</small>${st === 'ft' ? `<span class="ftTag">${t('ft')}${m.ot ? '/' + t('ot') : ''}</span>` : ''}`;
+  const yourLine = m.tt ? t('timeTBD')
+    : st === 'pre' ? `${t('yourTime', yourTime(m))}${ko - now < 48 * 3600000 ? ` · <b style="color:var(--sky)">${t('kicksIn', fmtDur(ko - now))}</b>` : ''}`
+    : st === 'live' ? t('underway', fmtDur(now - ko))
+    : t('wasYourTime', yourTime(m));
+  const mid = m.s1 != null
+    ? `<div class="score">${m.s1}–${m.s2}${m.ot ? `<small>${t('ot')}</small>` : ''}</div>`
+    : `<div class="vs">${t('at')}</div>`;
+  const win = m.fin ? winnerOf(m) : null;
+  const sideCls = c => win ? (win === c ? ' win' : ' loss') : '';
+  const tags = [];
+  if (m.st === 3) tags.push(roundName(m));
+  if (m.div && m.a) tags.push(`<span class="groupLink" onclick="event.stopPropagation();openDivision('${divOf(m.a)}')">${divName(divOf(m.a))}</span>`);
+  if (m.neutral) tags.push('🌍 ' + t('intl'));
+  if (m.tv) tags.push('📺 ' + m.tv);
+  const vn = m.v ? `<div class="venueLine"><span class="dot" style="background:${ROUND_COLOR[rkeyOf(m)]}"></span>${m.v} · ${venLoc(m.v)}</div>` : '';
+  return `<div class="${'card' + (fav?' followed':'') + (st==='live'?' live':'') + (st==='ft'?' done':'')}" style="animation-delay:${k*45}ms"
+    ${m.v ? `onmouseenter="hotMarker('${cssId(m.v)}',1)" onmouseleave="hotMarker('${cssId(m.v)}',0)" onclick="openVenue('${esc(m.v)}')"` : ''}>
+    <div class="top">
+      <div class="ko">${koHtml}</div>
+      <div class="mn">${tags.join(' · ')}</div>
+    </div>
+    <div class="teams">${teamHTML(m.a).replace('class="team', 'class="team' + sideCls(m.a))}${mid}${teamHTML(m.b, true).replace('class="team', 'class="team' + sideCls(m.b))}</div>
+    ${vn}
+    <div class="your">${yourLine}</div>
+  </div>`;
+}
+
+function hotMarker(id, on) {
+  const el = document.getElementById('mk-' + id);
+  if (el) el.classList.toggle('hot', !!on);
+}
+
+function openVenue(name) {
+  const v = VENUES[name];
+  const w = WEEKS[dayIdx].w;
+  const ms = (byWeek[w] || []).filter(m => m.v === name);
+  let body;
+  if (ms.length) {
+    body = ms.map(m => `<div class="ppm"><span class="t">${m.tt ? t('tbdTime') : fmt12(m.t)}</span>
+        ${m.a ? logoImg(m.a) : ''}${m.a ? teamNick(m.a) : t('tbd')}
+        <span style="color:var(--ink-dim)">${t('at')}</span>
+        ${m.b ? logoImg(m.b) : ''}${m.b ? teamNick(m.b) : t('tbd')}
+        ${m.s1 != null ? `<b style="margin-left:auto;color:var(--gold)">${m.s1}–${m.s2}${m.ot ? ` <small>${t('ot')}</small>` : ''}</b>` : ''}</div>`).join('');
+  } else {
+    const next = MATCHES.find(m => m.v === name && m.w >= w && m.s1 == null);
+    body = `<div class="next">${next
+      ? t('noMatchHere', fmtWD(dateObj(next.de)), next.tt ? t('tbdTime') : fmt12(next.t))
+      : t('noMoreHere')}</div>`;
+  }
+  const hosts = venHomeTeams(name);
+  L.popup({offset:[0, -16]})
+    .setLatLng([v[2], v[3]])
+    .setContent(`<div class="pp"><h3>🏟️ ${name}</h3>
+      <div class="ppc">${venLoc(name)} · ${t('capWord')} ${nfmt(v[4])}${v[6] ? ' · ' + t('dome') : ''}${hosts.length ? `<br>${t('homeOf')} ${hosts.map(c => teamName(c)).join(' & ')}` : ''}</div>${body}</div>`)
+    .openOn(map);
+  map.flyTo([v[2], v[3]], Math.max(map.getZoom(), 5.5), {duration:.7});
+}
+
+// ── journey: a team's season drawn as flights out and back from home ──────
+let journeyLayer = null, ballTimer = null, playTimer = null;
+let journeyVenues = null;   // while following: the only stadiums shown on the map
+let jAnim = null;           // {ball, path, stopIdx, stopMarkers, cumMiles, total}
+let jPlaying = false;
+
+function clearJourney() {
+  if (journeyLayer) { map.removeLayer(journeyLayer); journeyLayer = null; }
+  if (ballTimer) { clearInterval(ballTimer); ballTimer = null; }
+  if (playTimer) { clearInterval(playTimer); playTimer = null; }
+  jPlaying = false;
+  jAnim = null;
+}
+function arcPoints(a, b) {
+  const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const cx = mx - dy * 0.22, cy = my + dx * 0.22;
+  const pts = [];
+  for (let i = 0; i <= 32; i++) {
+    const t = i / 32;
+    pts.push([(1-t)*(1-t)*a[0] + 2*(1-t)*t*cx + t*t*b[0],
+              (1-t)*(1-t)*a[1] + 2*(1-t)*t*cy + t*t*b[1]]);
+  }
+  return pts;
+}
+const teamGames = c => MATCHES.filter(m => m.a === c || m.b === c).sort((x, y) => x.w - y.w || kickoffUTC(x) - kickoffUTC(y));
+// record so far (final games only)
+function recordOf(c, filter) {
+  let w = 0, l = 0, t = 0, pf = 0, pa = 0;
+  for (const m of MATCHES) {
+    if (!m.fin || m.s1 == null || (m.a !== c && m.b !== c)) continue;
+    if (filter && !filter(m)) continue;
+    const us = m.a === c ? m.s1 : m.s2, them = m.a === c ? m.s2 : m.s1;
+    pf += us; pa += them;
+    if (us > them) w++; else if (us < them) l++; else t++;
+  }
+  return { w, l, t, pf, pa, pct: (w + l + t) ? (w + t / 2) / (w + l + t) : 0, g: w + l + t };
+}
+
+// Travel model: the team lives at its home stadium. Each road game is a round trip
+// unless the next game is at the same venue, or both games are abroad (London
+// back-to-backs fly direct). Miles are summed along that path.
+function buildJourney() {
+  clearJourney();
+  saveState();
+  if (!follow) {
+    journeyVenues = null;
+    $id('journey').style.display = 'none';
+    layoutPanel();
+    updateMarkers(WEEKS[dayIdx].w);
+    return;
+  }
+  const home = homeVenue(follow);
+  const gm = teamGames(follow).filter(m => m.v);                 // TBD playoff games have no venue yet
+  const abroad = v => VENUES[v][1] !== 'USA';
+  // legs: sequence of venues visited, starting (and ending) at home
+  const legs = [home];
+  const stopsByVenue = {};                                        // venue → [labels]
+  const addLabel = (v, lab) => (stopsByVenue[v] = stopsByVenue[v] || []).push(lab);
+  addLabel(home, '🏠');
+  for (let i = 0; i < gm.length; i++) {
+    const m = gm[i], v = m.v, cur = legs[legs.length - 1];
+    if (v !== cur) legs.push(v);
+    if (v !== home) addLabel(v, roundShort(m));
+    const nx = gm[i + 1];
+    const stay = nx && (nx.v === v || (abroad(v) && nx.v && abroad(nx.v)));
+    if (v !== home && !stay) legs.push(home);
+  }
+  if (legs[legs.length - 1] !== home) legs.push(home);
+
+  journeyLayer = L.layerGroup().addTo(map);
+  let miles = 0, fullPath = [];
+  const stopIdx = [0], cumMiles = [0];
+  for (let i = 0; i < legs.length - 1; i++) {
+    const A = VENUES[legs[i]], B = VENUES[legs[i + 1]];
+    const pts = arcPoints([A[2], A[3]], [B[2], B[3]]);
+    const dmi = haversineMi([A[2], A[3]], [B[2], B[3]]);
+    miles += dmi;
+    const out = legs[i] === home;                                 // outbound green, homebound dimmer
+    L.polyline(pts, {color: '#22e07c', weight: 8, opacity: out ? .14 : .07, interactive: false}).addTo(journeyLayer);
+    L.polyline(pts, {color: '#22e07c', weight: out ? 2.4 : 1.6, opacity: out ? .95 : .5, dashArray: out ? null : '4 7', interactive: false}).addTo(journeyLayer);
+    fullPath = fullPath.concat(pts);
+    stopIdx.push(fullPath.length - 1);
+    cumMiles.push(cumMiles[cumMiles.length - 1] + dmi);
+  }
+  const stopMarkers = Object.keys(stopsByVenue).map(v => {
+    const V = VENUES[v], labs = stopsByVenue[v];
+    const isHome = v === home, k = gm.some(m => m.v === v && m.st === 3);
+    const text = isHome ? `🏠 ${t('homeShort')}` : labs.join(' · ');
+    return L.marker([V[2], V[3]], {
+      icon: L.divIcon({className:'', html:`<div class="stopBadge${isHome ? ' home' : k ? ' k' : ''}">${text}</div>`, iconSize:[0,0], iconAnchor:[-13, 27]}),
+      interactive: false,
+    }).addTo(journeyLayer);
+  });
+  if (fullPath.length > 1) {
+    const ball = L.marker(fullPath[0], {
+      icon: L.divIcon({className:'', html:'<div class="ballWrap"><span class="ballIcon">🏈</span></div>', iconSize:[20,20], iconAnchor:[10,10]}),
+      interactive: false, zIndexOffset: 6000,
+    }).addTo(journeyLayer);
+    jAnim = {ball, path: fullPath, stopIdx, legs, stopMarkers, cumMiles, total: cumMiles[cumMiles.length - 1]};
+    startIdleLoop();
+  }
+  journeyVenues = new Set(legs);
+  updateMarkers(WEEKS[dayIdx].w);
+  renderJourneyCard(gm, miles);
+  fitJourney(legs);
+}
+
+const IDLE_DWELL = 450;   // ms rest at each stop on the idle cruise
+function startIdleLoop() {
+  if (!jAnim || ballTimer || jPlaying || reduceMotion) return;
+  const {ball, path, stopIdx} = jAnim;
+  let k = 0, wait = 0;
+  ball.setLatLng(path[0]);
+  ballTimer = setInterval(() => {
+    if (wait > 0) { wait--; return; }
+    k = (k + 1) % path.length;
+    ball.setLatLng(path[k]);
+    if (stopIdx.indexOf(k) >= 0) wait = Math.round(IDLE_DWELL / 30);
+  }, 30);
+}
+// ▶ play-through: fly the whole season once, counting the miles up live, popping
+// each stadium's badge on first arrival; hand back to the idle cruise at the end.
+function playJourney() {
+  if (!jAnim || jPlaying || jAnim.path.length < 2) return;
+  jPlaying = true;
+  if (ballTimer) { clearInterval(ballTimer); ballTimer = null; }
+  const {ball, path, stopIdx, legs, stopMarkers, cumMiles, total} = jAnim;
+  const odo = $id('jOdo');
+  const badgeOf = v => { const V = VENUES[v]; const mk = stopMarkers.find(s => { const p = s.getLatLng(); return p.lat === V[2] && p.lng === V[3]; }); const e = mk && mk.getElement && mk.getElement(); return e ? e.querySelector('.stopBadge') : null; };
+  stopMarkers.forEach((m, i) => { const e = m.getElement && m.getElement(); const b = e && e.querySelector('.stopBadge'); if (b) b.classList.toggle('dim', i > 0 || legs[0] !== legs[0]); });
+  Object.keys(VENUES).forEach(v => { const b = badgeOf(v); if (b && v !== legs[0]) b.classList.add('dim'); });
+  let i = 0, nextStop = 1, hold = 0;
+  const HOLD = Math.round(650 / 26);
+  const arrive = v => { const b = badgeOf(v); if (b) { b.classList.remove('dim'); b.classList.add('pop'); setTimeout(() => b && b.classList.remove('pop'), 600); } };
+  const finish = () => {
+    clearInterval(playTimer); playTimer = null; jPlaying = false;
+    if (odo) odo.textContent = nfmt(Math.round(total));
+    startIdleLoop();
+  };
+  const tick = () => {
+    if (hold > 0) { hold--; return; }
+    if (i >= path.length - 1) { finish(); return; }
+    i++;
+    ball.setLatLng(path[i]);
+    const segFrom = cumMiles[nextStop - 1], segTo = cumMiles[nextStop];
+    const a = stopIdx[nextStop - 1], b = stopIdx[nextStop];
+    const frac = b > a ? (i - a) / (b - a) : 1;
+    if (odo) odo.textContent = nfmt(Math.round(segFrom + (segTo - segFrom) * Math.min(1, Math.max(0, frac))));
+    if (i >= stopIdx[nextStop]) { arrive(legs[nextStop]); hold = legs[nextStop] === legs[0] ? Math.round(HOLD / 2) : HOLD; nextStop++; }
+  };
+  if (playTimer) clearInterval(playTimer);
+  playTimer = setInterval(tick, 26);
+}
+
+function fitJourney(venueNames) {
+  const pts = [...new Set(venueNames)].map(n => [VENUES[n][2], VENUES[n][3]]);
+  if (!pts.length) return;
+  if (pts.length === 1) { map.flyTo(pts[0], 5.5, {duration: .8}); return; }
+  const mobile = mqMobile.matches;
+  const topPad = mobile ? $id('hdr').offsetHeight + 16 : 30;
+  let bottomPad = mobile ? 130 : 110;
+  if (mobile && $id('panel').classList.contains('open')) bottomPad = $id('panel').offsetHeight + 100;
+  map.flyToBounds(L.latLngBounds(pts).pad(0.06), {
+    paddingTopLeft: [mobile ? 16 : 410, topPad],
+    paddingBottomRight: [16, bottomPad],
+    duration: .9, maxZoom: 6,
+  });
+}
+
+function renderJourneyCard(gm, miles) {
+  const j = $id('journey');
+  j.style.display = 'block';
+  const home = homeVenue(follow), d = divOf(follow);
+  const arrow = '<span class="jarrow">→</span>';
+  const all = teamGames(follow);
+  const byW = {}; all.forEach(m => byW[m.w] = m);
+  const bye = WEEKS.find(w => w.byes && w.byes.includes(follow));
+  const chips = [];
+  for (const wk of WEEKS) {
+    const m = byW[wk.w];
+    if (m) {
+      const opp = m.a === follow ? m.b : m.a;
+      const isHome = m.v === home;
+      const res = m.fin && m.s1 != null ? (winnerOf(m) === follow ? ' w' : winnerOf(m) ? ' l' : '') : '';
+      const txt = `${roundShort(m)} ${opp ? (isHome ? 'vs ' : '@ ') + opp : t('tbd')}`;
+      chips.push(`<span class="jstop${isHome ? ' home' : ''}${m.st === 3 ? ' k' : ''}${res}" onclick="stopPlay();setDay(${WEEKS.indexOf(wk)})">${txt}</span>`);
+    } else if (bye && bye.w === wk.w) {
+      chips.push(`<span class="jstop bye" onclick="stopPlay();setDay(${WEEKS.indexOf(wk)})">${roundShort({st:2, pw:wk.pw})} ${t('byeShort')}</span>`);
+    }
+  }
+  const r = recordOf(follow);
+  j.innerHTML = `
+    <div class="jhead">${logoImg(follow)} ${t('journeyOf', teamName(follow))}
+      <span class="groupLink" style="margin-left:auto;font-size:10.5px;color:var(--ink-dim)" onclick="openDivision('${d}')">${divName(d)} →</span></div>
+    <div class="jstops">${chips.join(arrow)}</div>
+    <div class="jrec">${t('recLine', t('rec', r.w, r.l, r.t), r.pf, r.pa)}</div>
+    <div class="jmiles" title="${t('travelHint')}">
+      <span>${t('travel', `<span id="jOdo">${nfmt(Math.round(miles))}</span>`)}</span>
+      <button class="jplay" title="${t('playJourney')}" onclick="playJourney()">▶</button>
+    </div>`;
+  layoutPanel();
+}
+
+// ── follow team ──────────────────────────────────────────────────────────
+const sel = $id('teamSel');
+function rebuildTeamSelect() {
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">${t('pickTeam')}</option>`;
+  for (const d of Object.keys(DIVISIONS)) {
+    const og = document.createElement('optgroup'); og.label = divName(d);
+    DIVISIONS[d].slice().sort((a, b) => teamName(a).localeCompare(teamName(b))).forEach(code => og.appendChild(new Option(teamName(code), code)));
+    sel.appendChild(og);
+  }
+  sel.value = cur;
+}
+rebuildTeamSelect();
+const teamWeekIdxs = () => WEEKS.map((w, i) => i).filter(i => (byWeek[WEEKS[i].w] || []).some(m => m.a === follow || m.b === follow));
+function markTeamWeeks() {
+  const bye = follow && WEEKS.find(w => w.byes && w.byes.includes(follow));
+  WEEKS.forEach((wk, i) => {
+    const has = follow && (byWeek[wk.w] || []).some(m => m.a === follow || m.b === follow);
+    const isBye = !!(bye && bye.w === wk.w);
+    const dot = document.querySelector(`#dd${i} .fdot`); if (dot) dot.style.display = has ? 'block' : 'none';
+    const el = $id('dd' + i);
+    el.classList.toggle('off', !!follow && !has && !isBye);
+    el.classList.toggle('bye', isBye);
+    const cnt = el.querySelector('.cnt'); if (cnt) cnt.textContent = isBye ? t('byeShort') : wk.games;
+  });
+}
+sel.onchange = () => {
+  follow = sel.value;
+  const img = $id('followFlag');
+  if (follow) { img.src = logoURL(follow); img.style.display = 'block'; }
+  else img.style.display = 'none';
+  $id('teamFabFace').innerHTML = follow ? `<img src="${logoURL(follow)}" alt="${teamName(follow)}">` : '⭐';
+  $id('teamFab').classList.toggle('on', !!follow);
+  $id('follow').classList.toggle('on', !!follow);
+  markTeamWeeks();
+  buildJourney();
+  setDay(dayIdx, false);
+};
+function followTeam(c) {
+  sel.value = c; sel.onchange();
+  if ($id('drawer').classList.contains('open')) openDivision(divOf(c));
+}
+function clearFollow() {
+  if (!follow) return;
+  sel.value = ''; sel.onchange();
+  try { map.flyTo([38.5, -96.5], 4, { duration: .8 }); } catch (e) {}
+}
+
+// ── live engine ──────────────────────────────────────────────────────────
+function renderStrip() {
+  const now = Date.now();
+  const strip = $id('liveStrip');
+  const live = MATCHES.filter(m => m.a && stateOf(m, now) === 'live').sort((x, y) => (sideOf(y, follow) ? 1 : 0) - (sideOf(x, follow) ? 1 : 0) || kickoffUTC(x) - kickoffUTC(y));
+  strip.style.display = 'block';
+  if (live.length) {
+    strip.className = '';
+    const shown = live.slice(0, 4);
+    strip.innerHTML = shown.map(m =>
+      `<span class="reddot"></span><b>${t('live')}</b> · ${m.a}${m.s1 != null ? ` <b style="color:var(--gold)">${m.s1}–${m.s2}</b>` : ' ' + t('at')} ${m.b} · ${m.clock || VENUES[m.v][0]}`
+    ).join('<br>') + (live.length > 4 ? `<br><span style="color:var(--ink-dim)">${t('moreLive', live.length - 4)}</span>` : '');
+    const first = shown[0];
+    strip.onclick = () => { stopPlay(); setDay(WEEKS.findIndex(w => w.w === first.w)); openVenue(first.v); };
+  } else {
+    const next = MATCHES.filter(m => m.a && !m.tt && kickoffUTC(m) > now).sort((a, b) => kickoffUTC(a) - kickoffUTC(b))[0];
+    strip.className = 'next';
+    if (next) {
+      strip.innerHTML = t('nextKickoff', fmtDur(kickoffUTC(next) - now), teamNick(next.a), teamNick(next.b), VENUES[next.v][0]);
+      strip.onclick = () => { stopPlay(); setDay(WEEKS.findIndex(w => w.w === next.w)); openVenue(next.v); };
+    } else {
+      strip.innerHTML = t('seasonDone');
+      strip.onclick = null;
+    }
+  }
+  layoutPanel();
+}
+setInterval(() => {
+  renderStrip();
+  checkKickoffs(Date.now());
+  if (!playing) { updateMarkers(WEEKS[dayIdx].w); renderPanel(WEEKS[dayIdx].w, byWeek[WEEKS[dayIdx].w] || [], true); }
+}, 30000);
+
+// ── ESPN scoreboard: backfill finals + poll live games ─────────────────────
+// One source for everything. Each game carries its ESPN event id, so a week's
+// scoreboard maps straight onto MATCHES. data.js is only as fresh as the last
+// `node refresh.js`, so on load we backfill every kicked-off game without a score.
+const ESPN_SB = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard';
+const weekURL = wk => `${ESPN_SB}?dates=${META.season}&seasontype=${wk.st}&week=${wk.pw}`;
+function refreshViews() {
+  renderStrip();
+  updatePointsChip();
+  if (!playing) { updateMarkers(WEEKS[dayIdx].w); renderPanel(WEEKS[dayIdx].w, byWeek[WEEKS[dayIdx].w] || [], true); }
+  if (follow) renderJourneyCard(teamGames(follow).filter(m => m.v), jAnim ? jAnim.total : 0);
+  if (curDiv && $id('drawer').classList.contains('open')) renderDivision();
+}
+// apply one ESPN event to its game; returns true if anything changed
+function applyEvent(e, celebrate) {
+  const m = MATCH_BY_ID[e.id]; if (!m) return false;
+  const c = e.competitions && e.competitions[0]; if (!c) return false;
+  const st = (e.status && e.status.type) || {};
+  const home = c.competitors.find(x => x.homeAway === 'home'), away = c.competitors.find(x => x.homeAway === 'away');
+  let changed = false, scored = false;
+  // playoff slots fill in as the seeding settles
+  if (!m.a && away && away.team && TEAMS[away.team.abbreviation]) { m.a = away.team.abbreviation; m.b = home.team.abbreviation; m.tbd = false; changed = true; }
+  if (!m.v && c.venue && c.venue.id) { const vn = Object.keys(VENUES).find(k => VENUES[k][8] === c.venue.id); if (vn) { m.v = vn; changed = true; } }
+  if (st.state === 'in' || st.state === 'post') {
+    const s1 = parseInt(away.score, 10), s2 = parseInt(home.score, 10);
+    if (!Number.isNaN(s1) && !Number.isNaN(s2) && (s1 !== m.s1 || s2 !== m.s2)) {
+      if (m.s1 != null && (s1 > m.s1 || s2 > m.s2)) scored = (s1 > m.s1 ? m.a : m.b);
+      m.s1 = s1; m.s2 = s2; changed = true;
+    }
+    if (e.status.period > 4 && !m.ot) { m.ot = true; changed = true; }
+  }
+  if (st.state === 'in') {
+    const clk = st.shortDetail || null;
+    if (!m.live || m.clock !== clk) { m.live = true; m.fin = false; m.clock = clk; changed = true; }
+  } else if (st.state === 'post' && st.completed) {
+    if (!m.fin || m.live) { m.fin = true; m.live = false; m.clock = null; changed = true; }
+  }
+  if (celebrate && scored && (!follow || scored === follow)) { scoreBurst(m.v); notifyScore(m); }
+  return changed;
+}
+async function fetchWeek(wk) {
+  const j = await (await fetch(weekURL(wk))).json();
+  return j.events || [];
+}
+async function pollLive() {
+  const now = Date.now();
+  const active = MATCHES.filter(m => m.a && !m.fin && !m.tt && now >= kickoffUTC(m) - 10 * 60000 && now < kickoffUTC(m) + WINDOW_MS + 30 * 60000);
+  if (!active.length) return;
+  let changed = false;
+  for (const w of [...new Set(active.map(m => m.w))]) {
+    try { for (const e of await fetchWeek(WEEKS.find(x => x.w === w))) if (applyEvent(e, true)) changed = true; }
+    catch (err) { /* offline or API hiccup — retry next tick */ }
+  }
+  if (changed) refreshViews();
+}
+async function backfillScores() {
+  const now = Date.now();
+  const need = MATCHES.filter(m => m.a && m.s1 == null && !m.tt && now >= kickoffUTC(m));
+  if (!need.length) return;
+  for (const w of [...new Set(need.map(m => m.w))]) {
+    let changed = false;
+    try { for (const e of await fetchWeek(WEEKS.find(x => x.w === w))) if (applyEvent(e, false)) changed = true; }
+    catch (err) { /* skip — the retry timer covers it */ }
+    if (changed) refreshViews();
+  }
+}
+setInterval(pollLive, 45000);
+pollLive();
+backfillScores();
+const _backfillTimer = setInterval(() => {
+  if (MATCHES.some(m => m.a && m.s1 == null && !m.tt && Date.now() >= kickoffUTC(m))) backfillScores();
+  else clearInterval(_backfillTimer);
+}, 90000);
+// playoff pairings land on ESPN as the seeding settles — refresh the TBD weeks every few minutes once Week 18 ends
+async function pollPlayoffSlots() {
+  const tbd = WEEKS.filter(wk => wk.st === 3 && (byWeek[wk.w] || []).some(m => !m.a));
+  if (!tbd.length || TODAY < WEEKS[17].to) return;
+  let changed = false;
+  for (const wk of tbd) { try { for (const e of await fetchWeek(wk)) if (applyEvent(e, false)) changed = true; } catch (err) {} }
+  if (changed) { buildDayChips(); markTeamWeeks(); setDay(dayIdx, false); if (follow) buildJourney(); }
+}
+pollPlayoffSlots(); setInterval(pollPlayoffSlots, 5 * 60000);
+
+// ── playback: kickoff-order light show ───────────────────────────────────
+const playBtn = $id('playBtn');
+let playing = false, playT = null, hotList = [];
+function unhotAll() { hotList.forEach(id => hotMarker(id, 0)); hotList = []; }
+function clockShow(html) {
+  const c = $id('clockChip');
+  if (html) { c.innerHTML = html; c.style.display = 'flex'; }
+  else c.style.display = 'none';
+}
+function stopPlay() {
+  playing = false;
+  if (playT) { clearTimeout(playT); playT = null; }
+  playBtn.textContent = '▶';
+  unhotAll(); clockShow(null);
+}
+function startPlay() {
+  if (playing) return stopPlay();
+  playing = true;
+  playBtn.textContent = '⏸';
+  playDay(dayIdx);
+}
+function playDay(i) {
+  if (!playing) return;
+  setDay(i);
+  const slots = {};
+  (byWeek[WEEKS[i].w] || []).filter(m => m.v && !m.tt).forEach(m => { const k = kickoffUTC(m); (slots[k] = slots[k] || []).push(m); });
+  const keys = Object.keys(slots).map(Number).sort((a, b) => a - b);
+  let s = 0;
+  const beat = () => {
+    if (!playing) return;
+    unhotAll();
+    if (s < keys.length) {
+      const ms = slots[keys[s]];
+      const tLocal = new Date(keys[s]).toLocaleTimeString([], {weekday:'short', hour:'numeric', minute:'2-digit'});
+      const shown = ms.slice(0, 4);
+      clockShow(`<span class="t">🕐 ${tLocal}</span>` + shown.map(m =>
+        `<span>${shortHTML(m.a)} <span class="sep">${t('at')}</span> ${shortHTML(m.b)}</span>`
+      ).join('<span class="sep">|</span>') + (ms.length > 4 ? `<span class="sep">+${ms.length - 4}</span>` : ''));
+      ms.forEach(m => { const id = cssId(m.v); hotMarker(id, 1); hotList.push(id); });
+      s++;
+      playT = setTimeout(beat, ms.length > 4 ? 2200 : 1500);
+    } else {
+      clockShow(null);
+      playT = setTimeout(() => {
+        let ni = i + 1;
+        if (follow) { const idxs = teamWeekIdxs(); ni = idxs.find(x => x > i); }
+        if (ni == null || ni >= NWEEKS) stopPlay(); else playDay(ni);
+      }, 650);
+    }
+  };
+  playT = setTimeout(beat, 1100);
+}
+function stepDay(dir) {
+  if (follow) {
+    const idxs = teamWeekIdxs();
+    if (idxs.length) {
+      const next = dir > 0 ? idxs.find(i => i > dayIdx) : [...idxs].reverse().find(i => i < dayIdx);
+      return setDay(next != null ? next : dir > 0 ? idxs[0] : idxs[idxs.length - 1]);
+    }
+  }
+  setDay(dayIdx + dir);
+}
+playBtn.onclick = startPlay;
+$id('prevBtn').onclick = () => { stopPlay(); stepDay(-1); };
+$id('nextBtn').onclick = () => { stopPlay(); stepDay(1); };
+
+// ── score sound (synthesized via Web Audio — opt-in) ─────────────────────
+const soundBtn = $id('soundBtn');
+function renderSound() {
+  soundBtn.textContent = soundOn ? '🔊' : '🔇';
+  soundBtn.classList.toggle('on', soundOn);
+  soundBtn.title = soundOn ? t('soundOn') : t('soundOff');
+}
+soundBtn.onclick = () => { soundOn = !soundOn; if (soundOn) playScore(); renderSound(); saveState(); };
+renderSound();
+let audioCtx = null;
+function ensureAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch (e) { audioCtx = null; }
+  return audioCtx;
+}
+function playScore() {
+  if (!soundOn) return;
+  const ac = ensureAudio();
+  if (!ac) return;
+  const t0 = ac.currentTime + 0.02, notes = [392.00, 523.25, 659.25, 783.99];
+  notes.forEach((f, i) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'triangle'; o.frequency.value = f;
+    const t = t0 + i * 0.11, dur = i === notes.length - 1 ? 0.5 : 0.26;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(ac.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  });
+}
+
+// ── game alerts (local notifications while the page is alive) ─────────────
+let swReg = null;
+const notifiedKick = new Set(), notifiedScore = new Set();
+const notifySupported = () => 'Notification' in window;
+const canNotify = () => notifyOn && notifySupported() && Notification.permission === 'granted';
+function showNote(title, body, tag) {
+  try {
+    const opts = {body, tag, renotify: true, icon: 'icon-192.png', badge: 'icon-192.png'};
+    if (swReg && swReg.showNotification) swReg.showNotification(title, opts);
+    else new Notification(title, opts);
+  } catch (e) {}
+}
+function notifyScore(m) {
+  if (!canNotify()) return;
+  if (follow && m.a !== follow && m.b !== follow) return;
+  const key = `${m.n}:${m.s1}-${m.s2}`;
+  if (notifiedScore.has(key)) return;
+  notifiedScore.add(key);
+  showNote(t('noteScoreTitle'), `${teamNick(m.a)} ${m.s1}–${m.s2} ${teamNick(m.b)} · ${m.clock || VENUES[m.v][0]}`, 'score-' + m.n);
+}
+function checkKickoffs(now) {
+  if (!canNotify() || !follow) return;
+  for (const m of MATCHES) {
+    if (!m.a || m.tt || (m.a !== follow && m.b !== follow) || notifiedKick.has(m.n)) continue;
+    const ko = kickoffUTC(m);
+    if (now >= ko && now < ko + 5 * 60000) {
+      notifiedKick.add(m.n);
+      showNote(t('noteKickTitle', teamNick(follow)), `${teamNick(m.a)} ${t('at')} ${teamNick(m.b)} · ${VENUES[m.v][0]}`, 'kick-' + m.n);
+    }
+  }
+}
+const notifyBtn = $id('notifyBtn');
+function renderNotify() {
+  const on = canNotify();
+  notifyBtn.textContent = on ? '🔔' : '🔕';
+  notifyBtn.classList.toggle('on', on);
+  notifyBtn.title = on ? t('alertsOn') : t('alertsOff');
+}
+async function toggleNotify() {
+  if (!notifySupported()) { alert(t('alertsUnsupported')); return; }
+  if (notifyOn && Notification.permission === 'granted') notifyOn = false;
+  else {
+    let perm = Notification.permission;
+    if (perm !== 'granted') perm = await Notification.requestPermission();
+    if (perm !== 'granted') { notifyOn = false; renderNotify(); saveState(); return; }
+    notifyOn = true;
+    showNote(t('noteOnTitle'), t('noteOnBody'), 'welcome');
+  }
+  saveState(); renderNotify();
+}
+notifyBtn.onclick = toggleNotify;
+renderNotify();
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => {});
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (helpOn) return helpClose(); return closeDrawer(); }
+  if (helpOn) return;
+  if (e.key === 'ArrowLeft') { stopPlay(); stepDay(-1); }
+  if (e.key === 'ArrowRight') { stopPlay(); stepDay(1); }
+  if (e.key === ' ') { e.preventDefault(); startPlay(); }
+});
+
+// ── division standings ───────────────────────────────────────────────────
+// Win pct, then NFL tiebreakers as far as a schedule-only model can take them:
+// head-to-head (sweep / pct among the tied), division record, conference record,
+// net points. (Common games, strength of victory/schedule: not yet modelled.)
+function standingsFor(d) {
+  const rows = DIVISIONS[d].map(c => {
+    const o = recordOf(c), dv = recordOf(c, m => m.div), cf = recordOf(c, m => m.conf);
+    return { c, ...o, net: o.pf - o.pa, dv, cf };
+  });
+  const h2h = (x, y) => recordOf(x, m => m.a === y || m.b === y);
+  rows.sort((x, y) => {
+    if (y.pct !== x.pct) return y.pct - x.pct;
+    const hx = h2h(x.c, y.c), hy = h2h(y.c, x.c);
+    if (hx.g && hx.pct !== hy.pct) return hy.pct - hx.pct;
+    if (y.dv.pct !== x.dv.pct) return y.dv.pct - x.dv.pct;
+    if (y.cf.pct !== x.cf.pct) return y.cf.pct - x.cf.pct;
+    if (y.net !== x.net) return y.net - x.net;
+    return teamName(x.c).localeCompare(teamName(y.c));
+  });
+  return rows;
+}
+function openDivision(d) {
+  if (!DIVISIONS[d]) return;
+  curDiv = d;
+  renderDivision();
+  $id('drawer').classList.add('open');
+}
+function closeDrawer() { $id('drawer').classList.remove('open'); }
+const fmtPct3 = p => (p >= 1 ? '1.000' : p.toFixed(3).replace(/^0/, ''));
+function renderDivision() {
+  const d = curDiv, st = standingsFor(d);
+  const fx = MATCHES.filter(m => m.div && m.a && divOf(m.a) === d).sort((x, y) => x.w - y.w || kickoffUTC(x) - kickoffUTC(y));
+  const anyPlayed = fx.some(m => m.fin);
+  const [conf] = d.split(' ');
+  $id('drawerInner').innerHTML = `
+    <div class="dh"><h2>${conf} <b>${divName(d).replace(conf + ' ', '')}</b></h2><button class="dx" onclick="closeDrawer()">✕</button></div>
+    <div class="db">
+      <div class="divNav">${Object.keys(DIVISIONS).filter(x => x.startsWith(conf)).map(x => `<button class="${x === d ? 'on' : ''}" onclick="openDivision('${x}')">${divName(x).replace(conf + ' ', '')}</button>`).join('')}
+        <button onclick="openDivision('${conf === 'AFC' ? 'NFC' : 'AFC'} ${d.split(' ')[1]}')">${conf === 'AFC' ? 'NFC' : 'AFC'} →</button></div>
+      <table class="stTbl">
+        <thead><tr><th></th><th class="tl">${t('thTeam')}</th><th>${t('thW')}</th><th>${t('thL')}</th><th>${t('thT')}</th><th>${t('thPct')}</th><th>${t('thNet')}</th><th>${t('thDiv')}</th></tr></thead>
+        <tbody>${st.map((r, i) => `
+          <tr class="${i === 0 ? 'q' : ''}${follow === r.c ? ' fol' : ''}" onclick="followTeam('${r.c}')" title="${t('clickFollow')}">
+            <td class="ps">${i + 1}</td>
+            <td class="tl">${logoImg(r.c)}${teamNick(r.c)}</td>
+            <td>${r.w}</td><td>${r.l}</td><td>${r.t}</td>
+            <td class="pts">${fmtPct3(r.pct)}</td>
+            <td>${r.net > 0 ? '+' : ''}${r.net}</td>
+            <td>${r.dv.w}–${r.dv.l}${r.dv.t ? '–' + r.dv.t : ''}</td>
+          </tr>`).join('')}</tbody>
+      </table>
+      <div class="legend">${anyPlayed ? t('legendPlayed') : t('legendEmpty')}</div>
+      <div class="gfix"><div class="gfixTitle">${t('divGames')}</div>
+      ${fx.map(m => `<div class="gfx" onclick="stopPlay();setDay(${WEEKS.findIndex(w => w.w === m.w)});openVenue('${esc(m.v)}')">
+          <span class="gd">${roundShort(m)}</span>
+          ${logoImg(m.a)}${m.a}
+          ${m.s1 != null ? `<b style="color:var(--gold)">${m.s1}–${m.s2}</b>` : `<span style="color:var(--ink-dim)">${t('at')}</span>`}
+          ${m.b}${logoImg(m.b)}
+          <span class="gv">${m.fin ? t('ft') + (m.ot ? '/' + t('ot') : '') : m.tt ? t('tbdTime') : fmt12(m.t)}<br>${fmtMD(dateObj(m.de))}</span></div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ── confetti: steady fall on Super Bowl week + bursts from a stadium on a score ──
+const cv = $id('confetti'), cx = cv.getContext('2d');
+const CONF_COLORS = ['#ffd166', '#22e07c', '#ff5d8f', '#4cc9f0', '#ffffff', '#b388ff'];
+let confOn = false, parts = [], bursts = [], rafLive = false;
+function sizeCanvas() { if (cv.width !== innerWidth || cv.height !== innerHeight) { cv.width = innerWidth; cv.height = innerHeight; } }
+function startLoop() { if (!rafLive) { rafLive = true; requestAnimationFrame(confTick); } }
+function confettiToggle(on) {
+  if (on && reduceMotion) return;
+  if (on === confOn) return;
+  confOn = on;
+  if (on) {
+    sizeCanvas();
+    parts = Array.from({length: 140}, () => ({
+      x: Math.random() * cv.width, y: -Math.random() * cv.height,
+      w: 5 + Math.random() * 6, h: 8 + Math.random() * 8,
+      vy: 1.4 + Math.random() * 2.4, vx: Math.random() * 1.4 - .7,
+      rot: Math.random() * Math.PI, vr: Math.random() * .12 - .06,
+      c: CONF_COLORS[Math.random() * 6 | 0],
+    }));
+    startLoop();
+  }
+}
+function scoreBurst(venueName) {
+  playScore();
+  if (reduceMotion) return;
+  sizeCanvas();
+  let ox = cv.width / 2, oy = cv.height * 0.55;
+  const V = VENUES[venueName];
+  if (V) { try { const pt = map.latLngToContainerPoint([V[2], V[3]]); ox = pt.x; oy = pt.y; } catch (e) {} }
+  for (let i = 0; i < 110; i++) {
+    const ang = -Math.PI / 2 + (Math.random() - .5) * 2.2, sp = 5 + Math.random() * 9;
+    bursts.push({ x: ox, y: oy, w: 5 + Math.random() * 6, h: 8 + Math.random() * 8,
+      vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, rot: Math.random() * Math.PI, vr: Math.random() * .3 - .15,
+      c: CONF_COLORS[Math.random() * 6 | 0], life: 1 });
+  }
+  startLoop();
+}
+function confTick() {
+  cx.clearRect(0, 0, cv.width, cv.height);
+  if (confOn) {
+    for (const p of parts) {
+      p.y += p.vy; p.x += p.vx + Math.sin(p.y * .02); p.rot += p.vr;
+      if (p.y > cv.height + 20) { p.y = -20; p.x = Math.random() * cv.width; }
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.rot);
+      cx.fillStyle = p.c; cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); cx.restore();
+    }
+  }
+  if (bursts.length) {
+    for (const p of bursts) {
+      p.vy += 0.22; p.vx *= 0.99;
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life -= 0.011;
+      cx.save(); cx.globalAlpha = Math.max(0, p.life);
+      cx.translate(p.x, p.y); cx.rotate(p.rot);
+      cx.fillStyle = p.c; cx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); cx.restore();
+    }
+    cx.globalAlpha = 1;
+    bursts = bursts.filter(p => p.life > 0 && p.y < cv.height + 40);
+  }
+  if (confOn || bursts.length) requestAnimationFrame(confTick);
+  else { rafLive = false; cx.clearRect(0, 0, cv.width, cv.height); }
+}
+addEventListener('resize', () => { layoutPanel(); if (confOn || bursts.length) sizeCanvas(); });
+
+// ── help / tutorial ────────────────────────────────────────────────────────
+let helpOn = false;
+const HELP_KEY = 'nflviz.seenHelp.v1';
+const IG_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>';
+function renderHelp() {
+  $id('help').firstElementChild.innerHTML = `
+    <div class="hh"><h2><span class="pc">${t('helpTitle')}</span></h2>
+      <span class="langPill" title="Language / Idioma">
+        <button class="${LANG === 'en' ? 'on' : ''}" onclick="setLang('en')">EN</button>
+        <button class="${LANG === 'es' ? 'on' : ''}" onclick="setLang('es')">ES</button>
+      </span>
+      <button class="hx" onclick="helpClose()" title="${t('tClose')}">✕</button></div>
+    <div class="helpBody">${t('helpRows').map(([i, tx]) => `<div class="helpRow"><div class="hi">${i}</div><div class="ht">${tx}</div></div>`).join('')}</div>
+    <div class="helpFoot"><a class="igLink" href="http://instagram.com/fractura07" target="_blank" rel="noopener noreferrer">${IG_SVG}${t('igFollow')}</a><button onclick="helpClose()">${t('helpGotIt')}</button></div>`;
+}
+function helpOpen() { helpOn = true; renderHelp(); $id('help').classList.add('open'); }
+function helpClose() { helpOn = false; $id('help').classList.remove('open'); try { localStorage.setItem(HELP_KEY, '1'); } catch (e) {} }
+$id('helpBtn').onclick = () => helpOn ? helpClose() : helpOpen();
+
+// ── language switch ─────────────────────────────────────────────────────────
+function applyStaticText() {
+  try { document.documentElement.lang = LANG; } catch (e) {}
+  const hdr = $id('hdr');
+  hdr.querySelector('h1').innerHTML = t('h1');
+  hdr.querySelector('.sub').innerHTML = t('sub');
+  const lbl = $id('follow').querySelector('label'); if (lbl) lbl.textContent = t('followLabel');
+  $id('prevBtn').title = t('tPrev'); $id('playBtn').title = t('tPlay'); $id('nextBtn').title = t('tNext'); $id('helpBtn').title = t('tHelp');
+  [$id('followClear'), $id('teamFabClear')].forEach(el => { if (el) { el.title = t('clearTeam'); el.setAttribute('aria-label', t('clearTeam')); } });
+}
+function applyLanguage() {
+  applyStaticText();
+  rebuildTeamSelect();
+  buildDayChips();
+  markTeamWeeks();
+  setDay(dayIdx, false);
+  buildJourney();
+  renderStrip();
+  renderSound();
+  renderNotify();
+  if (curDiv && $id('drawer').classList.contains('open')) renderDivision();
+  if (helpOn) renderHelp();
+}
+function setLang(l) {
+  if (l === LANG || (l !== 'en' && l !== 'es')) return;
+  LANG = l;
+  try { localStorage.setItem(LANG_KEY, l); } catch (e) {}
+  MONTHS = MONTHS_T[LANG]; DOW = DOW_T[LANG];
+  applyLanguage();
+}
+
+// ── go! ──────────────────────────────────────────────────────────────────
+applyStaticText();
+let _initTeam = (_params.get('team') || '').toUpperCase();
+if (!TEAMS[_initTeam] && TEAMS[SAVED.follow]) _initTeam = SAVED.follow;
+if (TEAMS[_initTeam]) { sel.value = _initTeam; sel.onchange(); }
+$id('fab').onclick = () => $id('panel').classList.toggle('open');
+$id('sheetClose').onclick = () => $id('panel').classList.remove('open');
+applyFormFactor();
+setDay(dayIdx, TEAMS[_initTeam] ? false : undefined);
+if (TEAMS[_initTeam]) buildJourney();
+renderStrip();
+if (_params.get('sheet') === '1') $id('panel').classList.add('open');
+const _qdiv = _params.get('div');
+if (_qdiv && DIVISIONS[_qdiv]) openDivision(_qdiv);
+if (_params.get('play') === '1') startPlay();
+let _seenHelp = true; try { _seenHelp = !!localStorage.getItem(HELP_KEY); } catch (e) {}
+if (!_seenHelp && !_params.get('div') && !_params.get('play')) helpOpen();
+
+// ── easter eggs ───────────────────────────────────────────────────────────────
+(() => {
+  try {
+    console.log('%c🏈  NFL 2026 · SEASON MAP',
+      'font:700 14px/1.6 system-ui,sans-serif; color:#22e07c; text-shadow:0 1px 0 rgba(0,0,0,.4)');
+    console.log('%c285 games · 38 stadiums · 32 teams · one self-contained HTML file.\nbuilt between snaps — poke around. (psst: the ball up top likes attention.)',
+      'color:#7d8aa3; font:12px/1.6 monospace');
+  } catch (e) {}
+})();
+let _ballTaps = 0, _ballLast = 0;
+document.addEventListener('click', e => {
+  if (!e.target.closest || !e.target.closest('#hdr h1 .ball')) return;
+  const now = Date.now();
+  _ballTaps = (now - _ballLast < 1200) ? _ballTaps + 1 : 1;
+  _ballLast = now;
+  if (_ballTaps >= 5) { _ballTaps = 0; kickBall(); }
+});
+function kickBall() {
+  if (reduceMotion || document.getElementById('looseBall')) return;
+  const b = document.createElement('div');
+  b.id = 'looseBall'; b.textContent = '🏈'; b.setAttribute('aria-hidden', 'true');
+  b.addEventListener('animationend', () => b.remove());
+  document.body.appendChild(b);
+}
+</script>
+</body>
+</html>
