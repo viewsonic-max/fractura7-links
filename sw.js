@@ -4,7 +4,7 @@
 // offline); cache-first for the other static shell assets (icons, manifest) —
 // bump CACHE when THOSE change; runtime cache for cross-origin CDN assets
 // (Leaflet, fonts, flags).
-const CACHE = 'wcviz-v25';   // v25: odds-history "how the odds evolved" chart
+const CACHE = 'wcviz-v26';   // v26: ignore sibling sub-apps (./nfl/); v25: odds-history chart
 const SHELL = [
   './',
   './index.html',
@@ -29,6 +29,14 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
+
+  // Sibling apps live in subfolders of this origin path (e.g. ./nfl/ beside the World
+  // Cup map): leave their requests alone so their own service worker (or the network)
+  // handles them — and a sub-app's page never gets cached as THIS app's shell.
+  if (url.origin === self.location.origin) {
+    const base = new URL('./', self.location).pathname;
+    if (url.pathname.startsWith(base) && url.pathname.slice(base.length).includes('/')) return;
+  }
 
   // Never cache live data APIs — always hit the network.
   if (/wikipedia\.org|espn\.com/.test(url.hostname)) return;
