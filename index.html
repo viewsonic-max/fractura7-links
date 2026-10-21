@@ -45,6 +45,8 @@
   body{font-family:'Outfit',system-ui,sans-serif; background:var(--bg); color:var(--ink);}
   #map{position:absolute; inset:0; background:#0b1120;}
   .leaflet-container{font:inherit;}
+  /* tint Esri's neutral dark-gray canvas toward the app's navy */
+  .leaflet-tile-pane{filter:sepia(.4) hue-rotate(185deg) saturate(1.7) brightness(.6) contrast(1.08);}
 
   /* ── header ─────────────────────────────── */
   #hdr{
@@ -1227,10 +1229,16 @@ function dayLabel(d) {
 const map = L.map('map', {zoomControl:false, attributionControl:true, minZoom:3, maxZoom:12})
   .setView([37.5, -97], 4);
 L.control.zoom({position:'bottomright'}).addTo(map);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a> · Schedule: <a href="https://en.wikipedia.org/wiki/2026_FIFA_World_Cup">Wikipedia</a>',
-  subdomains:'abcd', maxZoom:19,
+// Basemap: Esri's World Dark Gray canvas, no API key needed (CARTO's dark_all tiles
+// started serving "API KEY REQUIRED" watermarks for keyless use in Oct 2026). Base
+// layer + Reference layer (place labels); the tile pane is CSS-tinted toward the
+// app's navy so the gray canvas sits under the glass UI.
+const ESRI_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_{l}/MapServer/tile/{z}/{y}/{x}';
+L.tileLayer(ESRI_TILES.replace('{l}', 'Base'), {
+  attribution:'Tiles &copy; <a href="https://www.esri.com/">Esri</a> · HERE · Garmin · <a href="https://www.openstreetmap.org/copyright">OSM</a> · Schedule: <a href="https://en.wikipedia.org/wiki/2026_FIFA_World_Cup">Wikipedia</a>',
+  maxZoom:16,
 }).addTo(map);
+L.tileLayer(ESRI_TILES.replace('{l}', 'Reference'), { maxZoom:16, opacity:.85 }).addTo(map);
 
 const markers = {};
 for (const [name, v] of Object.entries(VENUES)) {
