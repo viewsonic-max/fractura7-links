@@ -33,9 +33,36 @@ writes `_shot-<scenario>.png`.
   final), backfill on load for any kicked-off game missing a score, playoff pairings
   picked up automatically once Week 18 ends. Score fanfare + confetti burst and
   notifications for the followed team only (NFL scoring is too frequent for everyone).
+- **📊 Fantasy leaders** (timeline button or the points chip) — top 10 fantasy scorers for
+  any completed week or the season, expandable to 25, in Standard / Half-PPR / PPR (choice
+  persists), with headshot, team, position, stat line, and per-game average on the season
+  tab. Players only (QB/RB/WR/TE/K) — no team defenses.
 - **PWA** (`manifest.json`, `sw.js` cache `nflviz-v1`, generated 🏈 icons), **en/es**
   toggle in the help overlay, deep links `?w=7`, `?d=2026-10-25`, `?team=KC`,
-  `?div=AFC West`, `?play=1`, `?sheet=1`.
+  `?div=AFC West`, `?play=1`, `?sheet=1`, `?ff=1`.
+
+## Fantasy pipeline (`fantasy.js`)
+
+`node refresh.js` runs it automatically (skip with `--no-fantasy`); `node fantasy.js
+[--offline]` runs it alone. One ESPN game summary is ~560 KB, so the browser can't pull
+them — the script caches each **final** game's summary once in `raw/sum/<eventId>.json`
+(immutable after the final whistle), looks up each player's position once via the core
+athletes endpoint (`raw/athletes.json`), scores every offensive player and kicker under
+three formats and writes `fantasy-data.js` (`window.NFLF`, ~80 KB):
+
+```
+weeksDone  [1,2,…]                                  weeks with at least one final
+weeks      { "6": [ {id,n,tm,pos,pts:[std,half,ppr],st:{py,ptd,int,ry,rtd,rec,recy,rectd,fl,tp,fgm,fga,xpm,xpa}} … ] }
+seasonTop  [ same rows + g (games) + best {w,pts} ]  union of each format's top 60
+```
+
+Scoring = ESPN defaults: pass yds 0.04, pass TD 4, INT −2, rush/rec yds 0.1, TD 6, two-point
+conversion 2 (each player named in the play), fumble lost −2, reception 0 / 0.5 / 1; kickers
+FG 3/4/5 by distance (distances from the scoring-play log), XP 1, missed FG −1.
+Each week's list is the union of the top 30 under each format, so re-sorting in the page is
+exact. **Validation (2026-10-23):** season PPR totals match ESPN's own fantasy API
+(`lm-api-reads.fantasy.espn.com … leaguedefaults/3`) to the decimal for the top-40 most-owned
+players once the same games are included.
 
 ## Data pipeline
 
