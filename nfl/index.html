@@ -425,6 +425,38 @@
     .helpCard{width:100vw; height:100%; max-height:100vh; border-radius:0;}
   }
 
+  /* 📊 fantasy leaders panel (reuses .helpCard) */
+  #ff{position:absolute; inset:0; z-index:1660; display:none; background:rgba(7,11,22,.86); backdrop-filter:blur(6px); padding:18px;}
+  #ff.open{display:flex; justify-content:center; align-items:center;}
+  .ffCtl{display:flex; gap:6px; padding:10px 18px 4px; flex-wrap:wrap; align-items:center;}
+  .ffTabs{display:flex; gap:4px; flex:1 1 200px;}
+  .ffTabs button{flex:1; padding:7px; border-radius:9px; border:1px solid var(--panel-border); background:#16203a; color:var(--ink-dim); font:800 12px 'Outfit',sans-serif; cursor:pointer; white-space:nowrap;}
+  .ffTabs button.on{border-color:var(--gold); color:var(--gold); background:rgba(255,209,102,.1);}
+  .ffWk{display:flex; align-items:center; gap:4px;}
+  .ffWk button{width:28px; height:28px; border-radius:50%; border:1px solid var(--panel-border); background:#16203a; color:var(--ink); cursor:pointer; font-size:10px;}
+  .ffWk button:disabled{opacity:.3; cursor:default;}
+  .ffFmt{display:flex; border:1px solid var(--panel-border); border-radius:8px; overflow:hidden; margin-left:auto;}
+  .ffFmt button{background:none; border:none; color:var(--ink-dim); font:800 11px 'Outfit',sans-serif; padding:6px 10px; cursor:pointer;}
+  .ffFmt button.on{background:var(--pitch); color:#04150c;}
+  .ffRow{display:grid; grid-template-columns:22px 42px minmax(0,1fr) auto; align-items:center; gap:10px; padding:8px 4px; border-bottom:1px solid rgba(255,255,255,.05);}
+  .ffRow:last-of-type{border-bottom:none;}
+  .ffRow .rk{text-align:center; color:var(--ink-dim); font-weight:800; font-size:12px;}
+  .ffRow.top .rk{color:var(--gold);}
+  .ffRow .hs{width:42px; height:42px; border-radius:50%; object-fit:cover; object-position:top; background:#1c2947; border:1px solid var(--panel-border);}
+  .ffRow .nm{font-weight:800; font-size:14px; display:flex; align-items:center; gap:6px; min-width:0;}
+  .ffRow .nm .n{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .ffRow .nm img.lg{width:18px; height:18px;}
+  .ffRow .nm .pos{font-size:9.5px; font-weight:800; color:var(--ink-dim); background:rgba(255,255,255,.08); padding:1px 6px; border-radius:6px; flex:none;}
+  .ffRow .ln{font-size:11px; color:var(--ink-dim); margin-top:2px; font-weight:600;}
+  .ffRow .pt{font-weight:900; color:var(--gold); font-size:17px; text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .ffRow .pt small{display:block; font-size:9.5px; color:var(--ink-dim); font-weight:700;}
+  .ffMore{width:100%; margin:8px 0 4px; padding:8px; border-radius:9px; border:1px solid var(--panel-border); background:none; color:var(--ink-dim); font:800 11.5px 'Outfit',sans-serif; cursor:pointer;}
+  .ffMore:hover{color:var(--ink);}
+  .ffNote{font-size:10px; color:var(--ink-dim); padding:6px 18px 10px; line-height:1.4; border-top:1px solid var(--panel-border);}
+  .scMsg{padding:26px; text-align:center; color:var(--ink-dim); font-size:13px;}
+  .chip.goals{cursor:pointer;} .chip.goals:hover{background:rgba(255,209,102,.16);}
+  @media (max-width:760px){ #ff{padding:0;} .ffRow .nm{font-size:13px;} }
+
   #confetti{position:absolute; inset:0; z-index:1500; pointer-events:none;}
   #sheetBar{display:none;}
   #fabRow{display:none;}
@@ -541,6 +573,7 @@
 </div>
 <div id="drawer" role="dialog" aria-modal="true" aria-label="Division standings"><div id="drawerInner"></div></div>
 <div id="help" role="dialog" aria-modal="true" aria-label="How to use this app"><div class="helpCard"></div></div>
+<div id="ff" role="dialog" aria-modal="true" aria-label="Fantasy leaders" onclick="if(event.target===this)ffClose()"><div class="helpCard"></div></div>
 <div id="clockChip"></div>
 
 <div id="tl">
@@ -549,12 +582,14 @@
   <button class="tlBtn small" id="nextBtn" title="Next week (→)">▶</button>
   <button class="tlBtn small" id="soundBtn" title="Score sounds">🔇</button>
   <button class="tlBtn small" id="notifyBtn" title="Game alerts">🔕</button>
+  <button class="tlBtn small" id="ffBtn" title="Fantasy leaders">📊</button>
   <button class="tlBtn small" id="helpBtn" title="How to use this app">?</button>
   <div id="days"></div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="data.js"></script>
+<script src="fantasy-data.js"></script>
 <script>
 if (new URLSearchParams(location.search).get('debug') === '1') {
   window.onerror = (msg, src, line, col) => {
@@ -651,6 +686,12 @@ const STR = {
     legendEmpty: 'no results yet — click a team to follow',
     divGames: 'DIVISION GAMES',
     helpTitle: '👋 How to use the Season Map', helpGotIt: 'Got it 🏈', igFollow: 'Follow on Instagram', tClose: 'Close (Esc)',
+    tFf: 'Fantasy leaders', ffTitle: '📊 Fantasy leaders', ffSeason: 'Season', ffStd: 'Std', ffHalf: 'Half', ffPpr: 'PPR',
+    ffPts: 'pts', ffAvg: a => `${a}/game`, ffGames: n => `${n} g`, ffMore: 'Show top 25',
+    ffEmpty: 'No completed games yet.', ffNA: 'Fantasy data isn’t available.',
+    ffPass: 'pass yds', ffRush: 'rush yds', ffRec: 'rec', ffYds: 'yds', ffFum: 'fum lost',
+    ffNote: 'ESPN default scoring: pass yds ÷25, pass TD 4, INT −2, rush/rec yds ÷10, TD 6, 2-pt 2, fumble lost −2. Half / PPR add 0.5 / 1 per catch. Kickers: FG 3/4/5 by distance, XP 1, miss −1. Players only — no team defenses.',
+    ffUpdated: n => `Through ${n} completed games.`,
     helpRows: [
       ['🗺️','<b>The map.</b> Every marker is a stadium. Idle ones show a dot &amp; next-game countdown; active ones pulse with the week’s game count; the Super Bowl bounces a 🏆. Click any marker for its game, home team &amp; capacity.'],
       ['📅','<b>Pick a week.</b> Tap a week on the timeline, use <span class="k">◀</span> <span class="k">▶</span>, or the <span class="k">←</span> <span class="k">→</span> keys. Chip colors mark the round — regular season → Wild Card → Divisional → Conference → Super Bowl.'],
@@ -661,6 +702,7 @@ const STR = {
       ['🔴','<b>Live scores.</b> On game days the scores and clock update on their own — no refresh needed.'],
       ['🔊','<b>Score sounds.</b> Toggle 🔊 in the timeline bar for a fanfare when your team scores (off by default).'],
       ['🔔','<b>Game alerts.</b> Tap 🔔 to get a notification for your followed team’s kickoffs and scores. Install the app to your home screen for the full experience. Alerts ping while the app is open.'],
+      ['📊','<b>Fantasy leaders.</b> Tap 📊 (or the points chip) for the top fantasy scorers of any week or the whole season, in Standard, Half-PPR or PPR scoring, with each player’s stat line.'],
       ['🔗','<b>Share the view.</b> The URL remembers your week and followed team — copy it to share exactly what you’re looking at.'],
     ],
   },
@@ -709,6 +751,12 @@ const STR = {
     legendEmpty: 'aún sin resultados — clic en un equipo para seguir',
     divGames: 'JUEGOS DIVISIONALES',
     helpTitle: '👋 Cómo usar el Mapa de la Temporada', helpGotIt: '¡Entendido! 🏈', igFollow: 'Sígueme en Instagram', tClose: 'Cerrar (Esc)',
+    tFf: 'Líderes de fantasy', ffTitle: '📊 Líderes de fantasy', ffSeason: 'Temporada', ffStd: 'Est', ffHalf: 'Media', ffPpr: 'PPR',
+    ffPts: 'pts', ffAvg: a => `${a}/juego`, ffGames: n => `${n} j`, ffMore: 'Ver top 25',
+    ffEmpty: 'Aún no hay juegos terminados.', ffNA: 'Datos de fantasy no disponibles.',
+    ffPass: 'yds pase', ffRush: 'yds carrera', ffRec: 'rec', ffYds: 'yds', ffFum: 'balón perdido',
+    ffNote: 'Puntuación estándar de ESPN: yds de pase ÷25, TD de pase 4, INT −2, yds de carrera/recepción ÷10, TD 6, conversión de 2 pts 2, balón perdido −2. Media / PPR suman 0.5 / 1 por recepción. Pateadores: FG 3/4/5 según distancia, punto extra 1, fallo −1. Solo jugadores — sin defensivas.',
+    ffUpdated: n => `Con ${n} juegos terminados.`,
     helpRows: [
       ['🗺️','<b>El mapa.</b> Cada marcador es un estadio. Los inactivos muestran un punto y la cuenta regresiva al próximo juego; los activos laten con el número de juegos de la semana; el Super Bowl hace rebotar un 🏆. Haz clic en cualquier marcador para ver su juego, equipo local y capacidad.'],
       ['📅','<b>Elige una semana.</b> Toca una semana en la línea de tiempo, usa <span class="k">◀</span> <span class="k">▶</span>, o las teclas <span class="k">←</span> <span class="k">→</span>. Los colores marcan la ronda — temporada regular → Comodines → Divisional → Conferencia → Super Bowl.'],
@@ -719,6 +767,7 @@ const STR = {
       ['🔴','<b>Marcadores en vivo.</b> En días de juego, los marcadores y el reloj se actualizan solos — sin recargar.'],
       ['🔊','<b>Sonidos de anotación.</b> Activa 🔊 en la barra de tiempo para una fanfarria cuando tu equipo anota (desactivado por defecto).'],
       ['🔔','<b>Alertas de juego.</b> Toca 🔔 para recibir una notificación de los arranques y anotaciones del equipo que sigues. Instala la app en tu pantalla de inicio para la experiencia completa. Las alertas suenan mientras la app está abierta.'],
+      ['📊','<b>Líderes de fantasy.</b> Toca 📊 (o la ficha de puntos) para ver a los máximos anotadores de fantasy de cualquier semana o de toda la temporada, en puntuación Estándar, Media PPR o PPR, con la línea de estadísticas de cada jugador.'],
       ['🔗','<b>Comparte la vista.</b> La URL recuerda tu semana y equipo seguido — cópiala para compartir exactamente lo que ves.'],
     ],
   },
@@ -915,7 +964,7 @@ function applyFormFactor() {
 mqMobile.addEventListener('change', applyFormFactor);
 
 const totalPoints = () => { let g = 0, p = 0; for (const m of MATCHES) if (m.s1 != null && m.fin) { g += m.s1 + m.s2; p++; } return { g, p }; };
-function pointsChipHTML() { const { g, p } = totalPoints(); return `<span class="chip goals" id="goalsChip" title="${t('pointsTitle')}">${t('pointsTally', nfmt(g), p ? (g / p).toFixed(1) : '')}</span>`; }
+function pointsChipHTML() { const { g, p } = totalPoints(); return `<span class="chip goals" id="goalsChip" role="button" tabindex="0" title="${t('pointsTitle')} — ${t('tFf')}" onclick="ffOpen()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();ffOpen()}">${t('pointsTally', nfmt(g), p ? (g / p).toFixed(1) : '')}</span>`; }
 function updatePointsChip() { const el = $id('goalsChip'); if (el) el.outerHTML = pointsChipHTML(); }
 
 function setDay(i, fly) {
@@ -1584,8 +1633,8 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => {});
 }
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { if (helpOn) return helpClose(); return closeDrawer(); }
-  if (helpOn) return;
+  if (e.key === 'Escape') { if (ffOn) return ffClose(); if (helpOn) return helpClose(); return closeDrawer(); }
+  if (helpOn || ffOn) return;
   if (e.key === 'ArrowLeft') { stopPlay(); stepDay(-1); }
   if (e.key === 'ArrowRight') { stopPlay(); stepDay(1); }
   if (e.key === ' ') { e.preventDefault(); startPlay(); }
@@ -1717,6 +1766,66 @@ function confTick() {
 }
 addEventListener('resize', () => { layoutPanel(); if (confOn || bursts.length) sizeCanvas(); });
 
+// ── 📊 fantasy leaders ──────────────────────────────────────────────────────
+// Data comes from fantasy.js → fantasy-data.js (window.NFLF): per-week and season
+// rows for every offensive player + kicker with points under [Std, Half, PPR], plus
+// the raw stat line. Rows are the union of each format's top list, so re-sorting
+// here is exact. Headshots straight from ESPN's CDN.
+const FF = window.NFLF || null;
+const FF_KEY = 'nflviz.ff.v1';
+let ffOn = false, ffTab = 'week', ffWeek = null, ffFmt = 2, ffMore = false;
+try { const o = JSON.parse(localStorage.getItem(FF_KEY) || '{}'); if (o.fmt >= 0 && o.fmt <= 2) ffFmt = o.fmt; } catch (e) {}
+const ffSave = () => { try { localStorage.setItem(FF_KEY, JSON.stringify({ fmt: ffFmt })); } catch (e) {} };
+const ffWeeks = () => FF ? FF.weeksDone : [];
+const ffHead = id => `https://a.espncdn.com/i/headshots/nfl/players/full/${id}.png`;
+function ffOpen() {
+  ffOn = true; ffMore = false;
+  const ws = ffWeeks(), cur = WEEKS[dayIdx].w;                       // the timeline's week if it has finals, else the latest finished week before it
+  ffWeek = ws.includes(cur) ? cur : (ws.filter(w => w <= cur).pop() ?? ws[0] ?? null);
+  renderFF(); $id('ff').classList.add('open'); $id('ffBtn').classList.add('on');
+}
+function ffClose() { ffOn = false; $id('ff').classList.remove('open'); $id('ffBtn').classList.remove('on'); }
+function ffTabSet(tab) { ffTab = tab; ffMore = false; renderFF(); }
+function ffFmtSet(f) { ffFmt = f; ffSave(); renderFF(); }
+function ffStep(d) { const ws = ffWeeks(), i = ws.indexOf(ffWeek) + d; if (i >= 0 && i < ws.length) { ffWeek = ws[i]; ffMore = false; renderFF(); } }
+function ffShowMore() { ffMore = true; renderFF(); }
+function ffLine(s) {
+  const parts = [];
+  if (s.py || s.ptd || s.int) parts.push(`${nfmt(s.py)} ${t('ffPass')}${s.ptd ? `, ${s.ptd} TD` : ''}${s.int ? `, ${s.int} INT` : ''}`);
+  if (s.ry || s.rtd) parts.push(`${nfmt(s.ry)} ${t('ffRush')}${s.rtd ? `, ${s.rtd} TD` : ''}`);
+  if (s.rec || s.recy || s.rectd) parts.push(`${s.rec} ${t('ffRec')}, ${nfmt(s.recy)} ${t('ffYds')}${s.rectd ? `, ${s.rectd} TD` : ''}`);
+  if (s.fgm || s.fga || s.xpm) parts.push(`${s.fgm}/${s.fga} FG, ${s.xpm}/${s.xpa} XP`);
+  if (s.tp) parts.push(`${s.tp} 2PT`);
+  if (s.fl) parts.push(`${s.fl} ${t('ffFum')}`);
+  return parts.join(' · ');
+}
+function renderFF() {
+  const card = $id('ff').firstElementChild;
+  const fmts = [t('ffStd'), t('ffHalf'), t('ffPpr')];
+  const ws = ffWeeks(), wi = ws.indexOf(ffWeek);
+  const rows = !FF ? [] : ffTab === 'season' ? FF.seasonTop : (FF.weeks[ffWeek] || []);
+  const sorted = rows.slice().sort((a, b) => b.pts[ffFmt] - a.pts[ffFmt]).slice(0, ffMore ? 25 : 10);
+  const wkObj = ffWeek != null && WEEKS.find(w => w.w === ffWeek);
+  const wkLabel = wkObj ? weekName(wkObj) : '—';
+  const list = !FF ? `<div class="scMsg">${t('ffNA')}</div>` : !sorted.length ? `<div class="scMsg">${t('ffEmpty')}</div>`
+    : sorted.map((r, i) => `<div class="ffRow${i < 3 ? ' top' : ''}">
+        <span class="rk">${i + 1}</span>
+        <img class="hs" src="${ffHead(r.id)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <div><div class="nm"><span class="n">${r.n}</span>${TEAMS[r.tm] ? logoImg(r.tm) : ''}<span class="pos">${r.pos || '—'}</span></div>
+          <div class="ln">${ffLine(r.st)}${ffTab === 'season' ? ` · ${t('ffGames', r.g)}` : ''}</div></div>
+        <div class="pt">${r.pts[ffFmt].toFixed(1)}<small>${ffTab === 'season' && r.g ? t('ffAvg', (r.pts[ffFmt] / r.g).toFixed(1)) : t('ffPts')}</small></div>
+      </div>`).join('') + (rows.length > 10 && !ffMore ? `<button class="ffMore" onclick="ffShowMore()">${t('ffMore')}</button>` : '');
+  card.innerHTML = `<div class="hh"><h2><span class="pc">${t('ffTitle')}</span></h2><button class="hx" onclick="ffClose()" aria-label="${t('tClose')}">✕</button></div>
+    <div class="ffCtl">
+      <div class="ffTabs"><button class="${ffTab === 'week' ? 'on' : ''}" onclick="ffTabSet('week')">${wkLabel}</button><button class="${ffTab === 'season' ? 'on' : ''}" onclick="ffTabSet('season')">${t('ffSeason')}</button></div>
+      ${ffTab === 'week' ? `<div class="ffWk"><button onclick="ffStep(-1)" ${wi <= 0 ? 'disabled' : ''} aria-label="${t('tPrev')}">◀</button><button onclick="ffStep(1)" ${wi < 0 || wi >= ws.length - 1 ? 'disabled' : ''} aria-label="${t('tNext')}">▶</button></div>` : ''}
+      <div class="ffFmt">${fmts.map((f, i) => `<button class="${ffFmt === i ? 'on' : ''}" onclick="ffFmtSet(${i})">${f}</button>`).join('')}</div>
+    </div>
+    <div class="helpBody">${list}</div>
+    <div class="ffNote">${t('ffNote')}${FF ? ' ' + t('ffUpdated', FF.games) : ''}</div>`;
+}
+$id('ffBtn').onclick = () => ffOn ? ffClose() : ffOpen();
+
 // ── help / tutorial ────────────────────────────────────────────────────────
 let helpOn = false;
 const HELP_KEY = 'nflviz.seenHelp.v1';
@@ -1743,7 +1852,7 @@ function applyStaticText() {
   hdr.querySelector('h1').innerHTML = t('h1');
   hdr.querySelector('.sub').innerHTML = t('sub');
   const lbl = $id('follow').querySelector('label'); if (lbl) lbl.textContent = t('followLabel');
-  $id('prevBtn').title = t('tPrev'); $id('playBtn').title = t('tPlay'); $id('nextBtn').title = t('tNext'); $id('helpBtn').title = t('tHelp');
+  $id('prevBtn').title = t('tPrev'); $id('playBtn').title = t('tPlay'); $id('nextBtn').title = t('tNext'); $id('helpBtn').title = t('tHelp'); $id('ffBtn').title = t('tFf');
   [$id('followClear'), $id('teamFabClear')].forEach(el => { if (el) { el.title = t('clearTeam'); el.setAttribute('aria-label', t('clearTeam')); } });
 }
 function applyLanguage() {
@@ -1758,6 +1867,7 @@ function applyLanguage() {
   renderNotify();
   if (curDiv && $id('drawer').classList.contains('open')) renderDivision();
   if (helpOn) renderHelp();
+  if (ffOn) renderFF();
 }
 function setLang(l) {
   if (l === LANG || (l !== 'en' && l !== 'es')) return;
@@ -1782,8 +1892,9 @@ if (_params.get('sheet') === '1') $id('panel').classList.add('open');
 const _qdiv = _params.get('div');
 if (_qdiv && DIVISIONS[_qdiv]) openDivision(_qdiv);
 if (_params.get('play') === '1') startPlay();
+if (_params.get('ff') === '1') ffOpen();
 let _seenHelp = true; try { _seenHelp = !!localStorage.getItem(HELP_KEY); } catch (e) {}
-if (!_seenHelp && !_params.get('div') && !_params.get('play')) helpOpen();
+if (!_seenHelp && !_params.get('div') && !_params.get('play') && !_params.get('ff')) helpOpen();
 
 // ── easter eggs ───────────────────────────────────────────────────────────────
 (() => {
