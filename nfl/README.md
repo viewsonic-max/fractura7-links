@@ -8,9 +8,30 @@ Status: **data layer + core app done** (map, week timeline, game cards, follow-a
 travel route, division standings drawer, live ESPN polling, PWA, en/es). Playoff
 predictor, odds model and the season-recap card are the next steps (see below).
 
-**To use: open `index.html` in a browser.** `node verify.js [desk|team|div|mobile|es]`
+**To use: open `index.html` in a browser.** `node verify.js [desk|team|div|mobile|es|ff|layout]`
 runs a headless-Edge smoke test (uses `../wcviz/node_modules/playwright-core`) and
-writes `_shot-<scenario>.png`.
+writes `_shot-<scenario>.png`. The `layout` scenario asserts phone geometry — nothing
+floating over the timeline bar, one row of header chips, no colliding stadium labels,
+every game pin inside the visible band — and exits non-zero on a regression.
+
+### Mobile layout rules (2026-10-23 polish pass)
+
+A OnePlus 6T screenshot showed the floating buttons sitting on top of the week chips and
+the map reduced to a blob of overlapping pins. The fixes worth knowing before editing CSS:
+
+- **`--tlH`** is the timeline bar's measured height, set in `layoutPanel()`. The panel,
+  drawer, FAB row, clock chip and tile attribution all position off it. Never hard-code a
+  bottom offset — the bar's height changes with form factor and chip content.
+- **Zoom bands.** `zoomBand()` flips at zoom 5; `pinSizes()` returns smaller markers when
+  zoomed out and smaller again on phones (28/12 vs 40/22), and `body.zlow` hides stadium
+  labels on phones. The whole country only fits a phone at about zoom 3, where full-size
+  pins merge into one blob. Markers are re-iconed when the band changes.
+- **`fitDay()`** pads the fit by the real header and timeline heights, so a week's games
+  land in the band between them rather than behind the chrome.
+- **Phones get one chip row.** `cities` is dropped (it tracks games), the bye chip becomes
+  a count, and the full bye list moves to a tappable footer row under the game list.
+- **The week strip owns its own row** on phones (`#days{order:-1; flex-basis:100%}`), which
+  takes it from ~25% to ~95% of the bar — it is the primary control.
 
 ## What the app does today
 
