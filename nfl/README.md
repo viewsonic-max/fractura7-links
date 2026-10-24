@@ -65,6 +65,9 @@ the map reduced to a blob of overlapping pins. The fixes worth knowing before ed
   currently holding a wild-card seed, and a 🏆 shortcut to the playoff picture.
 - **🏆 Playoff picture** — both conferences seeded 1–7, who is in the hunt and how far
   back, and the wild-card matchups the seeding implies. See below.
+- **🔮 Bracket predictor** — second tab of 🏆. Tap a team to send them through; the
+  bracket reseeds as you pick. Chalk / random fill, a share link, and ✓/✗ grading once
+  real playoff games finish.
 - **Live** — ESPN scoreboard polled every 45 s during game windows (score, quarter/clock,
   final), backfill on load for any kicked-off game missing a score, playoff pairings
   picked up automatically once Week 18 ends. Score fanfare + confetti burst and
@@ -117,6 +120,27 @@ appear a week after the league announces it, but never wrongly.
 
 `node verify.js seeds` checks internal consistency and compares every seed against ESPN's
 published `playoffSeed`.
+
+## Bracket predictor
+
+The NFL **reseeds every round** — the top seed always draws the lowest surviving seed in
+the divisional round — so there is no fixed tree to fill in. `bracketModel()` rebuilds all
+13 games from the current seeding plus the picks made so far, on demand (it is cheap and
+depends on mutable state, so it is deliberately not cached). The thirteen **slots**
+(`AFC-WC1` … `SB`) stay stable even as their participants change.
+
+- Before January the field is the projected one from the tiebreaker engine and reshuffles
+  weekly; `prunePred()` drops any pick whose team is no longer in that slot.
+- `realFor(pw, a, b)` matches a slot to a real postseason game by participants, so once
+  the actual bracket exists a finished game locks the slot and grades the pick ✓/✗.
+- Chalk and random fill only the games you have not picked, so you can set a few upsets
+  and fill the rest.
+- The share link carries 13 set-bits plus one base64 character per pick — about 14
+  characters for a full bracket (`?po=bracket&b=…`).
+
+`node verify.js bracket` asserts 13 games, that placeholders never render as picked, that
+chalk leaves nothing undecided with a 1 v 4 divisional, that a 7-seed upset reseeds to
+1 v 7, that no pick survives for a team no longer in its slot, and that the code round-trips.
 
 ## Fantasy pipeline (`fantasy.js`)
 
