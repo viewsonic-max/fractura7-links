@@ -9,6 +9,7 @@ const SHELL = [
   './',
   './index.html',
   './data.js',
+  './fantasy-data.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
@@ -52,9 +53,9 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // data.js: network-first (revalidate) so schedule/score edits reach clients on a
-  // normal reload without a CACHE bump; fall back to the cached copy when offline.
-  if (url.origin === self.location.origin && url.pathname.endsWith('/data.js')) {
+  // data.js + fantasy-data.js: network-first (revalidate) so schedule/score/leader
+  // updates reach clients on a normal reload without a CACHE bump; cached copy offline.
+  if (url.origin === self.location.origin && /\/(data|fantasy-data)\.js$/.test(url.pathname)) {
     e.respondWith(
       fetch(req, { cache: 'no-cache' }).then(res => {
         if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
