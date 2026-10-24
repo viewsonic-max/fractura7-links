@@ -353,6 +353,15 @@
   .stadion.finale .ring{border-color:var(--gold);}
   @keyframes bounce{0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)}}
   .stadion.hot .pin{transform:scale(1.35); border-color:var(--gold); box-shadow:0 0 24px rgba(255,209,102,.8);}
+  /* a clustered pin: dashed collar says "several stadiums", the number stays the game
+     count so it reads exactly like a single pin. Tap it to fly in and split the group. */
+  .stadion.clus{cursor:pointer;}
+  .stadion.clus::after{
+    content:''; position:absolute; inset:-4px; border-radius:50%; pointer-events:none;
+    border:1.5px dashed rgba(255,255,255,.5);
+  }
+  .stadion.clus .pin{font-weight:900;}
+  .stadion.clus .lbl{color:var(--ink-dim); font-size:9px; letter-spacing:.2px;}
   .stadion.livenow .pin{background:radial-gradient(circle at 30% 30%, #ffb3bd, var(--live) 60%, #b01030); color:#fff;}
   .stadion.livenow .ring{border-color:var(--live);}
   .stadion.fav .pin{
@@ -699,6 +708,7 @@ const STR = {
     pointsTitle: 'Total points scored this season',
     live: 'LIVE', localLbl: 'local', ft: 'FINAL', at: '@', ot: 'OT', tbdTime: 'TBD', tbd: 'TBD', tbdLabel: 'To be determined',
     playsHere: 'PLAYS HERE', capWord: 'capacity', seatsWord: 'seats', homeOf: 'Home of',
+    nStadiums: n => `${n} stadiums`, tapToExpand: 'tap to zoom in',
     intl: 'International Series', divGame: 'Division game', dome: 'indoor',
     yourTime: s => `🕒 Your time: ${s}`,
     kicksIn: s => `⏳ kicks off in ${s}`,
@@ -730,7 +740,7 @@ const STR = {
     ffNote: 'ESPN default scoring: pass yds ÷25, pass TD 4, INT −2, rush/rec yds ÷10, TD 6, 2-pt 2, fumble lost −2. Half / PPR add 0.5 / 1 per catch. Kickers: FG 3/4/5 by distance, XP 1, miss −1. Players only — no team defenses.',
     ffUpdated: n => `Through ${n} completed games.`,
     helpRows: [
-      ['🗺️','<b>The map.</b> Every marker is a stadium. Idle ones show a dot &amp; next-game countdown; active ones pulse with the week’s game count; the Super Bowl bounces a 🏆. Click any marker for its game, home team &amp; capacity.'],
+      ['🗺️','<b>The map.</b> Every marker is a stadium. Idle ones show a dot &amp; next-game countdown; active ones pulse with the week’s game count; the Super Bowl bounces a 🏆. Click any marker for its game, home team &amp; capacity. Stadiums too close together to tell apart merge into a <b>dashed pin</b> — tap it to zoom in and split them.'],
       ['📅','<b>Pick a week.</b> Tap a week on the timeline, use <span class="k">◀</span> <span class="k">▶</span>, or the <span class="k">←</span> <span class="k">→</span> keys. Chip colors mark the round — regular season → Wild Card → Divisional → Conference → Super Bowl.'],
       ['▶️','<b>Play the season.</b> Hit <span class="k">▶</span> (or <span class="k">space</span>) for a week-by-week light show that flashes stadiums in kickoff order — the Sunday 1pm wave lights up at once.'],
       ['🪧','<b>Game cards.</b> The side panel lists the week’s games by day, away @ home, with kickoff in <b>both</b> stadium-local and your own time zone. Live games glow red; finished ones dim and show the score.'],
@@ -766,6 +776,7 @@ const STR = {
     pointsTitle: 'Puntos totales anotados esta temporada',
     live: 'EN VIVO', localLbl: 'local', ft: 'FINAL', at: '@', ot: 'TE', tbdTime: 'Por definir', tbd: 'TBD', tbdLabel: 'Por definir',
     playsHere: 'JUEGA AQUÍ', capWord: 'capacidad', seatsWord: 'asientos', homeOf: 'Casa de',
+    nStadiums: n => `${n} estadios`, tapToExpand: 'toca para acercar',
     intl: 'Serie Internacional', divGame: 'Juego divisional', dome: 'techado',
     yourTime: s => `🕒 Tu hora: ${s}`,
     kicksIn: s => `⏳ inicia en ${s}`,
@@ -797,7 +808,7 @@ const STR = {
     ffNote: 'Puntuación estándar de ESPN: yds de pase ÷25, TD de pase 4, INT −2, yds de carrera/recepción ÷10, TD 6, conversión de 2 pts 2, balón perdido −2. Media / PPR suman 0.5 / 1 por recepción. Pateadores: FG 3/4/5 según distancia, punto extra 1, fallo −1. Solo jugadores — sin defensivas.',
     ffUpdated: n => `Con ${n} juegos terminados.`,
     helpRows: [
-      ['🗺️','<b>El mapa.</b> Cada marcador es un estadio. Los inactivos muestran un punto y la cuenta regresiva al próximo juego; los activos laten con el número de juegos de la semana; el Super Bowl hace rebotar un 🏆. Haz clic en cualquier marcador para ver su juego, equipo local y capacidad.'],
+      ['🗺️','<b>El mapa.</b> Cada marcador es un estadio. Los inactivos muestran un punto y la cuenta regresiva al próximo juego; los activos laten con el número de juegos de la semana; el Super Bowl hace rebotar un 🏆. Haz clic en cualquier marcador para ver su juego, equipo local y capacidad. Los estadios demasiado juntos se agrupan en un <b>marcador punteado</b> — tócalo para acercar y separarlos.'],
       ['📅','<b>Elige una semana.</b> Toca una semana en la línea de tiempo, usa <span class="k">◀</span> <span class="k">▶</span>, o las teclas <span class="k">←</span> <span class="k">→</span>. Los colores marcan la ronda — temporada regular → Comodines → Divisional → Conferencia → Super Bowl.'],
       ['▶️','<b>Reproduce la temporada.</b> Presiona <span class="k">▶</span> (o <span class="k">espacio</span>) para un espectáculo semana a semana que ilumina los estadios en orden de inicio — la ola dominical de la 1 pm se enciende de golpe.'],
       ['🪧','<b>Tarjetas de juego.</b> El panel lateral lista los juegos de la semana por día, visitante @ local, con el inicio en <b>ambas</b> zonas horarias: la del estadio y la tuya. Los juegos en vivo brillan en rojo; los terminados se atenúan y muestran el marcador.'],
@@ -909,10 +920,11 @@ const zoomBand = () => map.getZoom() < 5 ? 'low' : 'high';
 let _zband = zoomBand();
 const applyZoomClass = () => document.body.classList.toggle('zlow', zoomBand() === 'low');
 applyZoomClass();
+// clustering is zoom-dependent, so re-icon on every zoom change, not just band flips
 map.on('zoomend', () => {
   applyZoomClass();
-  const b = zoomBand();
-  if (b !== _zband) { _zband = b; updateMarkers(WEEKS[dayIdx].w); }
+  _zband = zoomBand();
+  updateMarkers(WEEKS[dayIdx].w);
 });
 const pinSizes = () => {
   const m = mqMobile.matches, low = _zband === 'low';
@@ -943,12 +955,77 @@ function iconFor(name, wkMatches, now) {
     : '';
   return L.divIcon({
     className:'',
-    html:`<div class="stadion ${cls}" id="mk-${cssId(name)}" style="width:${sz}px;height:${sz}px">
+    html:`<div class="stadion ${cls}" id="mk-${cssId(name)}" data-v="${cssId(name)}" style="width:${sz}px;height:${sz}px">
       ${n ? '<div class="ring"></div><div class="ring r2"></div>' : ''}
       <div class="pin">${inner}</div>
       ${favTag}
       <div class="lbl">${v[0]}</div></div>`,
     iconSize:[sz, sz], iconAnchor:[sz/2, sz/2],
+  });
+}
+
+// ── marker clustering ────────────────────────────────────────────────────
+// At continental zoom the eastern stadiums are only a few pixels apart, so the week's
+// pins pile into one unreadable blob. Group them in PROJECTED PIXEL space (zoom-
+// dependent, pan-independent): each pass takes the busiest unclaimed stadium as an
+// anchor and absorbs every unclaimed venue within `thresh`. Any venue left over was
+// further than `thresh` from every earlier anchor, so all anchors end up at least
+// `thresh` apart — rendering each group at its anchor therefore cannot overlap, and
+// there is no centroid drift to chain the whole East into one pin.
+let clusterLayer = null;
+const CLUSTER_GAP = 1.3;                       // × the active pin size
+const HIDDEN_ICON = L.divIcon({ className: '', html: '', iconSize: [0, 0] });
+
+function clusterVenues(active, games, size) {
+  const z = map.getZoom(), thresh = size * CLUSTER_GAP, pt = {};
+  active.forEach(n => pt[n] = map.project([VENUES[n][2], VENUES[n][3]], z));
+  const order = active.slice().sort((a, b) =>
+    games[b].length - games[a].length || pt[a].x - pt[b].x || a.localeCompare(b));
+  const taken = new Set(), groups = [];
+  for (const anchor of order) {
+    if (taken.has(anchor)) continue;
+    taken.add(anchor);
+    const g = [anchor];
+    for (const n of order) {
+      if (taken.has(n) || pt[anchor].distanceTo(pt[n]) >= thresh) continue;
+      taken.add(n); g.push(n);
+    }
+    groups.push(g);
+  }
+  return groups;
+}
+
+function clusterMarker(g, games, now) {
+  const ms = g.flatMap(n => games[n]);
+  const V = VENUES[g[0]];                      // anchored on the busiest stadium, a real place
+  const sz = Math.round(pinSizes().active * 1.22);
+  const isFav = follow && ms.some(m => m.a === follow || m.b === follow);
+  const liveNow = ms.some(m => stateOf(m, now) === 'live');
+  const cls = 'stadion clus live' + (ms.some(m => rkeyOf(m) === 'sb') ? ' finale' : '')
+    + (liveNow ? ' livenow' : '') + (isFav ? ' fav' : '');
+  const favTag = isFav
+    ? `<div class="favTag">${logoImg(follow)}${teamNick(follow).toUpperCase()} ${t('playsHere')}</div>` : '';
+  const label = t('nStadiums', g.length);
+  const mk = L.marker([V[2], V[3]], {
+    icon: L.divIcon({ className: '', iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2],
+      html: `<div class="${cls}" data-v="${g.map(cssId).join(' ')}" style="width:${sz}px;height:${sz}px">
+        <div class="ring"></div><div class="ring r2"></div>
+        <div class="pin">${ms.length}</div>
+        ${favTag}
+        <div class="lbl">${label}</div></div>` }),
+    zIndexOffset: isFav ? 2200 : 1200, title: `${label} · ${t('tapToExpand')}`,
+  });
+  mk.on('click', () => zoomToCluster(g));
+  return mk;
+}
+
+// tap a cluster → fly to its stadiums; the next zoomend re-clusters and they split apart
+function zoomToCluster(names) {
+  const mobile = mqMobile.matches;
+  map.flyToBounds(L.latLngBounds(names.map(n => [VENUES[n][2], VENUES[n][3]])).pad(0.5), {
+    paddingTopLeft: [mobile ? 14 : 410, mobile ? $id('hdr').offsetHeight + 18 : 30],
+    paddingBottomRight: [14, mobile ? $id('tl').offsetHeight + 36 : 120],
+    duration: .8, maxZoom: 9,
   });
 }
 
@@ -1067,13 +1144,25 @@ function setDay(i, fly) {
 }
 
 function updateMarkers(w) {
-  const now = Date.now();
+  const now = Date.now(), wkMatches = byWeek[w] || [], games = {};
+  for (const name of Object.keys(VENUES)) games[name] = wkMatches.filter(m => m.v === name);
+  // only venues actually on screen this week take part in clustering
+  const active = Object.keys(VENUES).filter(n => games[n].length && (!journeyVenues || journeyVenues.has(n)));
+  const groups = clusterVenues(active, games, pinSizes().active);
+  const inCluster = new Set();
+  groups.forEach(g => { if (g.length > 1) g.forEach(n => inCluster.add(n)); });
+
   for (const name of Object.keys(VENUES)) {
-    const vm = (byWeek[w] || []).filter(m => m.v === name);
-    markers[name].setIcon(iconFor(name, vm, now));
+    const grouped = inCluster.has(name), vm = grouped ? [] : games[name];
+    markers[name].setIcon(grouped ? HIDDEN_ICON : iconFor(name, vm, now));
     const isFav = follow && vm.some(m => m.a === follow || m.b === follow);
-    markers[name].setZIndexOffset(isFav ? 2000 : vm.length ? 1000 : 0);
+    markers[name].setZIndexOffset(grouped ? 0 : isFav ? 2000 : vm.length ? 1000 : 0);
   }
+  if (clusterLayer) { map.removeLayer(clusterLayer); clusterLayer = null; }
+  const multi = groups.filter(g => g.length > 1);
+  if (!multi.length) return;
+  clusterLayer = L.layerGroup().addTo(map);
+  for (const g of multi) clusterMarker(g, games, now).addTo(clusterLayer);
 }
 
 // fit the week's US stadiums (an overseas game would zoom the whole globe out — it gets a 🌍 chip instead);
@@ -1154,9 +1243,9 @@ function cardHTML(m, now, k) {
   </div>`;
 }
 
+// a venue may be drawn on its own pin or folded into a cluster — match either
 function hotMarker(id, on) {
-  const el = document.getElementById('mk-' + id);
-  if (el) el.classList.toggle('hot', !!on);
+  document.querySelectorAll('.stadion[data-v~="' + id + '"]').forEach(el => el.classList.toggle('hot', !!on));
 }
 
 function openVenue(name) {
