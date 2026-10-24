@@ -494,6 +494,63 @@
   .pmRow .at{color:var(--ink-dim); margin:0 1px;}
   .pmRow.byeP{color:var(--gold);}
   .stTbl tr.po td.ps{color:var(--sky);}            /* holds a wild-card seed right now */
+  /* 🔮 bracket predictor (second tab of the playoff panel) */
+  .poTabs{display:flex; gap:4px; margin-left:auto;}
+  .poTabs button{padding:5px 13px; border-radius:999px; border:1px solid var(--panel-border); background:#16203a;
+    color:var(--ink-dim); font:800 11.5px 'Outfit',sans-serif; cursor:pointer; white-space:nowrap;}
+  .poTabs button.on{background:linear-gradient(135deg,var(--pitch),var(--pitch-deep)); color:#04150c; border-color:transparent;}
+  .helpCard .hh .poTabs + .hx{margin-left:8px;}
+  .brBar{display:flex; gap:6px; align-items:center; flex-wrap:wrap; padding:9px 18px 0;}
+  .brBar button{padding:5px 11px; border-radius:8px; border:1px solid var(--panel-border); background:#16203a;
+    color:var(--ink); font:700 11.5px 'Outfit',sans-serif; cursor:pointer;}
+  .brBar button:hover{filter:brightness(1.25);}
+  .brScore{margin-left:auto; font-size:11.5px; font-weight:800; color:var(--ink-dim);
+    background:rgba(255,255,255,.06); padding:4px 11px; border-radius:999px; white-space:nowrap;}
+  .brScore b{color:var(--pitch);}
+  .brHint{font-size:11px; color:var(--ink-dim); margin:2px 0 11px; line-height:1.45;}
+  .brConf{margin-bottom:15px;}
+  .brConf h3{font-size:12.5px; font-weight:900; letter-spacing:1.2px; color:var(--ink-dim); margin:0 0 7px;}
+  .brConf h3 b{color:var(--gold); letter-spacing:.3px;}
+  .brRounds{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; align-items:start;}
+  .brRh{font-size:8.5px; font-weight:800; letter-spacing:1px; color:var(--ink-dim); margin-bottom:5px;}
+  .brG{position:relative; background:rgba(255,255,255,.03); border:1px solid var(--panel-border);
+    border-radius:10px; padding:5px; margin-bottom:7px;}
+  .brG.done{border-color:rgba(255,209,102,.32);}
+  .brT{display:grid; grid-template-columns:13px 20px minmax(0,1fr) auto; align-items:center; gap:6px;
+    padding:5px 6px; border-radius:7px; font-size:12px; font-weight:800; border:1px solid transparent;}
+  .brT + .brT{margin-top:3px;}
+  .brT[onclick]{cursor:pointer;}
+  /* :not() keeps this from out-specifying .pick/.realwin — a hovered pick kept losing its highlight */
+  .brT[onclick]:not(.pick):not(.realwin):hover{background:rgba(255,255,255,.07); border-color:var(--panel-border);}
+  .brT .sd{font-size:9px; color:var(--ink-dim); text-align:center; font-weight:900;}
+  .brT img.lg{width:20px; height:20px;}
+  .brT .nm{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .brT .nm.ph{color:var(--ink-dim); font-weight:600; font-size:10.5px;}
+  .brT .sc{font-weight:900; font-variant-numeric:tabular-nums; font-size:12.5px;}
+  .brT.pick{background:linear-gradient(135deg,rgba(34,224,124,.26),rgba(34,224,124,.05)); border-color:var(--pitch);}
+  .brT.realwin{background:linear-gradient(135deg,rgba(255,209,102,.26),rgba(255,209,102,.04)); border-color:var(--gold);}
+  .brT.lost{opacity:.45;}
+  .brT.fav{box-shadow:inset 0 0 0 1px rgba(255,209,102,.55);}
+  .brQ{width:20px; height:20px; border-radius:50%; display:grid; place-items:center; background:#222e4d;
+    color:var(--sky); font:800 10px 'Outfit',sans-serif; border:1px dashed #3c4f7e;}
+  .brV{position:absolute; top:-7px; right:-6px; width:18px; height:18px; border-radius:50%; display:grid;
+    place-items:center; font-size:11px; font-weight:900; background:var(--panel);}
+  .brV.ok{color:var(--pitch); box-shadow:0 0 0 1px var(--pitch);}
+  .brV.no{color:var(--live); box-shadow:0 0 0 1px var(--live);}
+  .brSB{margin-top:2px; padding:13px; border-radius:14px; text-align:center;
+    background:linear-gradient(135deg,rgba(255,209,102,.11),rgba(255,255,255,.02)); border:1px solid rgba(255,209,102,.3);}
+  .brSB .pmT{font-size:9px; font-weight:800; letter-spacing:1.4px; color:var(--gold); margin-bottom:9px;}
+  .brSB .brG{max-width:290px; margin:0 auto; background:rgba(13,20,37,.65);}
+  .brChamp{margin-top:10px; font-size:13.5px; font-weight:900; color:var(--gold);}
+  .brToast{position:absolute; bottom:24px; left:50%; transform:translateX(-50%); animation:chipin .2s ease;
+    background:linear-gradient(135deg,#ffe9a8,var(--gold)); color:#3a2c00; font:800 12px 'Outfit',sans-serif;
+    padding:9px 17px; border-radius:999px; box-shadow:0 8px 28px rgba(0,0,0,.5);}
+  @media (max-width:760px){
+    .brRounds{grid-template-columns:1fr; gap:4px;}
+    .poTabs button{padding:5px 10px; font-size:11px;}
+    .helpCard .hh h2{font-size:14.5px;}
+    .brScore{margin-left:0; width:100%; text-align:center;}
+  }
   @media (max-width:760px){ #po{padding:0;} .poGrid{gap:14px;} }
 
   /* 📊 fantasy leaders panel (reuses .helpCard) */
@@ -754,9 +811,22 @@ const STR = {
     live: 'LIVE', localLbl: 'local', ft: 'FINAL', at: '@', ot: 'OT', tbdTime: 'TBD', tbd: 'TBD', tbdLabel: 'To be determined',
     playsHere: 'PLAYS HERE', capWord: 'capacity', seatsWord: 'seats', homeOf: 'Home of',
     nStadiums: n => `${n} stadiums`, tapToExpand: 'tap to zoom in',
-    tPo: 'Playoff picture', poTitle: '🏆 Playoff picture', poWildCard: 'Wild card',
+    tPo: 'Playoff picture', poTitle: 'Playoff picture', poWildCard: 'Wild card',
     poHunt: 'IN THE HUNT', poGB: gb => `${gb} back`, poIfToday: 'IF THE SEASON ENDED TODAY',
     poBye: 'first-round bye', poClinchdiv: 'Clinched the division', poClinchin: 'Clinched a playoff berth', poClinchout: 'Eliminated',
+    poTabPic: 'Picture', poTabBr: '🔮 Bracket', brTitle: 'Bracket predictor',
+    brWC: 'WILD CARD', brDivR: 'DIVISIONAL', brConfR: 'CONFERENCE', brTBD: 'To be decided',
+    brLowest: 'Lowest seed left', brWinnerWC: 'Wild-card winner', brWinnerD: 'Divisional winner',
+    brAfcChamp: 'AFC champion', brNfcChamp: 'NFC champion',
+    brChalk: '⚡ Chalk', brChalkT: 'Advance the higher seed in every game you have not picked yet',
+    brRandom: '🎲 Random', brRandomT: 'Flip a coin for every undecided game',
+    brShare: '🔗 Share', brClear: 'Clear the bracket', brConfirm: 'Clear your whole bracket?',
+    brCopied: '🔗 Bracket link copied!', brCopyFail: 'Clipboard unavailable',
+    brPickem: 'Tap a team to send them through',
+    brPicked: name => `🏆 ${name} to win it all`,
+    brCorrect: (ok, n) => `✓ <b>${ok}</b>/${n} correct`,
+    brProjected: 'The field is projected from the current standings and reshuffles as results land — your picks follow the teams. Once the real bracket is set in January, finished games lock and grade your picks ✓/✗.',
+    brNote: 'The NFL reseeds every round: the top seed always draws the lowest surviving seed in the divisional round, so the matchups change with each result. Picks are saved on this device and travel in the share link.',
     poNote: 'Seeds follow the NFL tiebreakers in order: head-to-head, division and conference record, common games, strength of victory, strength of schedule, the combined points-scored and points-allowed rankings, then net points and net touchdowns. Division winners always seed above wild cards. y = clinched division, x = clinched a berth, e = eliminated, each shown only once the records make it certain.',
     intl: 'International Series', divGame: 'Division game', dome: 'indoor',
     yourTime: s => `🕒 Your time: ${s}`,
@@ -783,7 +853,7 @@ const STR = {
     poSeed: n => n ? `currently the #${n} seed` : 'not seeded',
     divGames: 'DIVISION GAMES',
     helpTitle: '👋 How to use the Season Map', helpGotIt: 'Got it 🏈', igFollow: 'Follow on Instagram', tClose: 'Close (Esc)',
-    tFf: 'Fantasy leaders', ffTitle: '📊 Fantasy leaders', ffSeason: 'Season', ffStd: 'Std', ffHalf: 'Half', ffPpr: 'PPR',
+    tFf: 'Fantasy leaders', ffTitle: 'Fantasy leaders', ffSeason: 'Season', ffStd: 'Std', ffHalf: 'Half', ffPpr: 'PPR',
     ffPts: 'pts', ffAvg: a => `${a}/game`, ffGames: n => `${n} g`, ffMore: 'Show top 25',
     ffEmpty: 'No completed games yet.', ffNA: 'Fantasy data isn’t available.',
     ffPass: 'pass yds', ffRush: 'rush yds', ffRec: 'rec', ffYds: 'yds', ffFum: 'fum lost',
@@ -800,6 +870,7 @@ const STR = {
       ['🔊','<b>Score sounds.</b> Toggle 🔊 in the timeline bar for a fanfare when your team scores (off by default).'],
       ['🔔','<b>Game alerts.</b> Tap 🔔 to get a notification for your followed team’s kickoffs and scores. Install the app to your home screen for the full experience. Alerts ping while the app is open.'],
       ['🏆','<b>Playoff picture.</b> Tap 🏆 for both conferences seeded 1–7 with the full NFL tiebreakers, who is still in the hunt and how far back, and the wild-card matchups if the season ended today.'],
+      ['🔮','<b>Bracket predictor.</b> The second tab of 🏆. Tap a team to send them through — the NFL reseeds every round, so the matchups rebuild as you pick. Share your bracket with a link; real results lock in and grade your picks ✓/✗.'],
       ['📊','<b>Fantasy leaders.</b> Tap 📊 (or the points chip) for the top fantasy scorers of any week or the whole season, in Standard, Half-PPR or PPR scoring, with each player’s stat line.'],
       ['🔗','<b>Share the view.</b> The URL remembers your week and followed team — copy it to share exactly what you’re looking at.'],
     ],
@@ -828,9 +899,22 @@ const STR = {
     live: 'EN VIVO', localLbl: 'local', ft: 'FINAL', at: '@', ot: 'TE', tbdTime: 'Por definir', tbd: 'TBD', tbdLabel: 'Por definir',
     playsHere: 'JUEGA AQUÍ', capWord: 'capacidad', seatsWord: 'asientos', homeOf: 'Casa de',
     nStadiums: n => `${n} estadios`, tapToExpand: 'toca para acercar',
-    tPo: 'Panorama de playoffs', poTitle: '🏆 Panorama de playoffs', poWildCard: 'Comodín',
+    tPo: 'Panorama de playoffs', poTitle: 'Panorama de playoffs', poWildCard: 'Comodín',
     poHunt: 'EN LA PELEA', poGB: gb => `a ${gb}`, poIfToday: 'SI LA TEMPORADA TERMINARA HOY',
     poBye: 'descansa la primera ronda', poClinchdiv: 'Ganó la división', poClinchin: 'Clasificado a playoffs', poClinchout: 'Eliminado',
+    poTabPic: 'Panorama', poTabBr: '🔮 Cuadro', brTitle: 'Predictor del cuadro',
+    brWC: 'COMODINES', brDivR: 'DIVISIONAL', brConfR: 'CONFERENCIA', brTBD: 'Por definir',
+    brLowest: 'Peor sembrado vivo', brWinnerWC: 'Ganador de comodines', brWinnerD: 'Ganador divisional',
+    brAfcChamp: 'Campeón de la AFC', brNfcChamp: 'Campeón de la NFC',
+    brChalk: '⚡ Favoritos', brChalkT: 'Avanza el mejor sembrado en cada juego que no hayas elegido',
+    brRandom: '🎲 Al azar', brRandomT: 'Lanza una moneda en cada juego sin decidir',
+    brShare: '🔗 Compartir', brClear: 'Borrar el cuadro', brConfirm: '¿Borrar todo tu cuadro?',
+    brCopied: '🔗 ¡Enlace del cuadro copiado!', brCopyFail: 'Portapapeles no disponible',
+    brPickem: 'Toca un equipo para hacerlo avanzar',
+    brPicked: name => `🏆 ${name} campeón`,
+    brCorrect: (ok, n) => `✓ <b>${ok}</b>/${n} aciertos`,
+    brProjected: 'El grupo de clasificados es una proyección de la tabla actual y cambia con cada resultado — tus elecciones siguen a los equipos. Cuando se arme el cuadro real en enero, los juegos terminados se fijan y califican tus pronósticos ✓/✗.',
+    brNote: 'La NFL resiembra cada ronda: el mejor sembrado siempre enfrenta al peor sembrado que sobreviva en la ronda divisional, así que los duelos cambian con cada resultado. Tus elecciones se guardan en este dispositivo y viajan en el enlace.',
     poNote: 'Los puestos siguen los criterios de desempate de la NFL en orden: enfrentamientos directos, marca divisional y de conferencia, rivales en común, fuerza de victorias, fuerza del calendario, la suma de los lugares en puntos a favor y en contra, y luego la diferencia de puntos y de touchdowns. Los campeones de división siempre van por encima de los comodines. y = ganó la división, x = clasificado, e = eliminado, y solo se muestran cuando las marcas lo hacen matemáticamente seguro.',
     intl: 'Serie Internacional', divGame: 'Juego divisional', dome: 'techado',
     yourTime: s => `🕒 Tu hora: ${s}`,
@@ -857,7 +941,7 @@ const STR = {
     poSeed: n => n ? `actualmente el lugar #${n}` : 'sin lugar',
     divGames: 'JUEGOS DIVISIONALES',
     helpTitle: '👋 Cómo usar el Mapa de la Temporada', helpGotIt: '¡Entendido! 🏈', igFollow: 'Sígueme en Instagram', tClose: 'Cerrar (Esc)',
-    tFf: 'Líderes de fantasy', ffTitle: '📊 Líderes de fantasy', ffSeason: 'Temporada', ffStd: 'Est', ffHalf: 'Media', ffPpr: 'PPR',
+    tFf: 'Líderes de fantasy', ffTitle: 'Líderes de fantasy', ffSeason: 'Temporada', ffStd: 'Est', ffHalf: 'Media', ffPpr: 'PPR',
     ffPts: 'pts', ffAvg: a => `${a}/juego`, ffGames: n => `${n} j`, ffMore: 'Ver top 25',
     ffEmpty: 'Aún no hay juegos terminados.', ffNA: 'Datos de fantasy no disponibles.',
     ffPass: 'yds pase', ffRush: 'yds carrera', ffRec: 'rec', ffYds: 'yds', ffFum: 'balón perdido',
@@ -874,6 +958,7 @@ const STR = {
       ['🔊','<b>Sonidos de anotación.</b> Activa 🔊 en la barra de tiempo para una fanfarria cuando tu equipo anota (desactivado por defecto).'],
       ['🔔','<b>Alertas de juego.</b> Toca 🔔 para recibir una notificación de los arranques y anotaciones del equipo que sigues. Instala la app en tu pantalla de inicio para la experiencia completa. Las alertas suenan mientras la app está abierta.'],
       ['🏆','<b>Panorama de playoffs.</b> Toca 🏆 para ver ambas conferencias sembradas del 1 al 7 con todos los criterios de desempate de la NFL, quién sigue en la pelea y a cuánto está, y los duelos de comodines si la temporada terminara hoy.'],
+      ['🔮','<b>Predictor del cuadro.</b> La segunda pestaña de 🏆. Toca un equipo para hacerlo avanzar — la NFL resiembra cada ronda, así que los duelos se rearman conforme eliges. Comparte tu cuadro con un enlace; los resultados reales se fijan y califican tus pronósticos ✓/✗.'],
       ['📊','<b>Líderes de fantasy.</b> Toca 📊 (o la ficha de puntos) para ver a los máximos anotadores de fantasy de cualquier semana o de toda la temporada, en puntuación Estándar, Media PPR o PPR, con la línea de estadísticas de cada jugador.'],
       ['🔗','<b>Comparte la vista.</b> La URL recuerda tu semana y equipo seguido — cópiala para compartir exactamente lo que ves.'],
     ],
@@ -2141,6 +2226,141 @@ function confTick() {
 }
 addEventListener('resize', () => { layoutPanel(); if (confOn || bursts.length) sizeCanvas(); });
 
+// ── 🔮 bracket predictor ────────────────────────────────────────────────────
+// The NFL bracket RESEEDS every round, so there is no fixed tree to fill in: the
+// divisional matchups depend on which wild-card games were won. The model is
+// therefore rebuilt from the current seeding plus the picks made so far, and the
+// slots (AFC-WC1 … SB) stay stable even as their participants change.
+//
+// Before January the field is the projected one from the tiebreaker engine and
+// updates every week; once real playoff games are scheduled they are matched to
+// their slot by participants, and a final result locks the slot and grades the pick.
+const PRED_KEY = 'nflviz.pred.v1';
+const SLOTS_OF = cf => [cf + '-WC1', cf + '-WC2', cf + '-WC3', cf + '-D1', cf + '-D2', cf + '-C'];
+const ALL_SLOTS = [...SLOTS_OF('AFC'), ...SLOTS_OF('NFC'), 'SB'];
+const ROUND_PW = { WC: 1, D: 2, C: 3, SB: 4 };
+function loadPred() {
+  const q = _params.get('b');
+  if (q) { try { const d = decodePred(q); if (d) return d; } catch (e) {} }
+  try { const o = JSON.parse(localStorage.getItem(PRED_KEY)); if (o && o.win) return { win: o.win, t: o.t || {} }; } catch (e) {}
+  return { win: {}, t: {} };
+}
+function savePred() { try { localStorage.setItem(PRED_KEY, JSON.stringify(PRED)); } catch (e) {} }
+let PRED = { win: {}, t: {} };                      // filled after decodePred is defined
+
+// a real postseason game between these two clubs, if the schedule has one yet
+const realFor = (pw, a, b) => (!a || !b) ? null :
+  MATCHES.find(m => m.st === 3 && m.pw === pw && ((m.a === a && m.b === b) || (m.a === b && m.b === a))) || null;
+
+function mkGame(key, cf, pw, a, b, aSeed, bSeed, aLab, bLab) {
+  const real = realFor(pw, a, b);
+  const g = { key, cf, pw, a, b, aSeed, bSeed, aLab, bLab, real,
+    done: !!(real && real.fin && real.s1 != null) };
+  g.realWin = g.done ? winnerOf(real) : null;
+  const p = PRED.win[key];
+  g.pick = (p === a || p === b) ? p : null;
+  g.win = g.realWin || g.pick;
+  return g;
+}
+// rebuilt on demand — it depends on both the seeding and the picks, and is only 13 games
+function bracketModel() {
+  const P = playoffPicture(), M = {};
+  for (const cf of Object.keys(CONFS)) {
+    const seeds = P[cf].order.slice(0, 7), sOf = c => seeds.indexOf(c) + 1;
+    const wc = [[2, 7], [3, 6], [4, 5]].map(([hi, lo], i) =>
+      mkGame(`${cf}-WC${i + 1}`, cf, 1, seeds[hi - 1], seeds[lo - 1], hi, lo));
+    // reseed: the 1 seed draws the lowest surviving seed, the other two meet
+    const wins = wc.map(g => g.win);
+    let d1, d2;
+    if (wins.every(Boolean)) {
+      const rem = wins.map(sOf).sort((x, y) => x - y), low = rem[2];
+      d1 = mkGame(`${cf}-D1`, cf, 2, seeds[0], seeds[low - 1], 1, low);
+      d2 = mkGame(`${cf}-D2`, cf, 2, seeds[rem[0] - 1], seeds[rem[1] - 1], rem[0], rem[1]);
+    } else {
+      d1 = mkGame(`${cf}-D1`, cf, 2, seeds[0], null, 1, null, null, t('brLowest'));
+      d2 = mkGame(`${cf}-D2`, cf, 2, null, null, null, null, t('brWinnerWC'), t('brWinnerWC'));
+    }
+    const dw = [d1.win, d2.win].filter(Boolean);
+    const c = dw.length === 2
+      ? (sOf(dw[0]) <= sOf(dw[1])
+          ? mkGame(`${cf}-C`, cf, 3, dw[0], dw[1], sOf(dw[0]), sOf(dw[1]))
+          : mkGame(`${cf}-C`, cf, 3, dw[1], dw[0], sOf(dw[1]), sOf(dw[0])))
+      : mkGame(`${cf}-C`, cf, 3, null, null, null, null, t('brWinnerD'), t('brWinnerD'));
+    M[cf] = { seeds, rounds: [wc, [d1, d2], [c]], champ: c.win };
+  }
+  const [A, N] = [M.AFC.champ, M.NFC.champ];
+  M.sb = mkGame('SB', null, 4, A, N, null, null, t('brAfcChamp'), t('brNfcChamp'));
+  M.champion = M.sb.win;
+  return M;
+}
+const allGames = M => [...M.AFC.rounds.flat(), ...M.NFC.rounds.flat(), M.sb];
+
+// a changed pick can orphan the ones downstream of it
+function prunePred() {
+  for (let i = 0; i < 6; i++) {
+    const M = bracketModel(); let changed = false;
+    for (const g of allGames(M)) {
+      const p = PRED.win[g.key];
+      if (p && p !== g.a && p !== g.b) { delete PRED.win[g.key]; delete PRED.t[g.key]; changed = true; }
+    }
+    if (!changed) break;
+  }
+}
+function brPick(key, code) {
+  const g = allGames(bracketModel()).find(x => x.key === key);
+  if (!g || g.done) return;                                   // reality owns a finished game
+  if (PRED.win[key] === code) { delete PRED.win[key]; delete PRED.t[key]; }
+  else { PRED.win[key] = code; PRED.t[key] = TODAY; }
+  prunePred(); savePred(); renderPO();
+}
+const betterSeed = g => g.aSeed == null || g.bSeed == null
+  ? (TB().R[g.a].pct >= TB().R[g.b].pct ? g.a : g.b)          // Super Bowl: no shared seeding
+  : (g.aSeed <= g.bSeed ? g.a : g.b);
+function brFill(how) {
+  for (let pass = 0; pass < 4; pass++) {
+    for (const g of allGames(bracketModel())) {
+      if (!g.a || !g.b || g.done || g.pick) continue;
+      PRED.win[g.key] = how === 'chalk' ? betterSeed(g) : (Math.random() < .5 ? g.a : g.b);
+      PRED.t[g.key] = TODAY;
+    }
+  }
+  prunePred(); savePred(); renderPO();
+}
+function brReset() { if (!confirm(t('brConfirm'))) return; PRED = { win: {}, t: {} }; savePred(); renderPO(); }
+function predScore() {
+  let ok = 0, n = 0;
+  for (const g of allGames(bracketModel())) if (g.done && PRED.win[g.key]) { n++; if (PRED.win[g.key] === g.realWin) ok++; }
+  return { ok, n };
+}
+// share code: 13 set-bits then one char per pick (index into the 32-team roster)
+const _B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+const _TI = Object.keys(TEAMS).slice().sort();
+const _pack = bits => { let s = ''; for (let i = 0; i < bits.length; i += 6) { let v = 0; for (let j = 0; j < 6; j++) v = (v << 1) | (bits[i + j] || 0); s += _B64[v]; } return s; };
+const _unpack = (str, n) => { const b = []; for (const ch of str) { const v = _B64.indexOf(ch); for (let j = 5; j >= 0; j--) b.push((v >> j) & 1); } return b.slice(0, n); };
+function encodePred() {
+  const bits = ALL_SLOTS.map(k => (PRED.win[k] && _TI.indexOf(PRED.win[k]) >= 0) ? 1 : 0);
+  let s = '2' + _pack(bits);
+  ALL_SLOTS.forEach((k, i) => { if (bits[i]) s += _B64[_TI.indexOf(PRED.win[k])]; });
+  return s;
+}
+function decodePred(s) {
+  if (!s || s[0] !== '2') return null;
+  const w = Math.ceil(ALL_SLOTS.length / 6), bits = _unpack(s.substr(1, w), ALL_SLOTS.length);
+  let p = 1 + w; const out = { win: {}, t: {} };
+  ALL_SLOTS.forEach((k, i) => { if (bits[i]) { const c = _TI[_B64.indexOf(s[p++])]; if (c) out.win[k] = c; } });
+  return out;
+}
+function brShare() {
+  const url = location.origin + location.pathname + '?po=bracket&b=' + encodePred();
+  if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => brToast(t('brCopied')), () => brToast(t('brCopyFail')));
+  else brToast(t('brCopyFail'));
+}
+function brToast(msg) {
+  const el = document.createElement('div'); el.className = 'brToast'; el.textContent = msg;
+  $id('po').appendChild(el); setTimeout(() => el.remove(), 2200);
+}
+PRED = loadPred();                                  // after the codec consts exist
+
 // ── 🏆 playoff picture ──────────────────────────────────────────────────────
 // Both conferences: seeds 1–7 from the tiebreaker engine above, the clubs still in
 // the hunt with games back, and the wild-card weekend matchups the seeding implies.
@@ -2176,11 +2396,62 @@ function poConfHTML(cf) {
       <span class="at">${t('at')}</span>${logoImg(seeds[hi - 1])}${teamNick(seeds[hi - 1])}<span class="s">${hi}</span></div>`;
   return h + `</div></div>`;
 }
+// ── bracket rendering ──
+const scoreOf = (g, code) => !g.done ? null : (g.real.a === code ? g.real.s1 : g.real.s2);
+function brSideHTML(g, code, seed, lab) {
+  const sc = scoreOf(g, code);
+  // `code` may be null on an undecided slot — never let a placeholder look picked
+  const cls = 'brT' + (!code ? '' : g.done && g.realWin === code ? ' realwin' : g.done && g.realWin ? ' lost'
+    : !g.done && g.pick === code ? ' pick' : '') + (code && code === follow ? ' fav' : '');
+  const tap = code && !g.done ? ` onclick="brPick('${g.key}','${code}')"` : '';
+  return `<div class="${cls}"${tap}>
+    <span class="sd">${seed || ''}</span>
+    ${code ? logoImg(code) : '<span class="brQ">?</span>'}
+    <span class="nm${code ? '' : ' ph'}">${code ? teamNick(code) : (lab || t('brTBD'))}</span>
+    <span class="sc">${sc != null ? sc : ''}</span></div>`;
+}
+function brGameHTML(g) {
+  const v = g.done && g.pick ? `<span class="brV ${g.pick === g.realWin ? 'ok' : 'no'}">${g.pick === g.realWin ? '✓' : '✗'}</span>` : '';
+  return `<div class="brG${g.done ? ' done' : ''}">${v}
+    ${brSideHTML(g, g.a, g.aSeed, g.aLab)}${brSideHTML(g, g.b, g.bSeed, g.bLab)}</div>`;
+}
+function brConfHTML(cf, M) {
+  const R = M[cf].rounds;
+  const col = (title, games) => `<div class="brCol"><div class="brRh">${title}</div>${games.map(brGameHTML).join('')}</div>`;
+  return `<div class="brConf"><h3>${cf}${M[cf].champ ? ` · <b>${teamNick(M[cf].champ)}</b>` : ''}</h3>
+    <div class="brRounds">${col(t('brWC'), R[0])}${col(t('brDivR'), R[1])}${col(t('brConfR'), R[2])}</div></div>`;
+}
+function renderBracketHTML() {
+  const M = bracketModel(), sc = predScore();
+  const live = MATCHES.some(m => m.st === 3 && m.a);          // is the real field set yet?
+  return `<div class="brBar">
+      <button onclick="brFill('chalk')" title="${t('brChalkT')}">${t('brChalk')}</button>
+      <button onclick="brFill('random')" title="${t('brRandomT')}">${t('brRandom')}</button>
+      <button onclick="brShare()">${t('brShare')}</button>
+      <button onclick="brReset()" title="${t('brClear')}">↺</button>
+      <span class="brScore">${sc.n ? t('brCorrect', sc.ok, sc.n) : M.champion ? t('brPicked', teamNick(M.champion)) : t('brPickem')}</span>
+    </div>
+    <div class="helpBody">
+      ${live ? '' : `<p class="brHint">${t('brProjected')}</p>`}
+      ${Object.keys(CONFS).map(cf => brConfHTML(cf, M)).join('')}
+      <div class="brSB"><div class="pmT">${META.superBowl || 'SUPER BOWL'} · ${VENUES[matchByN(META.final).v][0]}</div>
+        ${brGameHTML(M.sb)}
+        ${M.champion ? `<div class="brChamp">🏆 ${teamName(M.champion)}</div>` : ''}</div>
+    </div>`;
+}
+let poTab = 'picture';
+function poSetTab(v) { poTab = v; renderPO(); }
 function renderPO() {
+  const tabs = `<div class="poTabs">
+    <button class="${poTab === 'picture' ? 'on' : ''}" onclick="poSetTab('picture')">${t('poTabPic')}</button>
+    <button class="${poTab === 'bracket' ? 'on' : ''}" onclick="poSetTab('bracket')">${t('poTabBr')}</button></div>`;
+  const body = poTab === 'bracket' ? renderBracketHTML()
+    : `<div class="helpBody"><div class="poGrid">${Object.keys(CONFS).map(poConfHTML).join('')}</div></div>`;
   $id('po').firstElementChild.innerHTML =
-    `<div class="hh"><h2><span class="pc">${t('poTitle')}</span></h2><button class="hx" onclick="poClose()" aria-label="${t('tClose')}">✕</button></div>
-     <div class="helpBody"><div class="poGrid">${Object.keys(CONFS).map(poConfHTML).join('')}</div></div>
-     <div class="ffNote">${t('poNote')}</div>`;
+    `<div class="hh"><h2>${poTab === 'bracket' ? '🔮' : '🏆'} <span class="pc">${poTab === 'bracket' ? t('brTitle') : t('poTitle')}</span></h2>${tabs}
+       <button class="hx" onclick="poClose()" aria-label="${t('tClose')}">✕</button></div>
+     ${body}
+     <div class="ffNote">${poTab === 'bracket' ? t('brNote') : t('poNote')}</div>`;
 }
 $id('poBtn').onclick = () => poOn ? poClose() : poOpen();
 
@@ -2233,7 +2504,7 @@ function renderFF() {
           <div class="ln">${ffLine(r.st)}${ffTab === 'season' ? ` · ${t('ffGames', r.g)}` : ''}</div></div>
         <div class="pt">${r.pts[ffFmt].toFixed(1)}<small>${ffTab === 'season' && r.g ? t('ffAvg', (r.pts[ffFmt] / r.g).toFixed(1)) : t('ffPts')}</small></div>
       </div>`).join('') + (rows.length > 10 && !ffMore ? `<button class="ffMore" onclick="ffShowMore()">${t('ffMore')}</button>` : '');
-  card.innerHTML = `<div class="hh"><h2><span class="pc">${t('ffTitle')}</span></h2><button class="hx" onclick="ffClose()" aria-label="${t('tClose')}">✕</button></div>
+  card.innerHTML = `<div class="hh"><h2>📊 <span class="pc">${t('ffTitle')}</span></h2><button class="hx" onclick="ffClose()" aria-label="${t('tClose')}">✕</button></div>
     <div class="ffCtl">
       <div class="ffTabs"><button class="${ffTab === 'week' ? 'on' : ''}" onclick="ffTabSet('week')">${wkLabel}</button><button class="${ffTab === 'season' ? 'on' : ''}" onclick="ffTabSet('season')">${t('ffSeason')}</button></div>
       ${ffTab === 'week' ? `<div class="ffWk"><button onclick="ffStep(-1)" ${wi <= 0 ? 'disabled' : ''} aria-label="${t('tPrev')}">◀</button><button onclick="ffStep(1)" ${wi < 0 || wi >= ws.length - 1 ? 'disabled' : ''} aria-label="${t('tNext')}">▶</button></div>` : ''}
@@ -2313,9 +2584,11 @@ const _qdiv = _params.get('div');
 if (_qdiv && DIVISIONS[_qdiv]) openDivision(_qdiv);
 if (_params.get('play') === '1') startPlay();
 if (_params.get('ff') === '1') ffOpen();
-if (_params.get('po') === '1') poOpen();
+const _qpo = _params.get('po');
+if (_qpo === 'bracket' || _params.get('b')) { poTab = 'bracket'; poOpen(); }
+else if (_qpo === '1') poOpen();
 let _seenHelp = true; try { _seenHelp = !!localStorage.getItem(HELP_KEY); } catch (e) {}
-if (!_seenHelp && !_params.get('div') && !_params.get('play') && !_params.get('ff') && !_params.get('po')) helpOpen();
+if (!_seenHelp && !_params.get('div') && !_params.get('play') && !_params.get('ff') && !_qpo && !_params.get('b')) helpOpen();
 
 // ── easter eggs ───────────────────────────────────────────────────────────────
 (() => {
