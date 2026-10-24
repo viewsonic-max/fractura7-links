@@ -151,8 +151,11 @@
   #follow.on #followClear{display:grid;}
 
   /* ── side panel ─────────────────────────── */
+  /* --tlH is the timeline bar's real height, measured in layoutPanel(): the week chips
+     are taller than the World Cup's day chips and change height per form factor, so
+     everything that floats above the bar is positioned off it instead of a guess. */
   #panel{
-    position:absolute; top:175px; left:14px; bottom:118px; width:380px; z-index:999;
+    position:absolute; top:175px; left:14px; bottom:calc(var(--tlH,90px) + 28px); width:380px; z-index:999;
     display:flex; flex-direction:column; pointer-events:none;
   }
   #panelInner{
@@ -206,10 +209,19 @@
     pointer-events:auto; background:var(--panel); border:1px solid var(--panel-border);
     border-radius:14px; padding:18px; text-align:center; color:var(--ink-dim); font-size:14px;
   }
+  /* bye teams live at the foot of the week's games, not in the header chip row */
+  .byeRow{
+    pointer-events:auto; display:flex; align-items:center; flex-wrap:wrap; gap:7px;
+    margin:12px 0 4px; padding:9px 12px; border-radius:12px; font-size:11px; font-weight:700;
+    background:rgba(255,255,255,.03); border:1px solid var(--panel-border); color:var(--ink-dim);
+  }
+  .byeRow .bl{letter-spacing:.3px;}
+  .byeRow .bt{display:flex; align-items:center; gap:4px; color:var(--ink);}
+  .byeRow img.lg{width:19px; height:19px;}
 
   /* ── division drawer ────────────────────── */
   #drawer{
-    position:absolute; top:80px; bottom:118px; right:-380px; width:340px; z-index:1100;
+    position:absolute; top:80px; bottom:calc(var(--tlH,90px) + 28px); right:-380px; width:340px; z-index:1100;
     background:var(--panel); border:1px solid var(--panel-border); backdrop-filter:blur(14px);
     border-radius:18px; box-shadow:0 12px 40px rgba(0,0,0,.55); overflow:hidden;
     transition:right .28s cubic-bezier(.4,1.4,.6,1); display:flex; flex-direction:column;
@@ -262,7 +274,16 @@
   .tlBtn:hover{transform:scale(1.1);}
   .tlBtn.small{width:34px; height:34px; font-size:13px; background:#222e4d; color:var(--ink); box-shadow:none;}
   .tlBtn.small.on{color:var(--gold); box-shadow:0 0 0 1px var(--gold);}
-  #days{flex:1 1 0; min-width:0; display:flex; gap:6px; overflow-x:auto; scroll-behavior:smooth; padding:4px 2px; scrollbar-width:none;}
+  /* 🔇 and 🔕 both render as red-slashed glyphs on Android and read as errors — dim the
+     off state so "muted" looks muted and the lit state is unmistakable */
+  #soundBtn:not(.on), #notifyBtn:not(.on){opacity:.45;}
+  #soundBtn.on, #notifyBtn.on{background:rgba(255,209,102,.14);}
+  /* divider between the transport controls and the toggles — three adjacent triangles
+     (prev / play / next) read as one group without it */
+  .tlSep{flex:none; width:1px; height:22px; background:rgba(255,255,255,.14); margin:0 3px;}
+  /* padding-top clears the "NOW" badge, which hangs 9px above its chip and would
+     otherwise be sliced off by the strip's overflow */
+  #days{flex:1 1 0; min-width:0; display:flex; gap:6px; overflow-x:auto; scroll-behavior:smooth; padding:11px 2px 4px; scrollbar-width:none;}
   #days::-webkit-scrollbar{display:none;}
   .day{
     flex-shrink:0; width:58px; padding:6px 0 5px; border-radius:12px; cursor:pointer;
@@ -357,6 +378,7 @@
   }
   .stadion.idle .lbl{color:#7787ab; opacity:.75;}
   body.zlow .stadion.idle .lbl{display:none;}   /* 30 stadiums: idle labels only once zoomed in */
+  body.zlow .stadion.idle .pin{border-width:1.5px; font-size:7px;}   /* shrunk to a faint league footprint */
   .stopBadge{
     font:800 9.5px 'Outfit',sans-serif; background:rgba(34,224,124,.92); color:#04150c;
     padding:2px 7px; border-radius:8px; white-space:nowrap; box-shadow:0 2px 8px rgba(0,0,0,.45);
@@ -385,7 +407,9 @@
   .pp .ppm .t{color:var(--pitch); font-weight:800; min-width:62px;}
   .pp .next{font-size:12px; color:var(--ink-dim); padding-top:6px; border-top:1px solid rgba(255,255,255,.07);}
   .leaflet-popup-close-button{color:var(--ink-dim) !important;}
-  .leaflet-control-attribution{background:rgba(11,17,32,.7) !important; color:#5a6a8d !important;}
+  /* float the required tile attribution clear of the timeline bar instead of behind it */
+  .leaflet-control-attribution{background:rgba(11,17,32,.7) !important; color:#5a6a8d !important;
+    margin-bottom:calc(var(--tlH,90px) + 22px + env(safe-area-inset-bottom)) !important;}
   .leaflet-control-attribution a{color:#7787ab !important;}
 
   /* ── help / tutorial ────────────────────────────── */
@@ -479,7 +503,7 @@
     #follow{display:none;}
     #panel{
       left:8px; right:8px; width:auto; top:auto !important;
-      bottom:calc(72px + env(safe-area-inset-bottom));
+      bottom:calc(var(--tlH,86px) + 14px + env(safe-area-inset-bottom));
       max-height:46vh; z-index:1050; pointer-events:auto;
       background:var(--panel); border:1px solid var(--panel-border); border-radius:16px;
       backdrop-filter:blur(14px); box-shadow:0 -8px 32px rgba(0,0,0,.5);
@@ -500,7 +524,7 @@
     #panelInner{mask-image:none; padding-right:2px;}
     #fabRow{
       display:flex; align-items:center; gap:8px; position:absolute;
-      right:10px; bottom:calc(78px + env(safe-area-inset-bottom)); z-index:1049;
+      right:10px; bottom:calc(var(--tlH,86px) + 20px + env(safe-area-inset-bottom)); z-index:1049;
     }
     #fab{
       display:flex; align-items:center; gap:6px;
@@ -523,12 +547,22 @@
       border:1.5px solid var(--gold); font:700 11px/19px 'Outfit',sans-serif; text-align:center;
       cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.5);}
     #teamFab.on #teamFabClear{display:block;}
-    #tl{left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom)); padding:8px; gap:7px; border-radius:14px;}
-    .tlBtn{width:36px; height:36px; font-size:14px;}
+    /* The week strip is the primary control but seven buttons left it a quarter of the
+       bar. Give it its own full-width row and let the buttons wrap underneath. */
+    #tl{left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom)); padding:7px 8px; gap:6px; border-radius:14px; flex-wrap:wrap;}
+    #days{order:-1; flex:1 1 100%; width:100%; padding:11px 0 1px;}
+    .tlSep{height:18px;}
+    .tlBtn{width:34px; height:34px; font-size:14px;}
+    .leaflet-control-attribution{font-size:8.5px !important;}
     .tlBtn.small{width:28px; height:28px; font-size:11px;}
-    .day{width:50px;}
-    .day .dn{font-size:15px;}
-    #clockChip{bottom:calc(80px + env(safe-area-inset-bottom)); font-size:10.5px; padding:6px 12px; gap:8px; max-width:calc(100vw - 20px);}
+    /* the word WEEK repeated 22× is noise on a phone — the number and dates carry it */
+    .day{width:54px;}
+    .day .dw{display:none;}
+    .day .dn{font-size:16px;}
+    .day .dn.txt{font-size:12.5px; line-height:1.35;}
+    /* at continental zoom every city label collides — the game list is the source of truth */
+    body.zlow .stadion .lbl{display:none;}
+    #clockChip{bottom:calc(var(--tlH,86px) + 24px + env(safe-area-inset-bottom)); font-size:10.5px; padding:6px 12px; gap:8px; max-width:calc(100vw - 20px);}
     #drawer{
       left:8px; right:8px; width:auto; top:auto; bottom:0; max-height:62vh;
       border-radius:18px 18px 0 0;
@@ -580,6 +614,7 @@
   <button class="tlBtn small" id="prevBtn" title="Previous week (←)">◀</button>
   <button class="tlBtn" id="playBtn" title="Play the season (space)">▶</button>
   <button class="tlBtn small" id="nextBtn" title="Next week (→)">▶</button>
+  <span class="tlSep" aria-hidden="true"></span>
   <button class="tlBtn small" id="soundBtn" title="Score sounds">🔇</button>
   <button class="tlBtn small" id="notifyBtn" title="Game alerts">🔕</button>
   <button class="tlBtn small" id="ffBtn" title="Fantasy leaders">📊</button>
@@ -657,6 +692,8 @@ const STR = {
     games: n => `${n} game${n !== 1 ? 's' : ''}`,
     cities: n => `${n} cit${n !== 1 ? 'ies' : 'y'}`,
     byes: list => `😴 Bye: ${list}`,
+    byesShort: n => `😴 ${n} on bye`,
+    byeFooter: 'On bye this week',
     intlChip: city => `🌍 ${city}`,
     pointsTally: (p, avg) => `🏈 ${p} pts${avg ? ' · ' + avg + '/game' : ''}`,
     pointsTitle: 'Total points scored this season',
@@ -722,6 +759,8 @@ const STR = {
     games: n => `${n} juego${n !== 1 ? 's' : ''}`,
     cities: n => `${n} ciudad${n !== 1 ? 'es' : ''}`,
     byes: list => `😴 Descanso: ${list}`,
+    byesShort: n => `😴 ${n} descansan`,
+    byeFooter: 'Descansan esta semana',
     intlChip: city => `🌍 ${city}`,
     pointsTally: (p, avg) => `🏈 ${p} pts${avg ? ' · ' + avg + '/juego' : ''}`,
     pointsTitle: 'Puntos totales anotados esta temporada',
@@ -862,8 +901,23 @@ L.tileLayer(ESRI_TILES.replace('{l}', 'Base'), {
   maxZoom:16,
 }).addTo(map);
 L.tileLayer(ESRI_TILES.replace('{l}', 'Reference'), { maxZoom:16, opacity:.85 }).addTo(map);
-const applyZoomClass = () => document.body.classList.toggle('zlow', map.getZoom() < 5);
-map.on('zoomend', applyZoomClass); applyZoomClass();
+// Zoom bands. The whole country only fits a phone at about zoom 3, where 14 full-size
+// pins in the eastern half merge into one green blob — so pins shrink when zoomed out
+// (and again on phones), and phones drop the city labels at that zoom. Re-icon the
+// markers whenever the band flips.
+const zoomBand = () => map.getZoom() < 5 ? 'low' : 'high';
+let _zband = zoomBand();
+const applyZoomClass = () => document.body.classList.toggle('zlow', zoomBand() === 'low');
+applyZoomClass();
+map.on('zoomend', () => {
+  applyZoomClass();
+  const b = zoomBand();
+  if (b !== _zband) { _zband = b; updateMarkers(WEEKS[dayIdx].w); }
+});
+const pinSizes = () => {
+  const m = mqMobile.matches, low = _zband === 'low';
+  return { active: m ? (low ? 28 : 36) : (low ? 36 : 40), idle: m ? (low ? 12 : 18) : (low ? 16 : 22) };
+};
 
 const markers = {};
 for (const [name, v] of Object.entries(VENUES)) {
@@ -883,7 +937,7 @@ function iconFor(name, wkMatches, now) {
   const cls = (n === 0 ? 'idle' : isFinal ? 'finale live' : 'live')
     + (liveNow ? ' livenow' : '') + (isFav ? ' fav' : '');
   const inner = n === 0 ? '·' : isFinal && !liveNow ? '🏆' : n;
-  const sz = n === 0 ? 22 : 40;
+  const S = pinSizes(), sz = n === 0 ? S.idle : S.active;
   const favTag = isFav
     ? `<div class="favTag">${logoImg(follow)}${teamNick(follow).toUpperCase()} ${t('playsHere')}</div>`
     : '';
@@ -951,6 +1005,8 @@ function centerDayChip(i) {
 // ── core render ──────────────────────────────────────────────────────────
 const mqMobile = matchMedia('(max-width: 760px)');
 function layoutPanel() {
+  const tl = $id('tl');
+  if (tl) document.documentElement.style.setProperty('--tlH', tl.offsetHeight + 'px');
   const p = $id('panel');
   if (mqMobile.matches) { p.style.top = ''; return; }
   p.style.top = (14 + $id('hdr').offsetHeight + 10) + 'px';
@@ -959,12 +1015,20 @@ function applyFormFactor() {
   const s = $id('teamSel');
   if (mqMobile.matches) $id('teamFab').appendChild(s);
   else $id('follow').appendChild(s);
+  // the floating 📋/⭐ buttons own the bottom-right on phones — move the required tile
+  // attribution to the opposite corner instead of letting them overlap
+  try { map.attributionControl.setPosition(mqMobile.matches ? 'bottomleft' : 'bottomright'); } catch (e) {}
   layoutPanel();
 }
-mqMobile.addEventListener('change', applyFormFactor);
+// rotating a phone changes chip text, pin sizes and the timeline height — re-render
+mqMobile.addEventListener('change', () => { applyFormFactor(); setDay(dayIdx, false); if (follow) buildJourney(); });
 
 const totalPoints = () => { let g = 0, p = 0; for (const m of MATCHES) if (m.s1 != null && m.fin) { g += m.s1 + m.s2; p++; } return { g, p }; };
-function pointsChipHTML() { const { g, p } = totalPoints(); return `<span class="chip goals" id="goalsChip" role="button" tabindex="0" title="${t('pointsTitle')} — ${t('tFf')}" onclick="ffOpen()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();ffOpen()}">${t('pointsTally', nfmt(g), p ? (g / p).toFixed(1) : '')}</span>`; }
+function pointsChipHTML() {
+  const { g, p } = totalPoints();
+  const avg = (p && !mqMobile.matches) ? (g / p).toFixed(1) : '';      // per-game only where there's room
+  return `<span class="chip goals" id="goalsChip" role="button" tabindex="0" title="${t('pointsTitle')} — ${t('tFf')}" onclick="ffOpen()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();ffOpen()}">${t('pointsTally', nfmt(g), avg)}</span>`;
+}
 function updatePointsChip() { const el = $id('goalsChip'); if (el) el.outerHTML = pointsChipHTML(); }
 
 function setDay(i, fly) {
@@ -976,12 +1040,15 @@ function setDay(i, fly) {
   $id('dayTitle').textContent = weekName(wk);
   const cities = new Set(wkMatches.filter(m => m.v).map(m => VENUES[m.v][0]));
   const intl = wkMatches.filter(m => m.neutral && m.v && VENUES[m.v][1] !== 'USA');
+  // phones get a single chip row: cities tracks games almost exactly, and the bye teams
+  // are listed in full at the foot of the game list instead of in a 150px-wide chip
+  const narrow = mqMobile.matches;
   $id('dayMeta').innerHTML =
     `<span class="chip round" style="background:${ROUND_COLOR[rk]}">${fmtSpan(wk.from, wk.to)}</span>
      <span class="chip">${t('games', wkMatches.length)}</span>
-     <span class="chip">${t('cities', cities.size)}</span>
+     ${narrow ? '' : `<span class="chip">${t('cities', cities.size)}</span>`}
      ${intl.map(m => `<span class="chip intl" onclick="openVenue('${esc(m.v)}')">${t('intlChip', VENUES[m.v][0])}</span>`).join('')}
-     ${wk.byes ? `<span class="chip bye">${t('byes', wk.byes.join(' · '))}</span>` : ''}
+     ${wk.byes ? `<span class="chip bye" title="${wk.byes.join(' · ')}">${narrow ? t('byesShort', wk.byes.length) : t('byes', wk.byes.join(' · '))}</span>` : ''}
      ${pointsChipHTML()}`;
 
   document.querySelectorAll('.day').forEach((el, j) => el.classList.toggle('active', j === dayIdx));
@@ -1016,9 +1083,14 @@ function fitDay(wkMatches) {
   if (follow) { const mine = ms.filter(m => m.a === follow || m.b === follow); if (mine.length) ms = mine; }
   else { const us = ms.filter(m => VENUES[m.v][1] === 'USA'); if (us.length) ms = us; }
   const pts = [...new Set(ms.map(m => m.v))].map(n => [VENUES[n][2], VENUES[n][3]]);
+  // The header and the timeline float OVER the map, so fit into the band between them —
+  // otherwise half the week's games sit behind the chrome with dead ocean below.
+  const mobile = mqMobile.matches;
+  const padTL = [mobile ? 14 : 410, mobile ? $id('hdr').offsetHeight + 18 : 30];
+  const padBR = [14, mobile ? $id('tl').offsetHeight + 36 : 120];
   if (!pts.length) { map.flyTo([38.5, -96.5], 4, {duration: .9}); return; }
   if (pts.length === 1) map.flyTo(pts[0], 6, {duration: .9});
-  else map.flyToBounds(L.latLngBounds(pts).pad(.25), {duration: .9, maxZoom: 5, paddingTopLeft: [mqMobile.matches ? 0 : 400, 0]});
+  else map.flyToBounds(L.latLngBounds(pts).pad(.08), {duration: .9, maxZoom: 5, paddingTopLeft: padTL, paddingBottomRight: padBR});
 }
 
 // game cards, grouped by the VISITOR's local calendar day, kickoff order within
@@ -1040,6 +1112,10 @@ function renderPanel(w, wkMatches, quiet) {
     </div>`;
     for (const m of ms) html += cardHTML(m, now, k++);
   }
+  const wk = WEEKS.find(x => x.w === w);
+  if (wk && wk.byes && wk.byes.length)
+    html += `<div class="byeRow"><span class="bl">😴 ${t('byeFooter')}</span>${wk.byes.map(c =>
+      `<span class="bt" onclick="followTeam('${c}')" title="${teamName(c)}">${logoImg(c)}${c}</span>`).join('')}</div>`;
   inner.innerHTML = html;
 }
 function cardHTML(m, now, k) {
