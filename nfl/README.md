@@ -4,11 +4,12 @@ NFL retarget of the World Cup 26 "Match Day Map" (`../wcviz`). Same idea: an
 interactive map of every game of the 2026 NFL season (Sept 10, 2026 – Super Bowl LXI,
 Feb 14, 2027) across the 30 NFL stadiums plus the International Series venues.
 
-Status: **data layer + core app done** (map, week timeline, game cards, follow-a-team
-travel route, division standings drawer, live ESPN polling, PWA, en/es). Playoff
-predictor, odds model and the season-recap card are the next steps (see below).
+Status: **data layer, core app, fantasy leaders, tiebreakers, bracket predictor and the
+odds model are all done** (map, week timeline, game cards, follow-a-team travel route,
+division standings drawer, live ESPN polling, PWA, en/es). The season-recap share card is
+the one thing left on the plan (see below).
 
-**To use: open `index.html` in a browser.** `node verify.js [desk|team|div|mobile|es|ff|layout]`
+**To use: open `index.html` in a browser.** `node verify.js [desk|team|div|mobile|es|ff|layout|seeds|bracket|odds]`
 runs a headless-Edge smoke test (uses `../wcviz/node_modules/playwright-core`) and
 writes `_shot-<scenario>.png`. The `layout` scenario asserts phone geometry — nothing
 floating over the timeline bar, one row of header chips, no colliding stadium labels or
@@ -65,7 +66,11 @@ the map reduced to a blob of overlapping pins. The fixes worth knowing before ed
   currently holding a wild-card seed, and a 🏆 shortcut to the playoff picture.
 - **🏆 Playoff picture** — both conferences seeded 1–7, who is in the hunt and how far
   back, and the wild-card matchups the seeding implies. See below.
-- **🔮 Bracket predictor** — second tab of 🏆. Tap a team to send them through; the
+- **📈 Season odds** — middle tab of 🏆. A points-margin model fitted to this season
+  plays the rest of it out 10,000 times: title, conference, playoff, division and
+  first-round-bye odds for all 32 clubs, plus a projected record. **How the odds moved**
+  expands into a week-by-week chart of the same model replayed. See below.
+- **🔮 Bracket predictor** — third tab of 🏆. Tap a team to send them through; the
   bracket reseeds as you pick. Chalk / random fill, a share link, and ✓/✗ grading once
   real playoff games finish.
 - **Live** — ESPN scoreboard polled every 45 s during game windows (score, quarter/clock,
@@ -78,7 +83,7 @@ the map reduced to a blob of overlapping pins. The fixes worth knowing before ed
   tab. Players only (QB/RB/WR/TE/K) — no team defenses.
 - **PWA** (`manifest.json`, `sw.js` cache `nflviz-v1`, generated 🏈 icons), **en/es**
   toggle in the help overlay, deep links `?w=7`, `?d=2026-10-25`, `?team=KC`,
-  `?div=AFC West`, `?play=1`, `?sheet=1`, `?ff=1`.
+  `?div=AFC West`, `?play=1`, `?sheet=1`, `?ff=1`, `?po=1|odds|bracket`.
 
 ## Tiebreakers and seeding
 
@@ -120,6 +125,58 @@ appear a week after the league announces it, but never wrongly.
 
 `node verify.js seeds` checks internal consistency and compares every seed against ESPN's
 published `playoffSeed`.
+
+## Odds model
+
+A points-margin model, fitted to the season so far and then played out.
+
+```
+margin(home − away) = rating[home] − rating[away] + home field
+```
+
+**Fit.** `fitRatings()` solves the ridge normal equations by Jacobi passes (strictly
+diagonally dominant with λ > 0, so they converge), alternating with a home-field update
+from the residual of the games that had a host. `RIDGE = 4` games of prior, which implies
+a prior rating SD of `GAME_SD/√λ ≈ 6.5` points — close to the real spread of NFL team
+strength, and what keeps a 2-0 club out of first place in September. A rout is capped at
+`MARGIN_CAP = 24`. Home field is fitted against `HFA_PRIOR = 1.8` weighted at 200 games,
+because one season is far too few to measure it from scratch (the raw residual over the
+first six weeks of 2026 is 0.5 ± 1.3). At the fixed point the ratings sum to zero on their
+own, so 0 is an average club by construction — `verify.js odds` asserts it.
+
+**Simulate.** A game's margin is normal around the rating difference with `GAME_SD = 13`
+points, rounded to whole points; a rounded 0 goes to overtime, where `TIE_RATE = 0.18` of
+them stay level (≈1.5 ties a season, which is about the real rate). Every simulation also
+redraws each club's rating from its own posterior, `GAME_SD/√(games + RIDGE)` — 4.1 points
+after six games, 2.8 after a full season — so the spread of outcomes carries what we do not
+know about the clubs, not only what we cannot know about the games. One simulation plays
+all 272 regular-season games, seeds both conferences, and runs the reseeding bracket to a
+champion; a postseason matchup that really happened is decided by what happened, not
+simulated. 10,000 of them take about half a second, chunked over `requestAnimationFrame`.
+
+**Seeding inside a simulation.** `pickBest()` runs the rule book exactly but is far too
+slow for ten thousand seasons, so simulations use a one-pass version of the chain: win
+percentage, head-to-head (mini-league record for groups of three or more), division and
+conference record, strength of victory, then a coin toss. Common games, the points
+rankings and net points are left out. It keeps the two rules that change results — a club
+is never seeded above a division rival it ranks behind (`orderDivMates`), and while clubs
+in a tie have played a different number of games more wins ranks first — and
+`simSeedCheck()` runs it against the live standings so `verify.js odds` can assert it
+reproduces the exact chain's seeds. **The standings and seeds the app shows always come
+from the exact chain.**
+
+**How the odds moved.** The model is deterministic given results, so the past is
+recomputable: for each completed week the ratings are re-fitted and the season re-simulated
+with everything after that Monday hidden (`HIST_SIMS = 2500` per week). No stored history
+and no backend — just replay, cached in `localStorage` against the full-time results
+signature. The chart follows whichever metric is selected; ✕ marks an elimination.
+
+`node verify.js odds` runs the Monte Carlo to completion and checks it adds up exactly —
+14 playoff berths, 8 division titles, 2 byes, 2 conference champions, 1 champion and 272
+team wins per simulated season — that no club's title odds exceed its conference odds (and
+so on down), that the simulated tiebreaker matches `playoffPicture()`, that the ratings sum
+to zero and home field lands in a believable band, and that the replay's kickoff column is
+near-uniform (proof it is not leaking later results).
 
 ## Bracket predictor
 
@@ -228,9 +285,13 @@ SoFi on 2027-02-14.
 ## Next (per the plan)
 
 1. ~~Retarget `index.html`~~ — done 2026-10-21.
-2. Full NFL tiebreakers (add common games, strength of victory / schedule, conference
-   wild-card procedure) + a conference-wide playoff-picture view.
-3. Playoff seeding (7 per conference, 1-seed bye) + reseeding bracket predictor and a
-   road-to-the-Super-Bowl tracer on the journey card.
-4. Odds: points-margin model (rating + home field, normal margin, small tie prob) feeding the
-   Monte Carlo and the "how the odds evolved" week-by-week chart; then the season-recap share card.
+2. ~~Full NFL tiebreakers + conference-wide playoff picture~~ — done 2026-10-24.
+3. ~~Reseeding bracket predictor~~ — done 2026-10-24. (The road-to-the-Super-Bowl tracer on
+   the journey card was dropped; the bracket highlights the followed team instead.)
+4. ~~Points-margin odds model + the week-by-week "how the odds moved" chart~~ —
+   done 2026-10-24. Still to come: the **season-recap share card**.
+
+Keeping it fresh: standings, fantasy leaders and odds are only as current as the last
+`node refresh.js`. After a game day, run it and push `data.js` + `fantasy-data.js` (both
+network-first in the service worker, so no `nflviz-vN` bump). A scheduled refresh is the
+obvious follow-up.
