@@ -458,6 +458,44 @@
     .helpCard{width:100vw; height:100%; max-height:100vh; border-radius:0;}
   }
 
+  /* 🏆 playoff picture (reuses .helpCard) */
+  #po{position:absolute; inset:0; z-index:1662; display:none; background:rgba(7,11,22,.86); backdrop-filter:blur(6px); padding:18px;}
+  #po.open{display:flex; justify-content:center; align-items:center;}
+  #po .helpCard{width:min(880px,96vw);}
+  .poGrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(296px,1fr)); gap:18px; padding:6px 0 10px;}
+  .poConf h3{font-size:12.5px; font-weight:900; letter-spacing:1.4px; color:var(--ink-dim); margin:0 0 8px;}
+  .poRow{display:grid; grid-template-columns:18px 24px minmax(0,1fr) auto; align-items:center; gap:9px;
+    padding:6px 8px; border-radius:9px; cursor:pointer;}
+  .poRow + .poRow{margin-top:2px;}
+  .poRow:hover{background:rgba(255,255,255,.07);}
+  .poRow.win{background:rgba(34,224,124,.09);}
+  .poRow.wc{background:rgba(76,201,240,.07);}
+  .poRow.bye{background:linear-gradient(90deg,rgba(255,209,102,.18),rgba(255,209,102,.02)); box-shadow:inset 0 0 0 1px rgba(255,209,102,.4);}
+  .poRow.hunt{opacity:.6;}
+  .poRow .sd{text-align:center; font-weight:900; font-size:12px; color:var(--ink-dim);}
+  .poRow.win .sd,.poRow.wc .sd{color:var(--pitch);} .poRow.bye .sd{color:var(--gold);}
+  .poRow img.lg{width:24px; height:24px;}
+  .poRow .nm{min-width:0; font-weight:800; font-size:13.5px; line-height:1.15;}
+  .poRow .nm .n{white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;}
+  .poRow .nm small{display:block; font-size:9.5px; font-weight:700; color:var(--ink-dim);}
+  .poRow .rc{font-weight:900; font-size:13px; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap;}
+  .poRow .rc small{display:block; font-size:9.5px; color:var(--ink-dim); font-weight:700;}
+  .poCut{display:flex; align-items:center; gap:9px; margin:10px 2px 7px; font-size:9px; font-weight:800; letter-spacing:1.2px; color:var(--ink-dim);}
+  .poCut::after{content:''; flex:1; height:1px; background:var(--panel-border);}
+  .poTag{font-size:8.5px; font-weight:900; padding:0 5px; border-radius:5px; margin-left:5px; vertical-align:1px;}
+  .poTag.y{color:var(--pitch); border:1px solid var(--pitch);}
+  .poTag.x{color:var(--sky); border:1px solid var(--sky);}
+  .poTag.e{color:var(--ink-dim); border:1px solid var(--ink-dim);}
+  .poMatch{margin-top:11px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,.03); border:1px solid var(--panel-border);}
+  .poMatch .pmT{font-size:9px; font-weight:800; letter-spacing:1.2px; color:var(--ink-dim); margin-bottom:7px;}
+  .pmRow{display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:700; padding:3.5px 0; white-space:nowrap;}
+  .pmRow img.lg{width:19px; height:19px;}
+  .pmRow .s{color:var(--ink-dim); font-weight:900; font-size:9.5px; min-width:9px;}
+  .pmRow .at{color:var(--ink-dim); margin:0 1px;}
+  .pmRow.byeP{color:var(--gold);}
+  .stTbl tr.po td.ps{color:var(--sky);}            /* holds a wild-card seed right now */
+  @media (max-width:760px){ #po{padding:0;} .poGrid{gap:14px;} }
+
   /* 📊 fantasy leaders panel (reuses .helpCard) */
   #ff{position:absolute; inset:0; z-index:1660; display:none; background:rgba(7,11,22,.86); backdrop-filter:blur(6px); padding:18px;}
   #ff.open{display:flex; justify-content:center; align-items:center;}
@@ -488,7 +526,12 @@
   .ffNote{font-size:10px; color:var(--ink-dim); padding:6px 18px 10px; line-height:1.4; border-top:1px solid var(--panel-border);}
   .scMsg{padding:26px; text-align:center; color:var(--ink-dim); font-size:13px;}
   .chip.goals{cursor:pointer;} .chip.goals:hover{background:rgba(255,209,102,.16);}
-  @media (max-width:760px){ #ff{padding:0;} .ffRow .nm{font-size:13px;} }
+  /* the explanatory footers are long; on a phone cap them so they can't eat the panel */
+  @media (max-width:760px){
+    #ff{padding:0;}
+    .ffRow .nm{font-size:13px;}
+    .ffNote{max-height:76px; overflow-y:auto; font-size:9.5px; line-height:1.45;}
+  }
 
   #confetti{position:absolute; inset:0; z-index:1500; pointer-events:none;}
   #sheetBar{display:none;}
@@ -617,6 +660,7 @@
 <div id="drawer" role="dialog" aria-modal="true" aria-label="Division standings"><div id="drawerInner"></div></div>
 <div id="help" role="dialog" aria-modal="true" aria-label="How to use this app"><div class="helpCard"></div></div>
 <div id="ff" role="dialog" aria-modal="true" aria-label="Fantasy leaders" onclick="if(event.target===this)ffClose()"><div class="helpCard"></div></div>
+<div id="po" role="dialog" aria-modal="true" aria-label="Playoff picture" onclick="if(event.target===this)poClose()"><div class="helpCard"></div></div>
 <div id="clockChip"></div>
 
 <div id="tl">
@@ -626,6 +670,7 @@
   <span class="tlSep" aria-hidden="true"></span>
   <button class="tlBtn small" id="soundBtn" title="Score sounds">🔇</button>
   <button class="tlBtn small" id="notifyBtn" title="Game alerts">🔕</button>
+  <button class="tlBtn small" id="poBtn" title="Playoff picture">🏆</button>
   <button class="tlBtn small" id="ffBtn" title="Fantasy leaders">📊</button>
   <button class="tlBtn small" id="helpBtn" title="How to use this app">?</button>
   <div id="days"></div>
@@ -709,6 +754,10 @@ const STR = {
     live: 'LIVE', localLbl: 'local', ft: 'FINAL', at: '@', ot: 'OT', tbdTime: 'TBD', tbd: 'TBD', tbdLabel: 'To be determined',
     playsHere: 'PLAYS HERE', capWord: 'capacity', seatsWord: 'seats', homeOf: 'Home of',
     nStadiums: n => `${n} stadiums`, tapToExpand: 'tap to zoom in',
+    tPo: 'Playoff picture', poTitle: '🏆 Playoff picture', poWildCard: 'Wild card',
+    poHunt: 'IN THE HUNT', poGB: gb => `${gb} back`, poIfToday: 'IF THE SEASON ENDED TODAY',
+    poBye: 'first-round bye', poClinchdiv: 'Clinched the division', poClinchin: 'Clinched a playoff berth', poClinchout: 'Eliminated',
+    poNote: 'Seeds follow the NFL tiebreakers in order: head-to-head, division and conference record, common games, strength of victory, strength of schedule, the combined points-scored and points-allowed rankings, then net points and net touchdowns. Division winners always seed above wild cards. y = clinched division, x = clinched a berth, e = eliminated, each shown only once the records make it certain.',
     intl: 'International Series', divGame: 'Division game', dome: 'indoor',
     yourTime: s => `🕒 Your time: ${s}`,
     kicksIn: s => `⏳ kicks off in ${s}`,
@@ -729,8 +778,9 @@ const STR = {
     seasonDone: '🏆 Season complete — see you in September!',
     thTeam: 'TEAM', thW: 'W', thL: 'L', thT: 'T', thPct: 'PCT', thPF: 'PF', thPA: 'PA', thNet: 'NET', thDiv: 'DIV',
     clickFollow: 'Click to follow', clearTeam: 'Clear team · reset view',
-    legendPlayed: 'division leader is a playoff seed · tiebreaks: head-to-head → division → conference → net points · click a team to follow',
+    legendPlayed: '<b style="color:var(--pitch)">green</b> leads the division · <b style="color:var(--sky)">blue</b> holds a wild-card seed · full NFL tiebreakers · tap 🏆 for the playoff picture',
     legendEmpty: 'no results yet — click a team to follow',
+    poSeed: n => n ? `currently the #${n} seed` : 'not seeded',
     divGames: 'DIVISION GAMES',
     helpTitle: '👋 How to use the Season Map', helpGotIt: 'Got it 🏈', igFollow: 'Follow on Instagram', tClose: 'Close (Esc)',
     tFf: 'Fantasy leaders', ffTitle: '📊 Fantasy leaders', ffSeason: 'Season', ffStd: 'Std', ffHalf: 'Half', ffPpr: 'PPR',
@@ -749,6 +799,7 @@ const STR = {
       ['🔴','<b>Live scores.</b> On game days the scores and clock update on their own — no refresh needed.'],
       ['🔊','<b>Score sounds.</b> Toggle 🔊 in the timeline bar for a fanfare when your team scores (off by default).'],
       ['🔔','<b>Game alerts.</b> Tap 🔔 to get a notification for your followed team’s kickoffs and scores. Install the app to your home screen for the full experience. Alerts ping while the app is open.'],
+      ['🏆','<b>Playoff picture.</b> Tap 🏆 for both conferences seeded 1–7 with the full NFL tiebreakers, who is still in the hunt and how far back, and the wild-card matchups if the season ended today.'],
       ['📊','<b>Fantasy leaders.</b> Tap 📊 (or the points chip) for the top fantasy scorers of any week or the whole season, in Standard, Half-PPR or PPR scoring, with each player’s stat line.'],
       ['🔗','<b>Share the view.</b> The URL remembers your week and followed team — copy it to share exactly what you’re looking at.'],
     ],
@@ -777,6 +828,10 @@ const STR = {
     live: 'EN VIVO', localLbl: 'local', ft: 'FINAL', at: '@', ot: 'TE', tbdTime: 'Por definir', tbd: 'TBD', tbdLabel: 'Por definir',
     playsHere: 'JUEGA AQUÍ', capWord: 'capacidad', seatsWord: 'asientos', homeOf: 'Casa de',
     nStadiums: n => `${n} estadios`, tapToExpand: 'toca para acercar',
+    tPo: 'Panorama de playoffs', poTitle: '🏆 Panorama de playoffs', poWildCard: 'Comodín',
+    poHunt: 'EN LA PELEA', poGB: gb => `a ${gb}`, poIfToday: 'SI LA TEMPORADA TERMINARA HOY',
+    poBye: 'descansa la primera ronda', poClinchdiv: 'Ganó la división', poClinchin: 'Clasificado a playoffs', poClinchout: 'Eliminado',
+    poNote: 'Los puestos siguen los criterios de desempate de la NFL en orden: enfrentamientos directos, marca divisional y de conferencia, rivales en común, fuerza de victorias, fuerza del calendario, la suma de los lugares en puntos a favor y en contra, y luego la diferencia de puntos y de touchdowns. Los campeones de división siempre van por encima de los comodines. y = ganó la división, x = clasificado, e = eliminado, y solo se muestran cuando las marcas lo hacen matemáticamente seguro.',
     intl: 'Serie Internacional', divGame: 'Juego divisional', dome: 'techado',
     yourTime: s => `🕒 Tu hora: ${s}`,
     kicksIn: s => `⏳ inicia en ${s}`,
@@ -797,8 +852,9 @@ const STR = {
     seasonDone: '🏆 Temporada terminada — ¡nos vemos en septiembre!',
     thTeam: 'EQUIPO', thW: 'G', thL: 'P', thT: 'E', thPct: 'PCT', thPF: 'PF', thPA: 'PC', thNet: 'DIF', thDiv: 'DIV',
     clickFollow: 'Clic para seguir', clearTeam: 'Quitar equipo · restablecer vista',
-    legendPlayed: 'el líder divisional es cabeza de serie · desempates: enfrentamientos directos → división → conferencia → diferencia de puntos · clic en un equipo para seguir',
+    legendPlayed: '<b style="color:var(--pitch)">verde</b> lidera la división · <b style="color:var(--sky)">azul</b> tiene lugar de comodín · criterios de desempate completos de la NFL · toca 🏆 para el panorama',
     legendEmpty: 'aún sin resultados — clic en un equipo para seguir',
+    poSeed: n => n ? `actualmente el lugar #${n}` : 'sin lugar',
     divGames: 'JUEGOS DIVISIONALES',
     helpTitle: '👋 Cómo usar el Mapa de la Temporada', helpGotIt: '¡Entendido! 🏈', igFollow: 'Sígueme en Instagram', tClose: 'Cerrar (Esc)',
     tFf: 'Líderes de fantasy', ffTitle: '📊 Líderes de fantasy', ffSeason: 'Temporada', ffStd: 'Est', ffHalf: 'Media', ffPpr: 'PPR',
@@ -817,6 +873,7 @@ const STR = {
       ['🔴','<b>Marcadores en vivo.</b> En días de juego, los marcadores y el reloj se actualizan solos — sin recargar.'],
       ['🔊','<b>Sonidos de anotación.</b> Activa 🔊 en la barra de tiempo para una fanfarria cuando tu equipo anota (desactivado por defecto).'],
       ['🔔','<b>Alertas de juego.</b> Toca 🔔 para recibir una notificación de los arranques y anotaciones del equipo que sigues. Instala la app en tu pantalla de inicio para la experiencia completa. Las alertas suenan mientras la app está abierta.'],
+      ['🏆','<b>Panorama de playoffs.</b> Toca 🏆 para ver ambas conferencias sembradas del 1 al 7 con todos los criterios de desempate de la NFL, quién sigue en la pelea y a cuánto está, y los duelos de comodines si la temporada terminara hoy.'],
       ['📊','<b>Líderes de fantasy.</b> Toca 📊 (o la ficha de puntos) para ver a los máximos anotadores de fantasy de cualquier semana o de toda la temporada, en puntuación Estándar, Media PPR o PPR, con la línea de estadísticas de cada jugador.'],
       ['🔗','<b>Comparte la vista.</b> La URL recuerda tu semana y equipo seguido — cópiala para compartir exactamente lo que ves.'],
     ],
@@ -1798,33 +1855,185 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => {});
 }
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { if (ffOn) return ffClose(); if (helpOn) return helpClose(); return closeDrawer(); }
-  if (helpOn || ffOn) return;
+  if (e.key === 'Escape') { if (poOn) return poClose(); if (ffOn) return ffClose(); if (helpOn) return helpClose(); return closeDrawer(); }
+  if (helpOn || ffOn || poOn) return;
   if (e.key === 'ArrowLeft') { stopPlay(); stepDay(-1); }
   if (e.key === 'ArrowRight') { stopPlay(); stepDay(1); }
   if (e.key === ' ') { e.preventDefault(); startPlay(); }
 });
 
+// ── NFL tiebreakers ──────────────────────────────────────────────────────
+// The real procedure from the rule book, not a sort comparator. Two chains — one
+// for clubs in the same division, one for clubs from different divisions (the
+// conference / wild-card chain) — and both begin at win percentage, so the steps
+// after it only ever compare clubs that are level.
+//
+// Three rules make this more than a sort:
+//   • Only ONE club is separated per pass. Once it is taken, every remaining club
+//     reverts to step 1 of the applicable chain.
+//   • If a step narrows the field without resolving it, the chain RESTARTS at
+//     step 1 for the clubs that remain.
+//   • In a wild-card tie, clubs from the same division are first reduced to their
+//     highest-ranked member (by the division chain) before the conference chain
+//     runs — a club can never be seeded above a division rival it ranks behind.
+//
+// Everything is derived from final scores, so the chain is exact through net
+// points. Net touchdowns (the last step before a coin toss) uses the team
+// touchdown counts fantasy.js pulls from the box scores. A tie that survives
+// every step is settled by a coin toss in reality; here it falls back to code order.
+const SEASON_GAMES = 17;
+let _tbSig = null, _TB = null;
+function TB() {
+  const sig = MATCHES.reduce((a, m) => (m.fin && m.s1 != null && m.a) ? a + m.n + ':' + m.s1 + '-' + m.s2 + ';' : a, '');
+  if (_TB && _tbSig === sig) return _TB;
+  const codes = Object.keys(TEAMS), G = {};
+  codes.forEach(c => G[c] = []);                 // team -> one entry per game played
+  for (const m of MATCHES) {
+    if (!m.fin || m.s1 == null || !m.a || !m.b) continue;
+    const aw = m.s1 > m.s2 ? 1 : m.s1 < m.s2 ? 0 : 0.5;
+    G[m.a].push({ opp: m.b, w: aw, pf: m.s1, pa: m.s2, div: !!m.div, conf: !!m.conf });
+    G[m.b].push({ opp: m.a, w: 1 - aw, pf: m.s2, pa: m.s1, div: !!m.div, conf: !!m.conf });
+  }
+  const R = {};
+  codes.forEach(c => {
+    const L = G[c], pts = L.reduce((s, x) => s + x.w, 0);    // a tie is half a win
+    R[c] = { g: L.length, pts, w: L.filter(x => x.w === 1).length, l: L.filter(x => x.w === 0).length,
+      t: L.filter(x => x.w === .5).length, pf: L.reduce((s, x) => s + x.pf, 0), pa: L.reduce((s, x) => s + x.pa, 0),
+      pct: L.length ? pts / L.length : 0 };
+    R[c].net = R[c].pf - R[c].pa;
+  });
+  // strength of victory / schedule: the aggregate record of the clubs beaten / played
+  const SOV = {}, SOS = {};
+  codes.forEach(c => {
+    let vp = 0, vg = 0, sp = 0, sg = 0;
+    for (const x of G[c]) {
+      sp += R[x.opp].pts; sg += R[x.opp].g;
+      if (x.w > 0) { vp += R[x.opp].pts * x.w; vg += R[x.opp].g * x.w; }   // a tie counts half
+    }
+    SOV[c] = vg ? vp / vg : 0; SOS[c] = sg ? sp / sg : 0;
+  });
+  // combined ranking in points scored and allowed; clubs level on a figure share a rank
+  const rankBy = (list, val, hiBest) => { const r = {};
+    list.forEach(c => r[c] = 1 + list.filter(o => hiBest ? val(o) > val(c) : val(o) < val(c)).length); return r; };
+  const rkL = { pf: rankBy(codes, c => R[c].pf, true), pa: rankBy(codes, c => R[c].pa, false) }, rkC = {};
+  for (const cf of Object.keys(CONFS)) rkC[cf] = { pf: rankBy(CONFS[cf], c => R[c].pf, true), pa: rankBy(CONFS[cf], c => R[c].pa, false) };
+  _tbSig = sig;
+  return _TB = { G, R, SOV, SOS, rkL, rkC, tds: (window.NFLF && NFLF.tds) || {} };
+}
+
+const pctOver = L => L.length ? L.reduce((s, x) => s + x.w, 0) / L.length : null;
+const netOver = L => L.reduce((s, x) => s + x.pf - x.pa, 0);
+const commonOppsOf = pool => { const sets = pool.map(c => new Set(TB().G[c].map(x => x.opp)));
+  return sets.length ? [...sets[0]].filter(o => sets.every(s => s.has(o))) : []; };
+
+// every step returns "higher is better", or null when it does not apply
+const STEPS = {
+  pct: c => TB().R[c].pct,
+  // The rule book assumes every club has played 17 games. Mid-season they have not,
+  // and a literal reading seats a 6-0 club behind a 5-0 one on strength of victory —
+  // which is how ESPN and the league's own standings would never show it. So when the
+  // clubs in a tie have played a DIFFERENT number of games, more wins ranks first.
+  // Once the schedule is complete this step is skipped and the chain is the rule book.
+  moreWins: (c, pool) => {
+    const gs = pool.map(x => TB().R[x].g);
+    return Math.min(...gs) === Math.max(...gs) ? null : TB().R[c].pts;
+  },
+  h2h: (c, pool) => {
+    const L = TB().G[c].filter(x => pool.indexOf(x.opp) >= 0);
+    if (pool.length === 2) return pctOver(L);                       // two clubs: plain head-to-head
+    const others = pool.filter(o => o !== c);                       // three or more: sweep only
+    if (!others.every(o => L.some(x => x.opp === o))) return 0.5;
+    if (L.every(x => x.w === 1)) return 1;                          // beat them all
+    if (L.every(x => x.w === 0)) return 0;                          // lost to them all
+    return 0.5;
+  },
+  divPct: c => pctOver(TB().G[c].filter(x => x.div)),
+  confPct: c => pctOver(TB().G[c].filter(x => x.conf)),
+  common: (c, pool, mode) => {
+    const opps = commonOppsOf(pool), L = TB().G[c].filter(x => opps.indexOf(x.opp) >= 0);
+    return L.length >= (mode === 'div' ? 1 : 4) ? pctOver(L) : null;   // wild card needs four
+  },
+  sov: c => TB().SOV[c],
+  sos: c => TB().SOS[c],
+  rkConf: c => { const k = TB().rkC[TEAMS[c].conf]; return -(k.pf[c] + k.pa[c]); },
+  rkLeague: c => { const k = TB().rkL; return -(k.pf[c] + k.pa[c]); },
+  netCommon: (c, pool) => { const opps = commonOppsOf(pool); return netOver(TB().G[c].filter(x => opps.indexOf(x.opp) >= 0)); },
+  netConf: c => netOver(TB().G[c].filter(x => x.conf)),
+  netAll: c => TB().R[c].net,
+  netTD: c => { const t = TB().tds[c]; return t ? t.f - t.a : null; },
+};
+const CHAIN_DIV = ['pct', 'moreWins', 'h2h', 'divPct', 'common', 'confPct', 'sov', 'sos', 'rkConf', 'rkLeague', 'netCommon', 'netAll', 'netTD'];
+const CHAIN_WC  = ['pct', 'moreWins', 'h2h', 'confPct', 'common', 'sov', 'sos', 'rkConf', 'rkLeague', 'netConf', 'netAll', 'netTD'];
+const r9 = x => Math.round(x * 1e9) / 1e9;       // keep 4/6 and 2/3 comparable
+
+// separate exactly one club out of `pool`, restarting the chain whenever it narrows
+function pickBest(pool, mode) {
+  let cur = pool.slice();
+  for (let guard = 0; guard < 40 && cur.length > 1; guard++) {
+    let narrowed = false;
+    for (const key of (mode === 'div' ? CHAIN_DIV : CHAIN_WC)) {
+      const vals = cur.map(c => STEPS[key](c, cur, mode));
+      if (vals.some(v => v == null || !isFinite(v))) continue;      // step does not apply
+      const best = Math.max(...vals.map(r9));
+      const keep = cur.filter((c, i) => r9(vals[i]) === best);
+      if (keep.length === cur.length) continue;                     // no separation
+      cur = keep; narrowed = true; break;                           // restart at step 1
+    }
+    if (!narrowed) break;
+  }
+  return cur.length === 1 ? cur[0] : cur.slice().sort()[0];         // coin toss stand-in
+}
+// wild-card pick: reduce each division to its highest-ranked club, then compare those
+function pickBestWC(pool) {
+  const byDiv = {};
+  pool.forEach(c => (byDiv[divOf(c)] = byDiv[divOf(c)] || []).push(c));
+  const reps = Object.keys(byDiv).sort().map(d => byDiv[d].length === 1 ? byDiv[d][0] : pickBest(byDiv[d], 'div'));
+  return reps.length === 1 ? reps[0] : pickBest(reps, 'wc');
+}
+const rankBySteps = (teams, pick) => { const out = []; let rest = teams.slice();
+  while (rest.length) { const b = pick(rest); out.push(b); rest = rest.filter(c => c !== b); } return out; };
+const rankDiv = teams => rankBySteps(teams, p => pickBest(p, 'div'));
+const rankWC = teams => rankBySteps(teams, pickBestWC);
+
+// ── playoff seeding ──────────────────────────────────────────────────────
+// Four division winners seeded 1–4, then the three best remaining clubs 5–7.
+let _POfor = null, _PO = null;
+function playoffPicture() {
+  const t = TB();
+  if (_POfor === t) return _PO;
+  const out = {};
+  for (const cf of Object.keys(CONFS)) {
+    const winners = Object.keys(DIVISIONS).filter(d => d.startsWith(cf)).map(d => pickBest(DIVISIONS[d].slice(), 'div'));
+    const top = rankWC(winners);
+    const wc = rankWC(CONFS[cf].filter(c => winners.indexOf(c) < 0));
+    out[cf] = { winners: top, wc, order: top.concat(wc) };
+  }
+  _POfor = t;
+  return _PO = out;
+}
+const seedOf = c => { const S = playoffPicture()[TEAMS[c].conf]; const i = S.order.indexOf(c); return i < 0 ? null : i + 1; };
+
+// Clinched / eliminated, by record alone and deliberately conservative: a club is
+// only marked once it is certain however the remaining games fall. Head-to-head
+// cannot be projected, so a rival that can merely draw level counts as a threat —
+// which means a marker may appear a week later than the league announces it, but
+// never wrongly.
+function clinchOf(c) {
+  const R = TB().R, maxP = x => R[x].pts + Math.max(0, SEASON_GAMES - R[x].g), minP = x => R[x].pts;
+  const conf = TEAMS[c].conf;
+  if (DIVISIONS[divOf(c)].every(x => x === c || maxP(x) < minP(c))) return 'div';
+  if (CONFS[conf].filter(x => x !== c && maxP(x) >= minP(c)).length <= 6) return 'in';
+  if (CONFS[conf].filter(x => x !== c && minP(x) > maxP(c)).length >= 7) return 'out';
+  return null;
+}
+
 // ── division standings ───────────────────────────────────────────────────
-// Win pct, then NFL tiebreakers as far as a schedule-only model can take them:
-// head-to-head (sweep / pct among the tied), division record, conference record,
-// net points. (Common games, strength of victory/schedule: not yet modelled.)
 function standingsFor(d) {
-  const rows = DIVISIONS[d].map(c => {
-    const o = recordOf(c), dv = recordOf(c, m => m.div), cf = recordOf(c, m => m.conf);
-    return { c, ...o, net: o.pf - o.pa, dv, cf };
+  return rankDiv(DIVISIONS[d]).map(c => {
+    const R = TB().R[c];
+    return { c, w: R.w, l: R.l, t: R.t, pct: R.pct, pf: R.pf, pa: R.pa, net: R.net,
+      dv: recordOf(c, m => m.div), cf: recordOf(c, m => m.conf) };
   });
-  const h2h = (x, y) => recordOf(x, m => m.a === y || m.b === y);
-  rows.sort((x, y) => {
-    if (y.pct !== x.pct) return y.pct - x.pct;
-    const hx = h2h(x.c, y.c), hy = h2h(y.c, x.c);
-    if (hx.g && hx.pct !== hy.pct) return hy.pct - hx.pct;
-    if (y.dv.pct !== x.dv.pct) return y.dv.pct - x.dv.pct;
-    if (y.cf.pct !== x.cf.pct) return y.cf.pct - x.cf.pct;
-    if (y.net !== x.net) return y.net - x.net;
-    return teamName(x.c).localeCompare(teamName(y.c));
-  });
-  return rows;
 }
 function openDivision(d) {
   if (!DIVISIONS[d]) return;
@@ -1843,11 +2052,12 @@ function renderDivision() {
     <div class="dh"><h2>${conf} <b>${divName(d).replace(conf + ' ', '')}</b></h2><button class="dx" onclick="closeDrawer()">✕</button></div>
     <div class="db">
       <div class="divNav">${Object.keys(DIVISIONS).filter(x => x.startsWith(conf)).map(x => `<button class="${x === d ? 'on' : ''}" onclick="openDivision('${x}')">${divName(x).replace(conf + ' ', '')}</button>`).join('')}
-        <button onclick="openDivision('${conf === 'AFC' ? 'NFC' : 'AFC'} ${d.split(' ')[1]}')">${conf === 'AFC' ? 'NFC' : 'AFC'} →</button></div>
+        <button onclick="openDivision('${conf === 'AFC' ? 'NFC' : 'AFC'} ${d.split(' ')[1]}')">${conf === 'AFC' ? 'NFC' : 'AFC'} →</button>
+        <button onclick="poOpen()" title="${t('tPo')}">🏆</button></div>
       <table class="stTbl">
         <thead><tr><th></th><th class="tl">${t('thTeam')}</th><th>${t('thW')}</th><th>${t('thL')}</th><th>${t('thT')}</th><th>${t('thPct')}</th><th>${t('thNet')}</th><th>${t('thDiv')}</th></tr></thead>
         <tbody>${st.map((r, i) => `
-          <tr class="${i === 0 ? 'q' : ''}${follow === r.c ? ' fol' : ''}" onclick="followTeam('${r.c}')" title="${t('clickFollow')}">
+          <tr class="${i === 0 ? 'q' : seedOf(r.c) <= 7 ? 'po' : ''}${follow === r.c ? ' fol' : ''}" onclick="followTeam('${r.c}')" title="${t('clickFollow')} · ${t('poSeed', seedOf(r.c))}">
             <td class="ps">${i + 1}</td>
             <td class="tl">${logoImg(r.c)}${teamNick(r.c)}</td>
             <td>${r.w}</td><td>${r.l}</td><td>${r.t}</td>
@@ -1930,6 +2140,49 @@ function confTick() {
   else { rafLive = false; cx.clearRect(0, 0, cv.width, cv.height); }
 }
 addEventListener('resize', () => { layoutPanel(); if (confOn || bursts.length) sizeCanvas(); });
+
+// ── 🏆 playoff picture ──────────────────────────────────────────────────────
+// Both conferences: seeds 1–7 from the tiebreaker engine above, the clubs still in
+// the hunt with games back, and the wild-card weekend matchups the seeding implies.
+let poOn = false;
+function poOpen() { poOn = true; renderPO(); $id('po').classList.add('open'); $id('poBtn').classList.add('on'); }
+function poClose() { poOn = false; $id('po').classList.remove('open'); $id('poBtn').classList.remove('on'); }
+// standard games-back, with a tie counting as half a win on both sides of the ledger
+function gamesBack(c, ref) {
+  const A = TB().R[ref], B = TB().R[c];
+  const gb = ((A.pts - B.pts) + ((B.g - B.pts) - (A.g - A.pts))) / 2;
+  return gb <= 0 ? '—' : String(Math.round(gb * 10) / 10);
+}
+function poRowHTML(c, seed, kind, sub) {
+  const R = TB().R[c], cl = clinchOf(c);
+  const tag = cl ? `<span class="poTag ${cl === 'div' ? 'y' : cl === 'in' ? 'x' : 'e'}" title="${t('poClinch' + cl)}">${cl === 'div' ? 'y' : cl === 'in' ? 'x' : 'e'}</span>` : '';
+  return `<div class="poRow ${kind}${seed === 1 ? ' bye' : ''}" onclick="followTeam('${c}');poClose()" title="${teamName(c)}">
+    <span class="sd">${seed}</span>${logoImg(c)}
+    <span class="nm"><span class="n">${teamNick(c)}${tag}</span><small>${sub}</small></span>
+    <span class="rc">${t('rec', R.w, R.l, R.t)}<small>${fmtPct3(R.pct)}</small></span></div>`;
+}
+function poConfHTML(cf) {
+  const S = playoffPicture()[cf], seeds = S.order.slice(0, 7), hunt = S.order.slice(7, 11);
+  let h = `<div class="poConf"><h3>${cf}</h3>`;
+  seeds.forEach((c, i) => h += poRowHTML(c, i + 1, i < 4 ? 'win' : 'wc', i < 4 ? divName(divOf(c)) : t('poWildCard')));
+  if (hunt.length) {
+    h += `<div class="poCut">${t('poHunt')}</div>`;
+    hunt.forEach((c, i) => h += poRowHTML(c, i + 8, 'hunt', t('poGB', gamesBack(c, S.order[6]))));
+  }
+  h += `<div class="poMatch"><div class="pmT">${t('poIfToday')}</div>
+    <div class="pmRow byeP"><span class="s">1</span>${logoImg(seeds[0])}<b>${teamNick(seeds[0])}</b> — ${t('poBye')}</div>`;
+  for (const [hi, lo] of [[2, 7], [3, 6], [4, 5]])
+    h += `<div class="pmRow"><span class="s">${lo}</span>${logoImg(seeds[lo - 1])}${teamNick(seeds[lo - 1])}
+      <span class="at">${t('at')}</span>${logoImg(seeds[hi - 1])}${teamNick(seeds[hi - 1])}<span class="s">${hi}</span></div>`;
+  return h + `</div></div>`;
+}
+function renderPO() {
+  $id('po').firstElementChild.innerHTML =
+    `<div class="hh"><h2><span class="pc">${t('poTitle')}</span></h2><button class="hx" onclick="poClose()" aria-label="${t('tClose')}">✕</button></div>
+     <div class="helpBody"><div class="poGrid">${Object.keys(CONFS).map(poConfHTML).join('')}</div></div>
+     <div class="ffNote">${t('poNote')}</div>`;
+}
+$id('poBtn').onclick = () => poOn ? poClose() : poOpen();
 
 // ── 📊 fantasy leaders ──────────────────────────────────────────────────────
 // Data comes from fantasy.js → fantasy-data.js (window.NFLF): per-week and season
@@ -2017,7 +2270,8 @@ function applyStaticText() {
   hdr.querySelector('h1').innerHTML = t('h1');
   hdr.querySelector('.sub').innerHTML = t('sub');
   const lbl = $id('follow').querySelector('label'); if (lbl) lbl.textContent = t('followLabel');
-  $id('prevBtn').title = t('tPrev'); $id('playBtn').title = t('tPlay'); $id('nextBtn').title = t('tNext'); $id('helpBtn').title = t('tHelp'); $id('ffBtn').title = t('tFf');
+  $id('prevBtn').title = t('tPrev'); $id('playBtn').title = t('tPlay'); $id('nextBtn').title = t('tNext');
+  $id('helpBtn').title = t('tHelp'); $id('ffBtn').title = t('tFf'); $id('poBtn').title = t('tPo');
   [$id('followClear'), $id('teamFabClear')].forEach(el => { if (el) { el.title = t('clearTeam'); el.setAttribute('aria-label', t('clearTeam')); } });
 }
 function applyLanguage() {
@@ -2033,6 +2287,7 @@ function applyLanguage() {
   if (curDiv && $id('drawer').classList.contains('open')) renderDivision();
   if (helpOn) renderHelp();
   if (ffOn) renderFF();
+  if (poOn) renderPO();
 }
 function setLang(l) {
   if (l === LANG || (l !== 'en' && l !== 'es')) return;
@@ -2058,8 +2313,9 @@ const _qdiv = _params.get('div');
 if (_qdiv && DIVISIONS[_qdiv]) openDivision(_qdiv);
 if (_params.get('play') === '1') startPlay();
 if (_params.get('ff') === '1') ffOpen();
+if (_params.get('po') === '1') poOpen();
 let _seenHelp = true; try { _seenHelp = !!localStorage.getItem(HELP_KEY); } catch (e) {}
-if (!_seenHelp && !_params.get('div') && !_params.get('play') && !_params.get('ff')) helpOpen();
+if (!_seenHelp && !_params.get('div') && !_params.get('play') && !_params.get('ff') && !_params.get('po')) helpOpen();
 
 // ── easter eggs ───────────────────────────────────────────────────────────────
 (() => {
