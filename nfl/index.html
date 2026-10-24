@@ -495,7 +495,8 @@
   .pmRow.byeP{color:var(--gold);}
   .stTbl tr.po td.ps{color:var(--sky);}            /* holds a wild-card seed right now */
   /* 🔮 bracket predictor (second tab of the playoff panel) */
-  .poTabs{display:flex; gap:4px; margin-left:auto;}
+  .poTabs{display:flex; gap:4px; margin-left:auto; min-width:0; overflow-x:auto; scrollbar-width:none;}
+  .poTabs::-webkit-scrollbar{display:none;}
   .poTabs button{padding:5px 13px; border-radius:999px; border:1px solid var(--panel-border); background:#16203a;
     color:var(--ink-dim); font:800 11.5px 'Outfit',sans-serif; cursor:pointer; white-space:nowrap;}
   .poTabs button.on{background:linear-gradient(135deg,var(--pitch),var(--pitch-deep)); color:#04150c; border-color:transparent;}
@@ -551,7 +552,81 @@
     .helpCard .hh h2{font-size:14.5px;}
     .brScore{margin-left:0; width:100%; text-align:center;}
   }
+  /* three tabs, a title and a ✕ do not fit one phone row in every language —
+     give the tab strip its own row instead of letting it squeeze or clip */
+  @media (max-width:560px){
+    .helpCard .hh{flex-wrap:wrap; row-gap:8px;}
+    .poTabs{order:3; flex-basis:100%; margin-left:0; justify-content:center; overflow-x:visible;}
+    .poTabs button{flex:1 1 0; text-align:center;}
+    .helpCard .hh .poTabs + .hx{margin-left:8px;}
+  }
   @media (max-width:760px){ #po{padding:0;} .poGrid{gap:14px;} }
+
+  /* 📈 season odds (third tab of the playoff panel) */
+  .odTop{display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin:0 0 10px;}
+  .odPills{display:flex; gap:4px; flex-wrap:wrap;}
+  .odPills button{padding:4px 10px; border-radius:999px; border:1px solid var(--panel-border); background:none;
+    color:var(--ink-dim); font:800 10.5px 'Outfit',sans-serif; cursor:pointer; white-space:nowrap;}
+  .odPills button.on{background:#16203a; color:var(--ink); border-color:var(--ink-dim);}
+  .odRun{padding:4px 9px; border-radius:8px; border:1px solid var(--panel-border); background:#16203a;
+    color:var(--ink); font:700 11px 'Outfit',sans-serif; cursor:pointer;}
+  .odRun:hover{filter:brightness(1.25);}
+  .odStat{font-size:10.5px; font-weight:700; color:var(--ink-dim); margin-left:auto; white-space:nowrap;}
+  .odProgWrap{flex-basis:100%; height:4px; background:rgba(255,255,255,.08); border-radius:99px; overflow:hidden; transition:opacity .4s ease;}
+  .odProgBar{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--pitch),var(--gold)); transition:width .12s linear;}
+  .odList{display:flex; flex-direction:column; gap:4px;}
+  .odRow{display:grid; grid-template-columns:20px 24px minmax(0,1.35fr) 1fr 48px; align-items:center; gap:8px;
+    padding:4px 8px; border-radius:9px; background:rgba(255,255,255,.025); font-weight:700; cursor:pointer;}
+  .odRow:hover{background:rgba(255,255,255,.07);}
+  .odRow.fav{background:linear-gradient(90deg,rgba(255,209,102,.16),rgba(255,209,102,.02)); box-shadow:inset 0 0 0 1px rgba(255,209,102,.4);}
+  .odRow .rk{text-align:center; font-weight:900; color:var(--ink-dim); font-size:11.5px;}
+  .odRow img.lg{width:24px; height:24px;}
+  .odRow .nm{min-width:0;}
+  .odRow .nm b{display:block; font-size:13px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .odRow .nm small{display:block; font-size:9px; font-weight:700; color:var(--ink-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .odBarWrap{height:12px; background:rgba(255,255,255,.05); border-radius:6px; overflow:hidden;}
+  .odBar{display:block; height:100%; border-radius:6px; background:linear-gradient(90deg,var(--pitch-deep),var(--pitch)); transition:width .2s ease;}
+  .odRow.fav .odBar{background:linear-gradient(90deg,var(--gold),var(--orange));}
+  .odPct{font-weight:900; font-size:13px; text-align:right; font-variant-numeric:tabular-nums;}
+  .odGap{height:1px; border-top:1px dashed var(--panel-border); margin:4px 0;}
+  @media (max-width:560px){
+    .odRow{grid-template-columns:18px 22px minmax(0,1fr) 46px; gap:7px;}
+    .odBarWrap{display:none;}
+  }
+  /* 📈 how the odds moved — the same model replayed week by week */
+  .histSec{margin-top:15px; border-top:1px solid var(--panel-border); padding-top:11px;}
+  .histHead{display:flex; justify-content:space-between; align-items:center; width:100%; padding:7px 11px;
+    border-radius:9px; border:1px solid var(--panel-border); background:#16203a; color:var(--ink);
+    font:800 12.5px 'Outfit',sans-serif; cursor:pointer;}
+  .histHead:hover{filter:brightness(1.25);}
+  .histCtl{display:flex; align-items:center; gap:7px; margin:9px 2px 5px; flex-wrap:wrap;}
+  .histCtl .vBtn{padding:3px 10px; border-radius:7px; border:1px solid var(--panel-border); background:none;
+    color:var(--ink-dim); font:800 10.5px 'Outfit',sans-serif; cursor:pointer;}
+  .histCtl .vBtn.on{background:#16203a; color:var(--ink);}
+  .histStat{font-size:10.5px; color:var(--ink-dim); font-weight:700; margin-left:auto;}
+  .histBox{position:relative;}
+  .histBox svg{display:block; width:100%; height:auto;}
+  .histTip{position:absolute; z-index:5; pointer-events:none; background:rgba(13,20,38,.96); border:1px solid var(--panel-border);
+    border-radius:9px; padding:7px 9px; font-size:10.5px; min-width:138px; box-shadow:0 8px 22px rgba(0,0,0,.45);}
+  .histTip .tD{font-weight:900; color:var(--ink); margin-bottom:4px;}
+  .histTip .tR{display:flex; align-items:center; gap:5px; color:var(--ink-dim); font-weight:700; line-height:1.7;}
+  .histTip .tR img.lg{width:15px; height:15px;}
+  .histTip .tR .tv{margin-left:auto; color:var(--ink); font-weight:800; padding-left:9px; font-variant-numeric:tabular-nums;}
+  .histLegend{display:flex; flex-wrap:wrap; gap:5px; margin-top:8px;}
+  .histChip{display:flex; align-items:center; gap:4px; padding:3px 8px 3px 6px; border-radius:99px;
+    border:1px solid var(--panel-border); background:rgba(255,255,255,.03); color:var(--ink-dim);
+    font:800 10px 'Outfit',sans-serif; cursor:pointer;}
+  .histChip img.lg{width:15px; height:15px;}
+  .histChip .dot{width:7px; height:7px; border-radius:99px; flex:none;}
+  .histChip.on{border-color:var(--ink-dim); color:var(--ink); background:rgba(255,255,255,.08);}
+  .histChip:hover{background:rgba(255,255,255,.07);}
+  .histTblWrap{overflow-x:auto; margin-top:6px; border:1px solid var(--panel-border); border-radius:9px;}
+  .histTbl{border-collapse:collapse; font-size:10px; white-space:nowrap;}
+  .histTbl th,.histTbl td{padding:4px 7px; text-align:right; border-bottom:1px solid rgba(255,255,255,.05); font-variant-numeric:tabular-nums;}
+  .histTbl th{color:var(--ink-dim); font-weight:800;}
+  .histTbl td:first-child,.histTbl th:first-child{text-align:left; position:sticky; left:0; background:#101a30;}
+  .histTbl .tm{display:flex; align-items:center; gap:5px; font-weight:800;}
+  .histTbl .tm img.lg{width:15px; height:15px;}
 
   /* 📊 fantasy leaders panel (reuses .helpCard) */
   #ff{position:absolute; inset:0; z-index:1660; display:none; background:rgba(7,11,22,.86); backdrop-filter:blur(6px); padding:18px;}
@@ -814,7 +889,22 @@ const STR = {
     tPo: 'Playoff picture', poTitle: 'Playoff picture', poWildCard: 'Wild card',
     poHunt: 'IN THE HUNT', poGB: gb => `${gb} back`, poIfToday: 'IF THE SEASON ENDED TODAY',
     poBye: 'first-round bye', poClinchdiv: 'Clinched the division', poClinchin: 'Clinched a playoff berth', poClinchout: 'Eliminated',
-    poTabPic: 'Picture', poTabBr: '🔮 Bracket', brTitle: 'Bracket predictor',
+    poTabPic: 'Picture', poTabOd: 'Odds', poTabBr: 'Bracket', brTitle: 'Bracket predictor',
+    odTitle: 'Season odds',
+    odIntro: n => `A points-margin model, fitted to this season and played out <b>${n}×</b>: every game still to come, both conferences seeded through the tiebreakers, then the reseeding bracket run to a champion. The ratings sharpen as results land. Independent of your bracket picks.`,
+    odMSB: 'Title', odMConf: 'Conference', odMPlay: 'Playoffs', odMDiv: 'Division', odMBye: 'Bye',
+    odProj: (w, l) => `proj ${w}-${l}`,
+    odAll: n => `Show all ${n} teams`,
+    odRunning: (n, tot) => `Simulating… ${n} / ${tot}`,
+    odDone: n => `Based on ${n} simulations`,
+    odRerun: 'Re-run', odRerunT: 'Run the simulation again',
+    odXSB: 'title', odXConf: 'conf', odXPlay: 'playoffs', odXDiv: 'div', odXBye: 'bye',
+    odSimming: 'Simulating…', odPre: 'Pre', odChart: 'Chart', odTable: 'Table',
+    odHistTitle: '📈 How the odds moved',
+    odHistHint: 'The same model, replayed: for each completed week the ratings are re-fitted and the season re-simulated using only the results known that Monday. ✕ marks an elimination — tap a badge to trace one club.',
+    odHistRun: (k, n) => `Replaying week ${k} / ${n}`,
+    odHistDone: n => `${n} simulations per week`,
+    odNote: h => `Ratings come from a ridge regression over every finished game: scoring margin adjusted for the opponent, a rout capped at 24 points, and everything pulled toward average while the season is young. A simulated margin is normal around the rating difference with an SD of 13 points, plus ${h} points of home field (fitted against a league-typical prior, none at a neutral site); a dead-even game goes to overtime. Each simulation also redraws every club's rating from its own uncertainty. Seeding inside a simulation uses win percentage, head-to-head, division and conference record and strength of victory — the standings and seeds the app shows always use the full tiebreaker chain.`,
     brWC: 'WILD CARD', brDivR: 'DIVISIONAL', brConfR: 'CONFERENCE', brTBD: 'To be decided',
     brLowest: 'Lowest seed left', brWinnerWC: 'Wild-card winner', brWinnerD: 'Divisional winner',
     brAfcChamp: 'AFC champion', brNfcChamp: 'NFC champion',
@@ -870,7 +960,8 @@ const STR = {
       ['🔊','<b>Score sounds.</b> Toggle 🔊 in the timeline bar for a fanfare when your team scores (off by default).'],
       ['🔔','<b>Game alerts.</b> Tap 🔔 to get a notification for your followed team’s kickoffs and scores. Install the app to your home screen for the full experience. Alerts ping while the app is open.'],
       ['🏆','<b>Playoff picture.</b> Tap 🏆 for both conferences seeded 1–7 with the full NFL tiebreakers, who is still in the hunt and how far back, and the wild-card matchups if the season ended today.'],
-      ['🔮','<b>Bracket predictor.</b> The second tab of 🏆. Tap a team to send them through — the NFL reseeds every round, so the matchups rebuild as you pick. Share your bracket with a link; real results lock in and grade your picks ✓/✗.'],
+      ['📈','<b>Season odds.</b> The middle tab of 🏆. A points-margin model fitted to this season plays the rest of it out 10,000 times — title, conference, playoff, division and first-round-bye odds for all 32 clubs, plus a projected record. Open <b>How the odds moved</b> for the week-by-week chart of the same model replayed.'],
+      ['🔮','<b>Bracket predictor.</b> The third tab of 🏆. Tap a team to send them through — the NFL reseeds every round, so the matchups rebuild as you pick. Share your bracket with a link; real results lock in and grade your picks ✓/✗.'],
       ['📊','<b>Fantasy leaders.</b> Tap 📊 (or the points chip) for the top fantasy scorers of any week or the whole season, in Standard, Half-PPR or PPR scoring, with each player’s stat line.'],
       ['🔗','<b>Share the view.</b> The URL remembers your week and followed team — copy it to share exactly what you’re looking at.'],
     ],
@@ -902,7 +993,22 @@ const STR = {
     tPo: 'Panorama de playoffs', poTitle: 'Panorama de playoffs', poWildCard: 'Comodín',
     poHunt: 'EN LA PELEA', poGB: gb => `a ${gb}`, poIfToday: 'SI LA TEMPORADA TERMINARA HOY',
     poBye: 'descansa la primera ronda', poClinchdiv: 'Ganó la división', poClinchin: 'Clasificado a playoffs', poClinchout: 'Eliminado',
-    poTabPic: 'Panorama', poTabBr: '🔮 Cuadro', brTitle: 'Predictor del cuadro',
+    poTabPic: 'Panorama', poTabOd: 'Momios', poTabBr: 'Cuadro', brTitle: 'Predictor del cuadro',
+    odTitle: 'Momios de la temporada',
+    odIntro: n => `Un modelo de diferencia de puntos, ajustado a esta temporada y jugado <b>${n}×</b>: cada juego que falta, ambas conferencias sembradas con los criterios de desempate, y el cuadro con resiembra hasta el campeón. Las calificaciones se afinan conforme llegan los resultados. Independiente de tus pronósticos del cuadro.`,
+    odMSB: 'Título', odMConf: 'Conferencia', odMPlay: 'Playoffs', odMDiv: 'División', odMBye: 'Descanso',
+    odProj: (w, l) => `proy ${w}-${l}`,
+    odAll: n => `Ver los ${n} equipos`,
+    odRunning: (n, tot) => `Simulando… ${n} / ${tot}`,
+    odDone: n => `Con base en ${n} simulaciones`,
+    odRerun: 'Recalcular', odRerunT: 'Volver a correr la simulación',
+    odXSB: 'título', odXConf: 'conf', odXPlay: 'playoffs', odXDiv: 'div', odXBye: 'descanso',
+    odSimming: 'Simulando…', odPre: 'Ini', odChart: 'Gráfica', odTable: 'Tabla',
+    odHistTitle: '📈 Cómo se movieron los momios',
+    odHistHint: 'El mismo modelo, reproducido: para cada semana completa se reajustan las calificaciones y se vuelve a simular la temporada usando solo los resultados conocidos ese lunes. ✕ marca una eliminación — toca una insignia para seguir a un equipo.',
+    odHistRun: (k, n) => `Reproduciendo la semana ${k} / ${n}`,
+    odHistDone: n => `${n} simulaciones por semana`,
+    odNote: h => `Las calificaciones salen de una regresión ridge sobre cada juego terminado: la diferencia de puntos ajustada por rival, con las palizas topadas en 24 puntos y todo jalado hacia el promedio mientras la temporada es joven. La diferencia simulada es normal alrededor de esa resta con una desviación de 13 puntos, más ${h} puntos de ventaja de local (ajustada contra un valor típico de la liga; ninguna en cancha neutral); un juego empatado se va a tiempo extra. Cada simulación también vuelve a sortear la calificación de cada equipo según su propia incertidumbre. La siembra dentro de una simulación usa porcentaje de victorias, enfrentamientos directos, marca divisional y de conferencia y fuerza de victorias — la tabla y los puestos que muestra la app siempre usan la cadena completa de desempates.`,
     brWC: 'COMODINES', brDivR: 'DIVISIONAL', brConfR: 'CONFERENCIA', brTBD: 'Por definir',
     brLowest: 'Peor sembrado vivo', brWinnerWC: 'Ganador de comodines', brWinnerD: 'Ganador divisional',
     brAfcChamp: 'Campeón de la AFC', brNfcChamp: 'Campeón de la NFC',
@@ -958,7 +1064,8 @@ const STR = {
       ['🔊','<b>Sonidos de anotación.</b> Activa 🔊 en la barra de tiempo para una fanfarria cuando tu equipo anota (desactivado por defecto).'],
       ['🔔','<b>Alertas de juego.</b> Toca 🔔 para recibir una notificación de los arranques y anotaciones del equipo que sigues. Instala la app en tu pantalla de inicio para la experiencia completa. Las alertas suenan mientras la app está abierta.'],
       ['🏆','<b>Panorama de playoffs.</b> Toca 🏆 para ver ambas conferencias sembradas del 1 al 7 con todos los criterios de desempate de la NFL, quién sigue en la pelea y a cuánto está, y los duelos de comodines si la temporada terminara hoy.'],
-      ['🔮','<b>Predictor del cuadro.</b> La segunda pestaña de 🏆. Toca un equipo para hacerlo avanzar — la NFL resiembra cada ronda, así que los duelos se rearman conforme eliges. Comparte tu cuadro con un enlace; los resultados reales se fijan y califican tus pronósticos ✓/✗.'],
+      ['📈','<b>Momios de la temporada.</b> La pestaña de en medio de 🏆. Un modelo de diferencia de puntos ajustado a esta temporada juega lo que falta 10,000 veces — probabilidades de título, conferencia, playoffs, división y descanso de primera ronda para los 32 equipos, más una marca proyectada. Abre <b>Cómo se movieron los momios</b> para la gráfica semana a semana del mismo modelo reproducido.'],
+      ['🔮','<b>Predictor del cuadro.</b> La tercera pestaña de 🏆. Toca un equipo para hacerlo avanzar — la NFL resiembra cada ronda, así que los duelos se rearman conforme eliges. Comparte tu cuadro con un enlace; los resultados reales se fijan y califican tus pronósticos ✓/✗.'],
       ['📊','<b>Líderes de fantasy.</b> Toca 📊 (o la ficha de puntos) para ver a los máximos anotadores de fantasy de cualquier semana o de toda la temporada, en puntuación Estándar, Media PPR o PPR, con la línea de estadísticas de cada jugador.'],
       ['🔗','<b>Comparte la vista.</b> La URL recuerda tu semana y equipo seguido — cópiala para compartir exactamente lo que ves.'],
     ],
@@ -1713,6 +1820,7 @@ function refreshViews() {
   if (!playing) { updateMarkers(WEEKS[dayIdx].w); renderPanel(WEEKS[dayIdx].w, byWeek[WEEKS[dayIdx].w] || [], true); }
   if (follow) renderJourneyCard(teamGames(follow).filter(m => m.v), jAnim ? jAnim.total : 0);
   if (curDiv && $id('drawer').classList.contains('open')) renderDivision();
+  refreshPO();
 }
 // apply one ESPN event to its game; returns true if anything changed
 function applyEvent(e, celebrate) {
@@ -2361,10 +2469,572 @@ function brToast(msg) {
 }
 PRED = loadPred();                                  // after the codec consts exist
 
+// ── 📈 odds model ───────────────────────────────────────────────────────────
+// A points-margin forecast, fitted to this season and then played out:
+//
+//     margin(home − away)  =  rating[home] − rating[away] + home field
+//
+// The ratings are solved by ridge-regularised least squares over every finished
+// game, so a club's number is its scoring margin adjusted for who it played and
+// pulled toward average by RIDGE games of nothing — which is what keeps a 2-0
+// club out of first place in September. A rout counts for at most MARGIN_CAP.
+// Home field is fitted the same way, against a league-typical prior, because a
+// season's worth of games is too few to measure it from scratch.
+//
+// A simulated game draws its margin from a normal around that number and rounds
+// it to whole points; a dead-even game goes to overtime, where a tie is rare.
+// Every simulation also redraws each club's rating from its own uncertainty —
+// GAME_SD / √(games + RIDGE), wide in September and narrow in December — so the
+// spread of outcomes carries what we do not know about the clubs, not only what
+// we cannot know about the games.
+//
+// One simulation plays all 272 regular-season games, seeds both conferences and
+// plays the reseeding bracket out to a champion. Ten thousand of them give the
+// numbers on the Odds tab. Independent of the bracket picks on the next tab.
+const MARGIN_CAP = 24;        // one rout is worth no more than four touchdowns
+const RIDGE = 4;              // λ, in games: implies a prior rating SD of GAME_SD/√λ ≈ 6.5
+const GAME_SD = 13;           // residual SD of an NFL scoring margin, in points
+const HFA_PRIOR = 1.8, HFA_W = 200;   // home field: league-typical, worth 200 games of evidence
+const TIE_RATE = 0.18;        // share of dead-even regulation games still level after overtime
+const ODDS_SIMS = 10000, HIST_SIMS = 2500;
+
+const SIMT = Object.keys(TEAMS).slice().sort();
+const NTM = SIMT.length;
+const SIX = {}; SIMT.forEach((c, i) => SIX[c] = i);
+const DIV_NAMES = Object.keys(DIVISIONS).slice().sort();
+const CONF_NAMES = Object.keys(CONFS).slice().sort();
+const DIVI = new Int32Array(NTM);
+SIMT.forEach((c, i) => DIVI[i] = DIV_NAMES.indexOf(divOf(c)));
+const DIV_MEM = DIV_NAMES.map(d => DIVISIONS[d].map(c => SIX[c]));
+const CONF_MEM = CONF_NAMES.map(cf => CONFS[cf].map(c => SIX[c]));
+const CONF_DIVS = CONF_NAMES.map(cf => DIV_NAMES.map((d, i) => i).filter(i => DIV_NAMES[i].startsWith(cf)));
+
+// the regular season, flattened once — only the results change from run to run
+const SCH = MATCHES.filter(m => m.st === 2 && m.a && m.b);
+const NG = SCH.length;
+const sH = new Int32Array(NG), sA = new Int32Array(NG),
+      sNeu = new Uint8Array(NG), sDiv = new Uint8Array(NG), sConf = new Uint8Array(NG);
+SCH.forEach((m, k) => { sH[k] = SIX[m.b]; sA[k] = SIX[m.a];      // b hosts, a visits
+  sNeu[k] = m.neutral ? 1 : 0; sDiv[k] = m.div ? 1 : 0; sConf[k] = m.conf ? 1 : 0; });
+
+let _g2 = null;                                  // standard normal, Marsaglia polar
+function gauss() {
+  if (_g2 !== null) { const v = _g2; _g2 = null; return v; }
+  let u, v, s;
+  do { u = Math.random() * 2 - 1; v = Math.random() * 2 - 1; s = u * u + v * v; } while (s === 0 || s >= 1);
+  const f = Math.sqrt(-2 * Math.log(s) / s);
+  _g2 = v * f; return u * f;
+}
+const fmtPct = p => p <= 0 ? '0%' : p < 0.01 ? '<1%' : Math.round(p * 100) + '%';
+const fmtPct1 = p => p <= 0 ? '0%' : p < 0.001 ? '<0.1%' : (p * 100).toFixed(1) + '%';
+
+// Alternating least squares: ratings by Jacobi passes over the ridge normal
+// equations (strictly diagonally dominant, so they converge), then home field
+// from what the ratings still miss on games with a host. At the fixed point the
+// ratings sum to zero on their own, so "0" is an average club by construction.
+function fitRatings(games) {
+  const R = new Float64Array(NTM), num = new Float64Array(NTM),
+        den = new Float64Array(NTM), n = new Float64Array(NTM);
+  let hfa = HFA_PRIOR;
+  den.fill(RIDGE);
+  for (const g of games) { den[g.h]++; den[g.a]++; n[g.h]++; n[g.a]++; }
+  for (let round = 0; round < 6; round++) {
+    for (let it = 0; it < 200; it++) {
+      num.fill(0);
+      for (const g of games) {
+        const h = g.neu ? 0 : hfa;
+        num[g.h] += g.m - h + R[g.a];
+        num[g.a] += h - g.m + R[g.h];
+      }
+      let d = 0;
+      for (let i = 0; i < NTM; i++) { const v = num[i] / den[i]; const c = Math.abs(v - R[i]); if (c > d) d = c; R[i] = v; }
+      if (d < 1e-7) break;
+    }
+    let s = 0, k = 0;
+    for (const g of games) if (!g.neu) { s += g.m - (R[g.h] - R[g.a]); k++; }
+    if (!k) break;
+    hfa = (HFA_PRIOR * HFA_W + s) / (HFA_W + k);
+  }
+  const sig = new Float64Array(NTM);
+  for (let i = 0; i < NTM; i++) sig[i] = GAME_SD / Math.sqrt(n[i] + RIDGE);
+  return { R, sig, hfa, n };
+}
+const played = (m, upto) => !!(m.fin && m.s1 != null && m.a && m.b) && (upto == null || m.w <= upto);
+function fitGames(upto) {                        // every finished game, margin from the host's side
+  const out = [];
+  for (const m of MATCHES) {
+    if (!played(m, upto)) continue;
+    out.push({ h: SIX[m.b], a: SIX[m.a], neu: !!m.neutral,
+      m: Math.max(-MARGIN_CAP, Math.min(MARGIN_CAP, m.s2 - m.s1)) });
+  }
+  return out;
+}
+
+// the live fit, cached on the results — the panel quotes its home-field number
+// before any simulation has run, and every full-season run reuses it
+let _fitCache = null, _fitFor = null;
+function liveFit() {
+  const sig = oddsSig();
+  if (_fitFor !== sig) { _fitCache = fitRatings(fitGames(null)); _fitFor = sig; }
+  return _fitCache;
+}
+
+// A run's context: the fit, the results already on the board, and the standings
+// those results imply. Points are counted 2 per win and 1 per tie so everything
+// stays integer. `playedOnly` drops the unplayed games from the schedule, which
+// turns the base tables into the live standings — used to check this ranking
+// against the exact tiebreaker chain.
+function buildCtx(upto, playedOnly) {
+  const C = { upto, playedOnly: !!playedOnly, fit: upto == null ? liveFit() : fitRatings(fitGames(upto)), post: {},
+    base: new Int8Array(NG), P: new Int32Array(NTM), DP: new Int32Array(NTM), CP: new Int32Array(NTM),
+    H: new Int32Array(NTM * NTM), GP: new Int32Array(NTM), DG: new Int32Array(NTM),
+    CG: new Int32Array(NTM), HG: new Int32Array(NTM * NTM) };
+  for (let k = 0; k < NG; k++) {
+    const m = SCH[k], h = sH[k], a = sA[k], done = played(m, upto);
+    C.base[k] = done ? (m.s2 > m.s1 ? 1 : m.s1 > m.s2 ? 0 : 2) : -1;
+    if (playedOnly && !done) continue;
+    C.GP[h]++; C.GP[a]++;
+    if (sDiv[k]) { C.DG[h]++; C.DG[a]++; }
+    if (sConf[k]) { C.CG[h]++; C.CG[a]++; }
+    C.HG[h * NTM + a]++; C.HG[a * NTM + h]++;
+    if (!done) continue;
+    const ph = C.base[k] === 1 ? 2 : C.base[k] === 2 ? 1 : 0;
+    C.P[h] += ph; C.P[a] += 2 - ph;
+    if (sDiv[k]) { C.DP[h] += ph; C.DP[a] += 2 - ph; }
+    if (sConf[k]) { C.CP[h] += ph; C.CP[a] += 2 - ph; }
+    C.H[h * NTM + a] += ph; C.H[a * NTM + h] += 2 - ph;
+  }
+  for (const m of MATCHES) {                     // January games that have already been decided
+    if (m.st !== 3 || !played(m, upto)) continue;
+    const w = winnerOf(m); if (w) C.post[pkey(m.pw, SIX[m.a], SIX[m.b])] = SIX[w];
+  }
+  return C;
+}
+
+// one season's scratch — fixed size, reused by every simulation
+const _P = new Int32Array(NTM), _DP = new Int32Array(NTM), _CP = new Int32Array(NTM),
+      _H = new Int32Array(NTM * NTM), _RES = new Int8Array(NG),
+      _SH = new Float64Array(NTM), _COIN = new Float64Array(NTM),
+      _SOVP = new Float64Array(NTM), _SOVG = new Float64Array(NTM);
+let CTX = null, _sovReady = false;
+const useCtx = C => { CTX = C; };
+
+const pctI = i => CTX.GP[i] ? _P[i] / (2 * CTX.GP[i]) : 0;
+const divPctI = i => CTX.DG[i] ? _DP[i] / (2 * CTX.DG[i]) : 0;
+const confPctI = i => CTX.CG[i] ? _CP[i] / (2 * CTX.CG[i]) : 0;
+function computeSOV() {                          // combined record of the clubs beaten; a tie counts half
+  _SOVP.fill(0); _SOVG.fill(0);
+  for (let k = 0; k < NG; k++) {
+    const r = _RES[k]; if (r < 0) continue;
+    const h = sH[k], a = sA[k];
+    if (r === 1) { _SOVP[h] += _P[a]; _SOVG[h] += CTX.GP[a]; }
+    else if (r === 0) { _SOVP[a] += _P[h]; _SOVG[a] += CTX.GP[h]; }
+    else { _SOVP[h] += _P[a] / 2; _SOVG[h] += CTX.GP[a] / 2; _SOVP[a] += _P[h] / 2; _SOVG[a] += CTX.GP[h] / 2; }
+  }
+}
+const sovI = i => _SOVG[i] ? _SOVP[i] / (2 * _SOVG[i]) : 0;
+function miniH2H(i, grp) {                       // record against the other clubs in the tie
+  let p = 0, g = 0;
+  for (let z = 0; z < grp.length; z++) { const j = grp[z]; if (j === i) continue; p += _H[i * NTM + j]; g += CTX.HG[i * NTM + j]; }
+  return g ? p / (2 * g) : 0.5;
+}
+// Ranking inside a simulation. pickBest() above runs the rule book exactly, but it
+// is far too slow for ten thousand seasons, so a simulation uses the steps that
+// decide nearly every real tie — win %, head-to-head, division and conference
+// record, strength of victory — applied once to each group of clubs that are
+// level instead of restarting the chain. Common games, the points rankings and
+// net points are left out; a tie that survives all of this falls to a coin toss,
+// which is where the rule book ends up too. The standings and seeds the app
+// SHOWS always come from the exact chain — verify.js checks the two agree.
+function breakTie(out, i, j, mode) {
+  const grp = out.slice(i, j);
+  if (!_sovReady) { computeSOV(); _sovReady = true; }
+  // same mid-season rule as STEPS.moreWins: while the clubs in a tie have played a
+  // different number of games, more wins ranks first. Never fires inside a
+  // simulation, where every club has played all 17.
+  let uneven = false;
+  for (let z = 1; z < grp.length; z++) if (CTX.GP[grp[z]] !== CTX.GP[grp[0]]) { uneven = true; break; }
+  const key = new Map();
+  for (const c of grp) key.set(c, mode === 1
+    ? [uneven ? _P[c] : 0, miniH2H(c, grp), divPctI(c), confPctI(c), sovI(c)]
+    : [uneven ? _P[c] : 0, miniH2H(c, grp), confPctI(c), divPctI(c), sovI(c)]);
+  grp.sort((x, y) => { const a = key.get(x), b = key.get(y);
+    for (let k = 0; k < 5; k++) if (a[k] !== b[k]) return b[k] - a[k];
+    return _COIN[x] - _COIN[y]; });
+  for (let k = 0; k < grp.length; k++) out[i + k] = grp[k];
+}
+// a club can never be seeded above a division rival it ranks behind: put each
+// division's clubs back into division order without moving the slots they hold
+const _dcount = new Int32Array(8);
+function orderDivMates(out) {
+  _dcount.fill(0);
+  let dup = false;
+  for (let k = 0; k < out.length; k++) if (++_dcount[DIVI[out[k]]] > 1) dup = true;
+  if (!dup) return;
+  for (let d = 0; d < 8; d++) {
+    if (_dcount[d] < 2) continue;
+    const ks = [];
+    for (let k = 0; k < out.length; k++) if (DIVI[out[k]] === d) ks.push(k);
+    const ord = simRank(ks.map(k => out[k]), 1);
+    for (let z = 0; z < ks.length; z++) out[ks[z]] = ord[z];
+  }
+}
+function simRank(list, mode) {                   // mode 1 = division chain, 0 = conference chain
+  const out = list.slice().sort((x, y) => pctI(y) - pctI(x) || _COIN[x] - _COIN[y]);
+  let i = 0;
+  while (i < out.length) {
+    let j = i + 1;
+    while (j < out.length && pctI(out[j]) === pctI(out[i])) j++;
+    if (j - i > 1) breakTie(out, i, j, mode);
+    i = j;
+  }
+  if (mode === 0) orderDivMates(out);
+  return out;
+}
+function simSeeds(cf) {                          // four division winners, then the three best left
+  const winners = CONF_DIVS[cf].map(d => simRank(DIV_MEM[d], 1)[0]);
+  const top = simRank(winners, 0);
+  const wc = simRank(CONF_MEM[cf].filter(c => winners.indexOf(c) < 0), 0);
+  return [top[0], top[1], top[2], top[3], wc[0], wc[1], wc[2]];
+}
+
+const pkey = (pw, x, y) => pw + ':' + (x < y ? x + '_' + y : y + '_' + x);
+function simWin(h, a, neu, pw) {                 // a matchup that really happened is decided by what happened
+  const k = CTX.post[pkey(pw, h, a)];
+  if (k !== undefined) return k === h;
+  return (CTX.fit.R[h] + _SH[h] - CTX.fit.R[a] - _SH[a] + (neu ? 0 : CTX.fit.hfa) + gauss() * GAME_SD) > 0;
+}
+// the NFL reseeds every round: the 1 seed draws the lowest survivor, the other two meet
+function simBracket(s) {
+  const w = [];
+  for (const pr of [[1, 6], [2, 5], [3, 4]]) w.push(simWin(s[pr[0]], s[pr[1]], false, 1) ? pr[0] : pr[1]);
+  const rem = w.slice().sort((a, b) => a - b);
+  const d1 = simWin(s[0], s[rem[2]], false, 2) ? 0 : rem[2];
+  const d2 = simWin(s[rem[0]], s[rem[1]], false, 2) ? rem[0] : rem[1];
+  const hi = Math.min(d1, d2), lo = Math.max(d1, d2);
+  return simWin(s[hi], s[lo], false, 3) ? hi : lo;
+}
+function simSeason(O) {
+  useCtx(O.ctx);
+  const F = CTX.fit;
+  for (let i = 0; i < NTM; i++) { _SH[i] = gauss() * F.sig[i]; _COIN[i] = Math.random(); }
+  _P.set(CTX.P); _DP.set(CTX.DP); _CP.set(CTX.CP); _H.set(CTX.H); _RES.set(CTX.base);
+  for (let k = 0; k < NG; k++) {
+    if (CTX.base[k] >= 0) continue;
+    const h = sH[k], a = sA[k];
+    const mu = F.R[h] + _SH[h] - F.R[a] - _SH[a] + (sNeu[k] ? 0 : F.hfa);
+    const d = Math.round(mu + gauss() * GAME_SD);
+    const r = d > 0 ? 1 : d < 0 ? 0 : Math.random() < TIE_RATE ? 2 : Math.random() < 0.5 ? 1 : 0;
+    _RES[k] = r;
+    const ph = r === 1 ? 2 : r === 2 ? 1 : 0;
+    _P[h] += ph; _P[a] += 2 - ph;
+    if (sDiv[k]) { _DP[h] += ph; _DP[a] += 2 - ph; }
+    if (sConf[k]) { _CP[h] += ph; _CP[a] += 2 - ph; }
+    _H[h * NTM + a] += ph; _H[a * NTM + h] += 2 - ph;
+  }
+  _sovReady = false;
+  for (let i = 0; i < NTM; i++) O.wins[i] += _P[i] / 2;
+  const champ = [];
+  for (let cf = 0; cf < 2; cf++) {
+    const s = simSeeds(cf);
+    for (let z = 0; z < 7; z++) O.play[s[z]]++;
+    for (let z = 0; z < 4; z++) O.dv[s[z]]++;
+    O.one[s[0]]++;
+    const c = s[simBracket(s)];
+    champ.push(c); O.cf[c]++;
+  }
+  O.sb[simWin(champ[0], champ[1], true, 4) ? champ[0] : champ[1]]++;
+  O.n++;
+}
+function newRun(upto, total) {
+  const z = () => new Float64Array(NTM);
+  return { ctx: buildCtx(upto), total, n: 0, play: z(), dv: z(), one: z(), cf: z(), sb: z(), wins: z() };
+}
+// the fast chain, run on the live standings — verify.js compares it to playoffPicture()
+function simSeedCheck() {
+  useCtx(buildCtx(null, true));
+  _P.set(CTX.P); _DP.set(CTX.DP); _CP.set(CTX.CP); _H.set(CTX.H); _RES.set(CTX.base);
+  for (let i = 0; i < NTM; i++) _COIN[i] = Math.random();
+  _sovReady = false;
+  const out = {};
+  CONF_NAMES.forEach((cf, k) => out[cf] = simSeeds(k).map(i => SIMT[i]));
+  return out;
+}
+
+// ── odds run loop + paint ───────────────────────────────────────────────────
+const OD_KEY = 'nflviz.odds.v1';
+const OD_ORDER = ['sb', 'cf', 'play', 'dv', 'one'];      // headline figures, most selective first
+const OD_LAB = { sb: 'odMSB', cf: 'odMConf', play: 'odMPlay', dv: 'odMDiv', one: 'odMBye' };
+const OD_SUB = { sb: 'odXSB', cf: 'odXConf', play: 'odXPlay', dv: 'odXDiv', one: 'odXBye' };
+let ODDS = null, oddsRAF = 0, oddsRunning = false, odMetric = 'sb', odMore = false;
+try { const o = JSON.parse(localStorage.getItem(OD_KEY) || 'null');
+  if (o && OD_ORDER.indexOf(o.m) >= 0) odMetric = o.m; } catch (e) {}
+const odSave = () => { try { localStorage.setItem(OD_KEY, JSON.stringify({ m: odMetric })); } catch (e) {} };
+// full-time only: live scores are not results, so the odds hold still during a game
+const oddsSig = () => MATCHES.reduce((s, m) => played(m, null) ? s + m.n + ':' + m.s1 + '-' + m.s2 + ';' : s, '');
+
+function odSetMetric(m) { odMetric = m; odSave(); renderPO(); }
+function odShowAll() { odMore = true; paintOdds(); }
+function runOdds(total) {
+  cancelAnimationFrame(oddsRAF);
+  total = total || ODDS_SIMS;
+  const O = ODDS = newRun(null, total);
+  O.sig = oddsSig();
+  oddsRunning = true;
+  const step = () => {
+    if (ODDS !== O) return;                      // superseded by a fresher run
+    const t0 = performance.now();
+    do { simSeason(O); } while (O.n < total && performance.now() - t0 < 9);
+    if (O.n >= total) oddsRunning = false;
+    paintOdds();
+    if (oddsRunning) oddsRAF = requestAnimationFrame(step);
+  };
+  oddsRAF = requestAnimationFrame(step);
+}
+function odRowHTML(i, rank, lead) {
+  const O = ODDS, n = O.n || 1, c = SIMT[i], p = O[odMetric][i] / n, w = O.wins[i] / n;
+  const sub = t('odProj', w.toFixed(1), (SEASON_GAMES - w).toFixed(1)) + ' · ' +
+    OD_ORDER.filter(k => k !== odMetric).slice(0, 3).map(k => `${t(OD_SUB[k])} ${fmtPct(O[k][i] / n)}`).join(' · ');
+  return `<div class="odRow${c === follow ? ' fav' : ''}" onclick="followTeam('${c}');poClose()" title="${teamName(c)}">
+    <span class="rk">${rank}</span>${logoImg(c)}
+    <span class="nm"><b>${teamNick(c)}</b><small>${sub}</small></span>
+    <span class="odBarWrap"><span class="odBar" style="width:${Math.max(1.5, p / lead * 100).toFixed(1)}%"></span></span>
+    <span class="odPct">${fmtPct1(p)}</span></div>`;
+}
+function paintOdds() {
+  const box = $id('odList'); if (!box || !ODDS) return;
+  const O = ODDS, n = O.n || 1;
+  const order = SIMT.map((c, i) => i).sort((a, b) => O[odMetric][b] - O[odMetric][a] || (SIMT[a] < SIMT[b] ? -1 : 1));
+  const lead = Math.max(1e-9, O[odMetric][order[0]] / n);
+  const cut = odMore ? order.length : 16;
+  let h = order.slice(0, cut).map((i, k) => odRowHTML(i, k + 1, lead)).join('');
+  const fi = follow ? order.indexOf(SIX[follow]) : -1;         // the followed club is never out of sight
+  if (fi >= cut) h += `<div class="odGap"></div>` + odRowHTML(order[fi], fi + 1, lead);
+  if (!odMore) h += `<button class="ffMore" onclick="odShowAll()">${t('odAll', order.length)}</button>`;
+  box.innerHTML = h;
+  const prog = $id('odProg');
+  if (prog) { prog.style.width = Math.round(O.n / O.total * 100) + '%';
+    prog.parentElement.style.opacity = O.n >= O.total ? 0 : 1; }
+  const stat = $id('odStat');
+  if (stat) stat.textContent = O.n >= O.total ? t('odDone', nfmt(O.n)) : t('odRunning', nfmt(O.n), nfmt(O.total));
+}
+function renderOddsHTML() {
+  setTimeout(() => {
+    if (!ODDS || ODDS.sig !== oddsSig()) runOdds(ODDS_SIMS); else paintOdds();
+    ensureHist();
+  }, 0);
+  return `<div class="helpBody">
+    <p class="brHint">${t('odIntro', nfmt(ODDS_SIMS))}</p>
+    <div class="odTop">
+      <div class="odPills">${OD_ORDER.map(k =>
+        `<button class="${odMetric === k ? 'on' : ''}" onclick="odSetMetric('${k}')">${t(OD_LAB[k])}</button>`).join('')}</div>
+      <button class="odRun" onclick="odMore=false;runOdds(${ODDS_SIMS})" title="${t('odRerunT')}">🎲 ${t('odRerun')}</button>
+      <span id="odStat" class="odStat"></span>
+      <span class="odProgWrap"><span id="odProg" class="odProgBar"></span></span>
+    </div>
+    <div id="odList" class="odList"></div>
+    ${histSecHTML()}</div>`;
+}
+
+// ── odds history: how the forecast moved, week by week ──────────────────────
+// The model is deterministic given results, so the past is recomputable: for each
+// completed week, re-fit the ratings to only what was known that Monday and
+// re-simulate with everything after it hidden. No stored history, no backend.
+const HIST_KEY = 'nflviz.hist.v1';
+let HIST = null, histRAF = 0, histRunning = false, histOn = false, histSel = null, histTable = false, _histGeo = null;
+function histCuts() {                            // kickoff, then every week whose games are all final
+  const byw = {};
+  for (const m of MATCHES) { if (!m.a || !m.b) continue;
+    const r = byw[m.w] = byw[m.w] || [0, 0]; r[0]++; if (played(m, null)) r[1]++; }
+  return [0].concat(Object.keys(byw).map(Number).sort((a, b) => a - b).filter(w => byw[w][0] && byw[w][0] === byw[w][1]));
+}
+const histLab = w => { if (!w) return t('odPre'); const wk = WEEKS[w - 1];
+  return !wk ? 'W' + w : wk.st === 2 ? 'W' + wk.pw : roundShort({ st: 3, pw: wk.pw }); };
+function runHist(sims) {
+  cancelAnimationFrame(histRAF); sims = sims || HIST_SIMS;
+  const H = HIST = { sig: oddsSig(), sims, cuts: histCuts(), series: {}, k: 0, done: false, run: null };
+  OD_ORDER.forEach(m => H.series[m] = {});
+  histRunning = true;
+  const step = () => {
+    if (HIST !== H) return;
+    if (oddsRunning) { histRAF = requestAnimationFrame(step); return; }   // the headline number goes first
+    if (!H.run) H.run = newRun(H.cuts[H.k], sims);
+    const t0 = performance.now();
+    do { simSeason(H.run); } while (H.run.n < sims && performance.now() - t0 < 9);
+    if (H.run.n >= sims) {
+      for (const m of OD_ORDER) SIMT.forEach((c, i) =>
+        (H.series[m][c] = H.series[m][c] || [])[H.k] = Math.round(H.run[m][i] / sims * 1e4) / 1e4);
+      H.run = null; H.k++;
+      if (H.k >= H.cuts.length) { H.done = true; histRunning = false; histSave(H); paintHist(); return; }
+    }
+    paintHist();
+    histRAF = requestAnimationFrame(step);
+  };
+  histRAF = requestAnimationFrame(step);
+}
+function histSave(H) { try { localStorage.setItem(HIST_KEY, JSON.stringify({ sig: H.sig, sims: H.sims, cuts: H.cuts, series: H.series })); } catch (e) {} }
+function histLoad() {
+  try {
+    const j = JSON.parse(localStorage.getItem(HIST_KEY) || 'null');
+    if (j && j.sig === oddsSig() && j.cuts && j.series && j.series[OD_ORDER[0]])
+      return { sig: j.sig, sims: j.sims, cuts: j.cuts, series: j.series, k: j.cuts.length, done: true, run: null };
+  } catch (e) {}
+  return null;
+}
+function toggleHist() { histOn = !histOn; renderPO(); }
+function ensureHist() {
+  if (!histOn) return;
+  if (HIST && HIST.sig === oddsSig() && (HIST.done || histRunning)) { paintHist(); return; }
+  const c = histLoad();
+  if (c) { HIST = c; histRunning = false; paintHist(); return; }
+  runHist();
+}
+function histPick(c) { histSel = histSel === c ? null : c; paintHist(); }
+function histView(tbl) { histTable = tbl; paintHist(); }
+function histSecHTML() {
+  return `<div class="histSec">
+    <button class="histHead" onclick="toggleHist()"><span>${t('odHistTitle')}</span><span>${histOn ? '▴' : '▾'}</span></button>
+    ${histOn ? `<div class="histCtl">
+        <button id="histVc" class="vBtn" onclick="histView(false)">${t('odChart')}</button>
+        <button id="histVt" class="vBtn" onclick="histView(true)">${t('odTable')}</button>
+        <span id="histStat" class="histStat"></span>
+      </div>
+      <p class="brHint">${t('odHistHint')}</p>
+      <div id="histBox" class="histBox"></div>` : ''}</div>`;
+}
+// series colours: the app's accents stepped darker so neighbouring lines stay apart
+const HIST_COLORS = ['#2f9dd0', '#c98500', '#9085e9', '#0ea35a', '#d55181', '#d95926'];
+const HIST_GRAY = 'rgba(148,163,196,.5)';
+function histDrawn() {                           // which clubs get a line, in peak order
+  const H = HIST, S = H.series[odMetric], kAv = H.done ? H.cuts.length : H.k;
+  const peak = c => { let p = 0; const s = S[c] || []; for (let i = 0; i < kAv; i++) p = Math.max(p, s[i] || 0); return p; };
+  return Object.keys(S).map(c => ({ c, pk: peak(c) })).filter(x => x.pk >= 0.02)
+    .sort((a, b) => b.pk - a.pk || (a.c < b.c ? -1 : 1)).slice(0, 14)
+    .map((x, i) => ({ c: x.c, col: i < HIST_COLORS.length ? HIST_COLORS[i] : HIST_GRAY, big: i < HIST_COLORS.length }));
+}
+function histTableHTML(drawn, kAv) {
+  const H = HIST, S = H.series[odMetric];
+  const rows = drawn.slice().sort((a, b) => (S[b.c][kAv - 1] || 0) - (S[a.c][kAv - 1] || 0));
+  let h = `<div class="histTblWrap"><table class="histTbl"><tr><th></th>`;
+  for (let i = 0; i < kAv; i++) h += `<th>${histLab(H.cuts[i])}</th>`;
+  h += `</tr>`;
+  for (const dn of rows) {
+    h += `<tr><td><span class="tm">${logoImg(dn.c)}${dn.c}</span></td>`;
+    for (let i = 0; i < kAv; i++) { const v = S[dn.c][i] || 0; h += `<td>${v ? fmtPct1(v) : '–'}</td>`; }
+    h += `</tr>`;
+  }
+  return h + `</table></div>`;
+}
+function paintHist() {
+  const box = $id('histBox'); if (!box || !HIST) return;
+  const H = HIST, kAv = H.done ? H.cuts.length : H.k, S = H.series[odMetric] || {};
+  const stat = $id('histStat');
+  if (stat) stat.textContent = H.done ? t('odHistDone', nfmt(H.sims)) : t('odHistRun', Math.min(H.k + 1, H.cuts.length), H.cuts.length);
+  const vc = $id('histVc'), vt = $id('histVt');
+  if (vc) vc.className = 'vBtn' + (histTable ? '' : ' on');
+  if (vt) vt.className = 'vBtn' + (histTable ? ' on' : '');
+  if (kAv < 1) { box.innerHTML = `<div class="brHint">${t('odSimming')}</div>`; return; }
+  const drawn = histDrawn();
+  if (histTable) { _histGeo = null; box.innerHTML = histTableHTML(drawn, kAv); return; }
+  const N = H.cuts.length;
+  const w = Math.max(300, box.clientWidth || 640), narrow = w < 480;
+  const ml = narrow ? 30 : 36, mr = narrow ? 56 : 88, mt = 14, mb = 22;
+  const h = Math.max(190, Math.min(300, Math.round(w * 0.42)));
+  const pw = w - ml - mr, ph = h - mt - mb;
+  const X = i => ml + (N <= 1 ? 0 : pw * i / (N - 1));
+  let pMax = 0;
+  drawn.forEach(dn => { const sr = S[dn.c] || []; for (let i = 0; i < kAv; i++) pMax = Math.max(pMax, sr[i] || 0); });
+  pMax = Math.max(0.15, Math.ceil(pMax * 1.15 * 20) / 20);
+  const Y = p => mt + ph * (1 - p / pMax);
+  let s = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${t('odHistTitle')}">`;
+  const gstep = pMax > 0.6 ? 0.2 : pMax > 0.3 ? 0.1 : 0.05;
+  for (let v = gstep; v <= pMax + 1e-9; v += gstep) {
+    s += `<line x1="${ml}" y1="${Y(v)}" x2="${w - mr + 14}" y2="${Y(v)}" stroke="rgba(255,255,255,.07)"/>`;
+    s += `<text x="${ml - 5}" y="${Y(v) + 3}" text-anchor="end" font-size="9" fill="#94a3c4">${Math.round(v * 100)}%</text>`;
+  }
+  s += `<line x1="${ml}" y1="${Y(0)}" x2="${w - mr + 14}" y2="${Y(0)}" stroke="rgba(255,255,255,.16)"/>`;
+  const kept = [];                               // x ticks, thinned so the labels never collide
+  for (let i = 0; i < N; i++) if (!kept.length || X(i) - X(kept[kept.length - 1]) >= 34) kept.push(i);
+  if (kept[kept.length - 1] !== N - 1) { while (kept.length && X(N - 1) - X(kept[kept.length - 1]) < 34) kept.pop(); kept.push(N - 1); }
+  kept.forEach(i => s += `<text x="${X(i)}" y="${h - 8}" text-anchor="middle" font-size="9" fill="#94a3c4">${histLab(H.cuts[i])}</text>`);
+  const geo = { ml, mr, mt, mb, w, h, N, kAv, drawn: [] };
+  let lines = '', marks = '';
+  const labels = [];
+  drawn.forEach(dn => {
+    const sr = S[dn.c] || [];
+    let lastNZ = -1;
+    for (let i = 0; i < kAv; i++) if ((sr[i] || 0) > 0) lastNZ = i;
+    if (lastNZ < 0) return;
+    const kEnd = Math.min(lastNZ + 1, kAv - 1);  // one point into the zero tail — the elimination drop
+    const out = kEnd > lastNZ;
+    const pts = []; for (let i = 0; i <= kEnd; i++) pts.push([X(i), Y(sr[i] || 0)]);
+    const sel = histSel === dn.c, dim = histSel && !sel;
+    const col = sel && !dn.big ? '#c7d3f0' : dn.col;
+    lines += `<polyline points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="${sel ? 3 : dn.big ? 2 : 1.3}" opacity="${dim ? 0.18 : (dn.big || sel) ? 1 : 0.55}" stroke-linejoin="round" stroke-linecap="round"/>`;
+    if (out && !dim) marks += `<text x="${pts[kEnd][0].toFixed(1)}" y="${(pts[kEnd][1] + 3.5).toFixed(1)}" text-anchor="middle" font-size="9" fill="#94a3c4">✕</text>`;
+    labels.push({ c: dn.c, big: dn.big, sel, dim, x: pts[kEnd][0], y: pts[kEnd][1], v: sr[kEnd] || 0, out });
+    geo.drawn.push({ c: dn.c, col: dn.col, big: dn.big });
+  });
+  const alive = labels.filter(l => !l.out && !l.dim).sort((a, b) => a.y - b.y);
+  const GAPL = 13, loY = mt + 6, hiY = h - mb - 4;
+  let prevY = -1e9;
+  alive.forEach(l => { l.ly = Math.max(l.y, prevY + GAPL); prevY = l.ly; });
+  prevY = 1e9;                                   // a long stack would run past the axis — slide it back
+  for (let i = alive.length - 1; i >= 0; i--) { const l = alive[i]; l.ly = Math.max(loY, Math.min(l.ly, prevY - GAPL, hiY)); prevY = l.ly; }
+  alive.forEach(l => {
+    marks += `<image href="${logoURL(l.c)}" x="${(l.x + 4).toFixed(1)}" y="${(l.ly - 7).toFixed(1)}" width="14" height="14"/>`;
+    marks += `<text x="${(l.x + 21).toFixed(1)}" y="${(l.ly + 3.5).toFixed(1)}" font-size="${l.big || l.sel ? 9.5 : 8.5}" font-weight="800" fill="${l.big || l.sel ? '#eef2ff' : '#94a3c4'}">${narrow ? fmtPct(l.v) : l.c + ' ' + fmtPct1(l.v)}</text>`;
+  });
+  const byX = {};
+  labels.filter(l => l.out && !l.dim).forEach(l => { const k = Math.round(l.x); (byX[k] = byX[k] || []).push(l); });
+  Object.keys(byX).forEach(k => byX[k].forEach((l, i) =>
+    marks += `<image href="${logoURL(l.c)}" x="${(l.x - 7).toFixed(1)}" y="${(l.y - 20 - i * 15).toFixed(1)}" width="14" height="14" opacity=".8"/>`));
+  s += lines + marks;
+  s += `<line id="histX" x1="0" y1="${mt - 4}" x2="0" y2="${Y(0)}" stroke="rgba(255,255,255,.25)" visibility="hidden"/>`;
+  s += `<rect x="0" y="0" width="${w}" height="${h}" fill="transparent" style="touch-action:pan-y" onpointermove="histMove(event)" onpointerdown="histMove(event)" onpointerleave="histLeave()"/></svg>`;
+  const legend = `<div class="histLegend">` + geo.drawn.map(dn =>
+    `<button type="button" class="histChip${histSel === dn.c ? ' on' : ''}" title="${teamName(dn.c)}" onclick="histPick('${dn.c}')"><span class="dot" style="background:${dn.big ? dn.col : HIST_GRAY}"></span>${logoImg(dn.c)}${dn.c}</button>`).join('') + `</div>`;
+  _histGeo = geo;
+  box.innerHTML = s + `<div id="histTip" class="histTip" hidden></div>` + legend;
+}
+function histMove(ev) {
+  const g = _histGeo, H = HIST; if (!g || !H) return;
+  const svg = ev.currentTarget.ownerSVGElement, box = $id('histBox');
+  const r = svg.getBoundingClientRect();
+  const px = (ev.clientX - r.left) * (g.w / (r.width || g.w));
+  const pw = g.w - g.ml - g.mr;
+  let i = Math.round((px - g.ml) / pw * (g.N - 1));
+  i = Math.max(0, Math.min(g.kAv - 1, i));
+  const x = g.ml + (g.N <= 1 ? 0 : pw * i / (g.N - 1));
+  const xl = $id('histX');
+  if (xl) { xl.setAttribute('x1', x); xl.setAttribute('x2', x); xl.setAttribute('visibility', 'visible'); }
+  const tip = $id('histTip'); if (!tip) return;
+  const S = H.series[odMetric] || {};
+  const rows = g.drawn.map(dn => ({ c: dn.c, v: (S[dn.c] || [])[i] || 0 }))
+    .filter(z => z.v > 0 || z.c === histSel).sort((a, b) => b.v - a.v).slice(0, 7);
+  tip.innerHTML = `<div class="tD">${histLab(H.cuts[i])} · ${t(OD_LAB[odMetric])}</div>` +
+    rows.map(z => `<div class="tR">${logoImg(z.c)}${teamNick(z.c)}<span class="tv">${fmtPct1(z.v)}</span></div>`).join('');
+  tip.hidden = false;
+  const bw = box.clientWidth || g.w, tw = tip.offsetWidth || 140;
+  const cx = x * ((r.width || g.w) / g.w);
+  tip.style.left = Math.max(0, Math.min(cx + 12, bw - tw - 2)) + 'px';
+  tip.style.top = '4px';
+}
+function histLeave() {
+  const tip = $id('histTip'); if (tip) tip.hidden = true;
+  const xl = $id('histX'); if (xl) xl.setAttribute('visibility', 'hidden');
+}
+addEventListener('resize', () => { if (poOn && poTab === 'odds' && histOn && HIST && !histTable) paintHist(); });
+
 // ── 🏆 playoff picture ──────────────────────────────────────────────────────
 // Both conferences: seeds 1–7 from the tiebreaker engine above, the clubs still in
 // the hunt with games back, and the wild-card weekend matchups the seeding implies.
 let poOn = false;
+// Everything in this panel is built from FINISHED results, so rebuild it when one
+// lands — but not on every live score tick, which would throw away the reader's
+// scroll position mid-game and restart the simulation for nothing.
+let _poSig = oddsSig();
+function refreshPO() { const sig = oddsSig(); if (sig === _poSig) return; _poSig = sig; if (poOn) renderPO(); }
 function poOpen() { poOn = true; renderPO(); $id('po').classList.add('open'); $id('poBtn').classList.add('on'); }
 function poClose() { poOn = false; $id('po').classList.remove('open'); $id('poBtn').classList.remove('on'); }
 // standard games-back, with a tie counting as half a win on both sides of the ledger
@@ -2439,19 +3109,24 @@ function renderBracketHTML() {
         ${M.champion ? `<div class="brChamp">🏆 ${teamName(M.champion)}</div>` : ''}</div>
     </div>`;
 }
+// tab -> [emoji, title, footer note]
+const PO_TABS = { picture: ['🏆', 'poTitle', 'poNote', 'poTabPic'],
+                  odds:    ['📈', 'odTitle', 'odNote', 'poTabOd'],
+                  bracket: ['🔮', 'brTitle', 'brNote', 'poTabBr'] };
 let poTab = 'picture';
 function poSetTab(v) { poTab = v; renderPO(); }
 function renderPO() {
-  const tabs = `<div class="poTabs">
-    <button class="${poTab === 'picture' ? 'on' : ''}" onclick="poSetTab('picture')">${t('poTabPic')}</button>
-    <button class="${poTab === 'bracket' ? 'on' : ''}" onclick="poSetTab('bracket')">${t('poTabBr')}</button></div>`;
-  const body = poTab === 'bracket' ? renderBracketHTML()
+  const cur = PO_TABS[poTab] || PO_TABS.picture;
+  const tabs = `<div class="poTabs">${Object.keys(PO_TABS).map(k =>
+    `<button class="${poTab === k ? 'on' : ''}" onclick="poSetTab('${k}')">${t(PO_TABS[k][3])}</button>`).join('')}</div>`;
+  const body = poTab === 'bracket' ? renderBracketHTML() : poTab === 'odds' ? renderOddsHTML()
     : `<div class="helpBody"><div class="poGrid">${Object.keys(CONFS).map(poConfHTML).join('')}</div></div>`;
+  const note = poTab === 'odds' ? t('odNote', liveFit().hfa.toFixed(1)) : t(cur[2]);
   $id('po').firstElementChild.innerHTML =
-    `<div class="hh"><h2>${poTab === 'bracket' ? '🔮' : '🏆'} <span class="pc">${poTab === 'bracket' ? t('brTitle') : t('poTitle')}</span></h2>${tabs}
+    `<div class="hh"><h2>${cur[0]} <span class="pc">${t(cur[1])}</span></h2>${tabs}
        <button class="hx" onclick="poClose()" aria-label="${t('tClose')}">✕</button></div>
      ${body}
-     <div class="ffNote">${poTab === 'bracket' ? t('brNote') : t('poNote')}</div>`;
+     <div class="ffNote">${note}</div>`;
 }
 $id('poBtn').onclick = () => poOn ? poClose() : poOpen();
 
@@ -2586,6 +3261,7 @@ if (_params.get('play') === '1') startPlay();
 if (_params.get('ff') === '1') ffOpen();
 const _qpo = _params.get('po');
 if (_qpo === 'bracket' || _params.get('b')) { poTab = 'bracket'; poOpen(); }
+else if (_qpo === 'odds') { poTab = 'odds'; poOpen(); }
 else if (_qpo === '1') poOpen();
 let _seenHelp = true; try { _seenHelp = !!localStorage.getItem(HELP_KEY); } catch (e) {}
 if (!_seenHelp && !_params.get('div') && !_params.get('play') && !_params.get('ff') && !_qpo && !_params.get('b')) helpOpen();
