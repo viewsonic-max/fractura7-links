@@ -60,8 +60,11 @@ the map reduced to a blob of overlapping pins. The fixes worth knowing before ed
   bye week dims, and their season draws as flights out and back from home (round trips;
   consecutive international games fly direct) with a live odometer and ▶ fly-through.
   Journey card lists every week (vs/@ opponent, W/L underline) plus record, PF/PA.
-- **Division drawer** — standings (W-L-T, PCT, NET, DIV record) with first-cut NFL
-  tiebreakers (head-to-head → division → conference → net points) and every division game.
+- **Division drawer** — standings (W-L-T, PCT, NET, DIV record) ordered by the full NFL
+  tiebreakers, every division game, green for the division leader and blue for a club
+  currently holding a wild-card seed, and a 🏆 shortcut to the playoff picture.
+- **🏆 Playoff picture** — both conferences seeded 1–7, who is in the hunt and how far
+  back, and the wild-card matchups the seeding implies. See below.
 - **Live** — ESPN scoreboard polled every 45 s during game windows (score, quarter/clock,
   final), backfill on load for any kicked-off game missing a score, playoff pairings
   picked up automatically once Week 18 ends. Score fanfare + confetti burst and
@@ -73,6 +76,47 @@ the map reduced to a blob of overlapping pins. The fixes worth knowing before ed
 - **PWA** (`manifest.json`, `sw.js` cache `nflviz-v1`, generated 🏈 icons), **en/es**
   toggle in the help overlay, deep links `?w=7`, `?d=2026-10-25`, `?team=KC`,
   `?div=AFC West`, `?play=1`, `?sheet=1`, `?ff=1`.
+
+## Tiebreakers and seeding
+
+`TB()` builds per-club game logs, records, strength of victory/schedule and the combined
+points rankings from final scores, cached on a results signature. `pickBest(pool, mode)`
+then runs the real NFL procedure rather than a sort comparator, because three rules make
+it one:
+
+- **Only one club is separated per pass.** Once it is taken, the rest revert to step 1.
+- **A step that narrows the field without resolving it restarts the chain** at step 1.
+- **In a wild-card tie, same-division clubs are first reduced to their highest-ranked
+  member**, so a club can never be seeded above a division rival it ranks behind.
+
+Chains, both starting at win percentage:
+
+| | Division | Wild card / conference |
+|---|---|---|
+| 1 | head-to-head | head-to-head (3+ clubs: sweep only) |
+| 2 | division record | conference record |
+| 3 | common games | common games, min. 4 |
+| 4 | conference record | strength of victory |
+| 5–6 | strength of victory, then schedule | strength of schedule, conference points rank |
+| 7–8 | combined points rank, conference then league | league points rank, net points in conference games |
+| 9–11 | net points in common games, all games, net touchdowns | net points all games, net touchdowns |
+
+Net touchdowns come from `fantasy-data.js` (`tds`), counted off the cached box scores.
+A tie surviving every step is a coin toss in reality; here it falls back to code order.
+
+**One deliberate addition.** The rule book assumes all 17 games are played. Mid-season
+they are not, and a literal reading seats a 6-0 club behind a 5-0 one on strength of
+victory — which is not how ESPN or the league display it. So when the clubs in a tie have
+played a *different* number of games, more wins ranks first. The step is skipped once
+schedules are equal, leaving the chain exactly as written. Without it the 2026 Week 7 NFC
+put Minnesota (5-0) over San Francisco (6-0); with it, all 32 seeds match ESPN.
+
+`clinchOf()` marks y/x/e by record alone and conservatively: a rival who can merely draw
+level counts as a threat, since head-to-head cannot be projected. A marker may therefore
+appear a week after the league announces it, but never wrongly.
+
+`node verify.js seeds` checks internal consistency and compares every seed against ESPN's
+published `playoffSeed`.
 
 ## Fantasy pipeline (`fantasy.js`)
 
