@@ -11,8 +11,8 @@ predictor, odds model and the season-recap card are the next steps (see below).
 **To use: open `index.html` in a browser.** `node verify.js [desk|team|div|mobile|es|ff|layout]`
 runs a headless-Edge smoke test (uses `../wcviz/node_modules/playwright-core`) and
 writes `_shot-<scenario>.png`. The `layout` scenario asserts phone geometry — nothing
-floating over the timeline bar, one row of header chips, no colliding stadium labels,
-every game pin inside the visible band — and exits non-zero on a regression.
+floating over the timeline bar, one row of header chips, no colliding stadium labels or
+game pins, every game pin inside the visible band — and exits non-zero on a regression.
 
 ### Mobile layout rules (2026-10-23 polish pass)
 
@@ -25,7 +25,19 @@ the map reduced to a blob of overlapping pins. The fixes worth knowing before ed
 - **Zoom bands.** `zoomBand()` flips at zoom 5; `pinSizes()` returns smaller markers when
   zoomed out and smaller again on phones (28/12 vs 40/22), and `body.zlow` hides stadium
   labels on phones. The whole country only fits a phone at about zoom 3, where full-size
-  pins merge into one blob. Markers are re-iconed when the band changes.
+  pins merge into one blob.
+- **Clustering** (`clusterVenues`). Even at 28px the eastern stadiums collide, so the
+  week's venues are grouped in projected-pixel space on every zoom change. Each pass takes
+  the busiest unclaimed stadium as an **anchor** and absorbs every unclaimed venue within
+  `pinSize × 1.3`. Anything left over was farther than that from every earlier anchor, so
+  **all anchors end up at least one threshold apart** — rendering each group at its anchor
+  therefore cannot overlap, and because the marker never moves to a centroid there is no
+  drift that would chain the whole East Coast into a single pin. A group of two or more
+  draws a dashed collar, shows the group's **game** count (same meaning as a single pin)
+  and a "N stadiums" label, and flies to its members' bounds when tapped; the resulting
+  zoom change re-clusters and splits it. Member markers get a zero-size icon, and
+  `hotMarker()` matches on `data-v~=` so hovering a game card still lights up the cluster
+  holding that venue. Verified: 14 games on screen at every zoom, zero pin collisions.
 - **`fitDay()`** pads the fit by the real header and timeline heights, so a week's games
   land in the band between them rather than behind the chrome.
 - **Phones get one chip row.** `cities` is dropped (it tracks games), the bye chip becomes
