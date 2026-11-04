@@ -665,6 +665,35 @@
     .ffNote{max-height:76px; overflow-y:auto; font-size:9.5px; line-height:1.45;}
   }
 
+  /* 📸 season recap share card */
+  #wrap{position:absolute; inset:0; z-index:1664; display:none; background:rgba(7,11,22,.86); backdrop-filter:blur(6px); padding:18px;}
+  #wrap.open{display:flex; justify-content:center; align-items:center;}
+  .wrapCard{
+    width:min(430px,94vw); max-height:calc(100vh - 40px); position:relative;
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:18px;
+    box-shadow:0 20px 60px rgba(0,0,0,.6); display:flex; flex-direction:column; overflow:hidden;
+    animation:pop .3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .wrapCard .wh{display:flex; align-items:center; gap:10px; padding:13px 16px; border-bottom:1px solid var(--panel-border);}
+  .wrapCard .wh h2{font-size:16px; font-weight:900;}
+  .wrapCard .wh h2 .pc{background:linear-gradient(92deg,var(--pitch),var(--sky) 55%,var(--hot)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .wrapCard .wx{margin-left:auto; background:none; border:none; color:var(--ink-dim); font-size:18px; cursor:pointer;}
+  .wrapCard .wx:hover{color:var(--ink);}
+  .wrapBody{overflow-y:auto; padding:12px 14px 4px; display:flex; justify-content:center; scrollbar-width:thin; scrollbar-color:#33415e transparent;}
+  #wrapCanvas{max-width:100%; max-height:62vh; width:auto; height:auto; border-radius:12px; border:1px solid var(--panel-border); background:#0b1120;}
+  .wrapStat{font:600 11.5px 'Outfit',sans-serif; color:var(--ink-dim); text-align:center; padding:6px 14px 0; min-height:16px;}
+  .wrapFoot{padding:11px 14px; display:flex; gap:9px; justify-content:center;}
+  .wrapFoot button{flex:1; max-width:170px; padding:10px 12px; border-radius:10px; border:none; cursor:pointer; font:800 13px 'Outfit',sans-serif;}
+  #wrapShareBtn{background:linear-gradient(135deg,var(--pitch),var(--pitch-deep)); color:#04150c;}
+  #wrapShareBtn:hover{filter:brightness(1.1);}
+  #wrapSaveBtn{background:rgba(255,255,255,.08); border:1px solid var(--panel-border); color:var(--ink);}
+  #wrapSaveBtn:hover{border-color:var(--ink-dim);}
+  @media (max-width:760px){
+    #wrap{padding:0;}
+    .wrapCard{width:100vw; height:100%; max-height:100vh; border-radius:0; justify-content:center;}
+    #wrapCanvas{max-height:66vh;}
+  }
+
   #confetti{position:absolute; inset:0; z-index:1500; pointer-events:none;}
   #sheetBar{display:none;}
   #fabRow{display:none;}
@@ -793,6 +822,7 @@
 <div id="help" role="dialog" aria-modal="true" aria-label="How to use this app"><div class="helpCard"></div></div>
 <div id="ff" role="dialog" aria-modal="true" aria-label="Fantasy leaders" onclick="if(event.target===this)ffClose()"><div class="helpCard"></div></div>
 <div id="po" role="dialog" aria-modal="true" aria-label="Playoff picture" onclick="if(event.target===this)poClose()"><div class="helpCard"></div></div>
+<div id="wrap" role="dialog" aria-modal="true" aria-label="My season share card" onclick="if(event.target===this)wrapClose()"><div class="wrapCard"></div></div>
 <div id="clockChip"></div>
 
 <div id="tl">
@@ -804,6 +834,7 @@
   <button class="tlBtn small" id="notifyBtn" title="Game alerts">🔕</button>
   <button class="tlBtn small" id="poBtn" title="Playoff picture">🏆</button>
   <button class="tlBtn small" id="ffBtn" title="Fantasy leaders">📊</button>
+  <button class="tlBtn small" id="wrapBtn" title="My season — share card">📸</button>
   <button class="tlBtn small" id="helpBtn" title="How to use this app">?</button>
   <div id="days"></div>
 </div>
@@ -949,6 +980,28 @@ const STR = {
     ffPass: 'pass yds', ffRush: 'rush yds', ffRec: 'rec', ffYds: 'yds', ffFum: 'fum lost',
     ffNote: 'ESPN default scoring: pass yds ÷25, pass TD 4, INT −2, rush/rec yds ÷10, TD 6, 2-pt 2, fumble lost −2. Half / PPR add 0.5 / 1 per catch. Kickers: FG 3/4/5 by distance, XP 1, miss −1. Players only — no team defenses.',
     ffUpdated: n => `Through ${n} completed games.`,
+    tWrap: 'My season — share card', wrapTitle: 'My season',
+    wrapShare: '📤 Share', wrapSave: '⬇ Save image',
+    wrapCrunch: (k, n) => `Replaying the odds… week ${k} / ${n}`,
+    wrapReady: 'Long-press the image, or use the buttons below.',
+    wrapShareText: 'My NFL season —',
+    rcMine: 'MY SEASON', rcLeague: 'THE SEASON', rcPre: 'Before kickoff',
+    rcThru: wk => `Through ${wk}`, rcDuring: wk => `${wk} in progress`,
+    rcChamp: 'SUPER BOWL CHAMPIONS', rcConfChamp: cf => `${cf} CHAMPIONS`, rcSBBound: cf => `${cf} CHAMPIONS · SUPER BOWL BOUND`,
+    rcOutIn: r => `OUT IN THE ${r}`, rcAlive: r => `ALIVE · ${r}`,
+    rcBye: '#1 SEED · FIRST-ROUND BYE', rcInPO: s => `PLAYOFF BOUND · #${s} SEED`,
+    rcDone: 'SEASON OVER', rcElim: 'ELIMINATED',
+    rcSeed: (s, cf) => `#${s} SEED IN THE ${cf}`, rcDivClinch: s => `DIVISION CLINCHED · #${s} SEED`, rcBerth: s => `BERTH CLINCHED · #${s} SEED`,
+    rcHunt: 'IN THE HUNT', rcHuntGB: gb => `IN THE HUNT · ${gb} BACK`,
+    rcJourney: (g, s, mi) => `${g} game${g === 1 ? '' : 's'} · ${s} stadium${s === 1 ? '' : 's'} · ${mi} mi`,
+    rcTopSeeds: 'THE #1 SEEDS', rcTopSeedsSub: 'Follow a team to make this card yours', rcVs: 'vs',
+    rcBracket: 'MY BRACKET', rcPick: 'MY SUPER BOWL PICK', rcGraded: 'picks graded so far', rcPicked: 'games picked',
+    rcPickedAt: (p, pre) => `${p} title odds ${pre ? 'at kickoff' : 'when I picked'}`,
+    rcOddsTeam: 'PLAYOFF & TITLE ODDS · WEEK BY WEEK', rcOddsLeague: 'TITLE FAVORITES · WEEK BY WEEK',
+    rcPlayoffs: 'PLAYOFFS', rcTitle: 'SUPER BOWL',
+    rcFfTeam: f => `TOP FANTASY PLAYER · ${f.toUpperCase()}`, rcFfLeague: f => `FANTASY LEADER · ${f.toUpperCase()}`,
+    rcRank: n => `#${n} overall`, rcBest: (w, p) => `best ${w}: ${p}`,
+    rcDiff: 'POINT DIFF', rcHome: 'HOME', rcRoad: 'ROAD', rcPts: 'POINTS', rcPerGame: 'PER GAME', rcOT: 'OVERTIMES',
     helpRows: [
       ['🗺️','<b>The map.</b> Every marker is a stadium. Idle ones show a dot &amp; next-game countdown; active ones pulse with the week’s game count; the Super Bowl bounces a 🏆. Click any marker for its game, home team &amp; capacity. Stadiums too close together to tell apart merge into a <b>dashed pin</b> — tap it to zoom in and split them.'],
       ['📅','<b>Pick a week.</b> Tap a week on the timeline, use <span class="k">◀</span> <span class="k">▶</span>, or the <span class="k">←</span> <span class="k">→</span> keys. Chip colors mark the round — regular season → Wild Card → Divisional → Conference → Super Bowl.'],
@@ -963,6 +1016,7 @@ const STR = {
       ['📈','<b>Season odds.</b> The middle tab of 🏆. A points-margin model fitted to this season plays the rest of it out 10,000 times — title, conference, playoff, division and first-round-bye odds for all 32 clubs, plus a projected record. Open <b>How the odds moved</b> for the week-by-week chart of the same model replayed.'],
       ['🔮','<b>Bracket predictor.</b> The third tab of 🏆. Tap a team to send them through — the NFL reseeds every round, so the matchups rebuild as you pick. Share your bracket with a link; real results lock in and grade your picks ✓/✗.'],
       ['📊','<b>Fantasy leaders.</b> Tap 📊 (or the points chip) for the top fantasy scorers of any week or the whole season, in Standard, Half-PPR or PPR scoring, with each player’s stat line.'],
+      ['📸','<b>Season recap.</b> Tap 📸 for a story-sized share card of your season: your team’s record, where it stands in the playoff race, miles travelled, how its playoff and title odds moved week by week, its top fantasy player, and your bracket score and Super Bowl pick. Share it straight to your phone’s share sheet, or save the image.'],
       ['🔗','<b>Share the view.</b> The URL remembers your week and followed team — copy it to share exactly what you’re looking at.'],
     ],
   },
@@ -1053,6 +1107,28 @@ const STR = {
     ffPass: 'yds pase', ffRush: 'yds carrera', ffRec: 'rec', ffYds: 'yds', ffFum: 'balón perdido',
     ffNote: 'Puntuación estándar de ESPN: yds de pase ÷25, TD de pase 4, INT −2, yds de carrera/recepción ÷10, TD 6, conversión de 2 pts 2, balón perdido −2. Media / PPR suman 0.5 / 1 por recepción. Pateadores: FG 3/4/5 según distancia, punto extra 1, fallo −1. Solo jugadores — sin defensivas.',
     ffUpdated: n => `Con ${n} juegos terminados.`,
+    tWrap: 'Mi temporada — tarjeta para compartir', wrapTitle: 'Mi temporada',
+    wrapShare: '📤 Compartir', wrapSave: '⬇ Guardar imagen',
+    wrapCrunch: (k, n) => `Reproduciendo los momios… semana ${k} / ${n}`,
+    wrapReady: 'Mantén presionada la imagen, o usa los botones.',
+    wrapShareText: 'Mi temporada de la NFL —',
+    rcMine: 'MI TEMPORADA', rcLeague: 'LA TEMPORADA', rcPre: 'Antes del arranque',
+    rcThru: wk => `Hasta ${wk}`, rcDuring: wk => `${wk} en curso`,
+    rcChamp: 'CAMPEONES DEL SUPER BOWL', rcConfChamp: cf => `CAMPEONES DE LA ${cf}`, rcSBBound: cf => `CAMPEONES DE LA ${cf} · AL SUPER BOWL`,
+    rcOutIn: r => `FUERA EN ${r}`, rcAlive: r => `VIVOS · ${r}`,
+    rcBye: '#1 · DESCANSA LA PRIMERA RONDA', rcInPO: s => `A PLAYOFFS · LUGAR #${s}`,
+    rcDone: 'TEMPORADA TERMINADA', rcElim: 'ELIMINADOS',
+    rcSeed: (s, cf) => `LUGAR #${s} DE LA ${cf}`, rcDivClinch: s => `DIVISIÓN ASEGURADA · LUGAR #${s}`, rcBerth: s => `PLAYOFFS ASEGURADOS · LUGAR #${s}`,
+    rcHunt: 'EN LA PELEA', rcHuntGB: gb => `EN LA PELEA · A ${gb}`,
+    rcJourney: (g, s, mi) => `${g} juego${g === 1 ? '' : 's'} · ${s} estadio${s === 1 ? '' : 's'} · ${mi} mi`,
+    rcTopSeeds: 'LOS SEMBRADOS #1', rcTopSeedsSub: 'Sigue a un equipo para hacer tuya esta tarjeta', rcVs: 'vs',
+    rcBracket: 'MI CUADRO', rcPick: 'MI PICK DEL SUPER BOWL', rcGraded: 'aciertos hasta ahora', rcPicked: 'juegos elegidos',
+    rcPickedAt: (p, pre) => `${p} de prob. ${pre ? 'al arranque' : 'cuando lo elegí'}`,
+    rcOddsTeam: 'PROB. DE PLAYOFFS Y TÍTULO · POR SEMANA', rcOddsLeague: 'FAVORITOS AL TÍTULO · POR SEMANA',
+    rcPlayoffs: 'PLAYOFFS', rcTitle: 'SUPER BOWL',
+    rcFfTeam: f => `MEJOR JUGADOR DE FANTASY · ${f.toUpperCase()}`, rcFfLeague: f => `LÍDER DE FANTASY · ${f.toUpperCase()}`,
+    rcRank: n => `#${n} general`, rcBest: (w, p) => `mejor ${w}: ${p}`,
+    rcDiff: 'DIF. DE PUNTOS', rcHome: 'EN CASA', rcRoad: 'DE VISITA', rcPts: 'PUNTOS', rcPerGame: 'POR JUEGO', rcOT: 'TIEMPOS EXTRA',
     helpRows: [
       ['🗺️','<b>El mapa.</b> Cada marcador es un estadio. Los inactivos muestran un punto y la cuenta regresiva al próximo juego; los activos laten con el número de juegos de la semana; el Super Bowl hace rebotar un 🏆. Haz clic en cualquier marcador para ver su juego, equipo local y capacidad. Los estadios demasiado juntos se agrupan en un <b>marcador punteado</b> — tócalo para acercar y separarlos.'],
       ['📅','<b>Elige una semana.</b> Toca una semana en la línea de tiempo, usa <span class="k">◀</span> <span class="k">▶</span>, o las teclas <span class="k">←</span> <span class="k">→</span>. Los colores marcan la ronda — temporada regular → Comodines → Divisional → Conferencia → Super Bowl.'],
@@ -1067,6 +1143,7 @@ const STR = {
       ['📈','<b>Momios de la temporada.</b> La pestaña de en medio de 🏆. Un modelo de diferencia de puntos ajustado a esta temporada juega lo que falta 10,000 veces — probabilidades de título, conferencia, playoffs, división y descanso de primera ronda para los 32 equipos, más una marca proyectada. Abre <b>Cómo se movieron los momios</b> para la gráfica semana a semana del mismo modelo reproducido.'],
       ['🔮','<b>Predictor del cuadro.</b> La tercera pestaña de 🏆. Toca un equipo para hacerlo avanzar — la NFL resiembra cada ronda, así que los duelos se rearman conforme eliges. Comparte tu cuadro con un enlace; los resultados reales se fijan y califican tus pronósticos ✓/✗.'],
       ['📊','<b>Líderes de fantasy.</b> Toca 📊 (o la ficha de puntos) para ver a los máximos anotadores de fantasy de cualquier semana o de toda la temporada, en puntuación Estándar, Media PPR o PPR, con la línea de estadísticas de cada jugador.'],
+      ['📸','<b>Resumen de la temporada.</b> Toca 📸 para una tarjeta tamaño historia de tu temporada: la marca de tu equipo, cómo va en la carrera por los playoffs, las millas recorridas, cómo se movieron sus probabilidades de playoffs y de título semana a semana, su mejor jugador de fantasy, y tus aciertos del cuadro y tu pick del Super Bowl. Compártela directo desde el menú de tu teléfono, o guarda la imagen.'],
       ['🔗','<b>Comparte la vista.</b> La URL recuerda tu semana y equipo seguido — cópiala para compartir exactamente lo que ves.'],
     ],
   },
@@ -1565,6 +1642,20 @@ function recordOf(c, filter) {
 // Travel model: the team lives at its home stadium. Each road game is a round trip
 // unless the next game is at the same venue, or both games are abroad (London
 // back-to-backs fly direct). Miles are summed along that path.
+// legs: the sequence of venues visited for games `gm`, starting and ending at home
+function travelLegs(c, gm) {
+  const home = homeVenue(c), abroad = v => VENUES[v][1] !== 'USA', legs = [home];
+  for (let i = 0; i < gm.length; i++) {
+    const v = gm[i].v, nx = gm[i + 1];
+    if (v !== legs[legs.length - 1]) legs.push(v);
+    const stay = nx && (nx.v === v || (abroad(v) && nx.v && abroad(nx.v)));
+    if (v !== home && !stay) legs.push(home);
+  }
+  if (legs[legs.length - 1] !== home) legs.push(home);
+  return legs;
+}
+const legMiles = legs => legs.slice(1).reduce((s, v, i) => {
+  const A = VENUES[legs[i]], B = VENUES[v]; return s + haversineMi([A[2], A[3]], [B[2], B[3]]); }, 0);
 function buildJourney() {
   clearJourney();
   saveState();
@@ -1577,21 +1668,11 @@ function buildJourney() {
   }
   const home = homeVenue(follow);
   const gm = teamGames(follow).filter(m => m.v);                 // TBD playoff games have no venue yet
-  const abroad = v => VENUES[v][1] !== 'USA';
-  // legs: sequence of venues visited, starting (and ending) at home
-  const legs = [home];
+  const legs = travelLegs(follow, gm);
   const stopsByVenue = {};                                        // venue → [labels]
   const addLabel = (v, lab) => (stopsByVenue[v] = stopsByVenue[v] || []).push(lab);
   addLabel(home, '🏠');
-  for (let i = 0; i < gm.length; i++) {
-    const m = gm[i], v = m.v, cur = legs[legs.length - 1];
-    if (v !== cur) legs.push(v);
-    if (v !== home) addLabel(v, roundShort(m));
-    const nx = gm[i + 1];
-    const stay = nx && (nx.v === v || (abroad(v) && nx.v && abroad(nx.v)));
-    if (v !== home && !stay) legs.push(home);
-  }
-  if (legs[legs.length - 1] !== home) legs.push(home);
+  gm.forEach(m => { if (m.v !== home) addLabel(m.v, roundShort(m)); });
 
   journeyLayer = L.layerGroup().addTo(map);
   let miles = 0, fullPath = [];
@@ -2048,7 +2129,7 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => {});
 }
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { if (poOn) return poClose(); if (ffOn) return ffClose(); if (helpOn) return helpClose(); return closeDrawer(); }
+  if (e.key === 'Escape') { if (wrapOn) return wrapClose(); if (poOn) return poClose(); if (ffOn) return ffClose(); if (helpOn) return helpClose(); return closeDrawer(); }
   if (helpOn || ffOn || poOn) return;
   if (e.key === 'ArrowLeft') { stopPlay(); stepDay(-1); }
   if (e.key === 'ArrowRight') { stopPlay(); stepDay(1); }
@@ -3190,6 +3271,451 @@ function renderFF() {
 }
 $id('ffBtn').onclick = () => ffOn ? ffClose() : ffOpen();
 
+// ── 📸 My Season — recap share card ────────────────────────────────────────
+// A 1080×1920 story-format canvas painted on demand: the followed club's record,
+// where it stands (seed / hunt / clinched / eliminated, then January's results),
+// miles travelled, its playoff- and title-odds story week by week, its top fantasy
+// player, plus the user's bracket score and Super Bowl pick. No club followed → a
+// league view (the #1 seeds, then the Super Bowl matchup, then the champion).
+// ESPN's image CDN sends Access-Control-Allow-Origin: *, so logos and headshots
+// load with crossOrigin and the canvas never taints; a failed load falls back to a
+// drawn chip, never a tainted drawImage. Shared via the Web Share API (files) with
+// a download fallback.
+const WRAP_URL = 'https://viewsonic-max.github.io/fractura7-links/nfl/';
+const WRAP_SIMS = 600;                     // per replayed week when no odds history is cached
+let wrapOn = false, _wrapRAF = 0, _wrapTok = null, _wrapData = null;
+const _wrapImgs = {};                      // url -> Promise<Image|null>
+function wrapImg(url) {
+  if (_wrapImgs[url]) return _wrapImgs[url];
+  return _wrapImgs[url] = new Promise(res => {
+    const im = new Image();
+    im.crossOrigin = 'anonymous';
+    const to = setTimeout(() => res(null), 4000);
+    im.onload = () => { clearTimeout(to); res(im); };
+    im.onerror = () => { clearTimeout(to); res(null); };
+    im.src = url;
+  });
+}
+const roundNm = pw => { const v = ROUND_T[LANG][rkeyOf({ st: 3, pw })]; return typeof v === 'function' ? v(pw) : v; };
+// where a club stands: January results first, then the final or current seeding
+function recapStatus(c) {
+  const post = MATCHES.filter(m => m.st === 3 && (m.a === c || m.b === c) && played(m, null)).sort((x, y) => x.pw - y.pw);
+  const last = post[post.length - 1];
+  if (last) {
+    const won = winnerOf(last) === c;
+    if (last.pw === 4) return [won ? 'champ' : 'sbLoss'];
+    if (!won) return ['outPO', last.pw];
+    return last.pw === 3 ? ['confChamp'] : ['alivePO', last.pw + 1];
+  }
+  const seed = seedOf(c);
+  if (!MATCHES.some(m => m.st === 2 && !played(m, null))) {     // regular season over
+    if (seed > 7) return ['done'];
+    if (seed === 1) return MATCHES.some(m => m.st === 3 && m.pw === 1 && played(m, null)) ? ['alivePO', 2] : ['bye'];
+    return ['inPO', seed];
+  }
+  const cl = clinchOf(c);
+  if (cl === 'out') return ['elim'];
+  if (seed <= 7) return ['seed', seed, cl];
+  return ['hunt', gamesBack(c, playoffPicture()[TEAMS[c].conf].order[6])];
+}
+const WRAP_STATUS_COL = { champ: '#ffd166', confChamp: '#ffd166', bye: '#ffd166', sbLoss: '#c7d3f0',
+  alivePO: '#22e07c', inPO: '#22e07c', seed: '#22e07c', hunt: '#4cc9f0', outPO: '#94a3c4', elim: '#94a3c4', done: '#94a3c4' };
+function wrapStatusText(c, s) {
+  const conf = TEAMS[c].conf;
+  switch (s[0]) {
+    case 'champ': return t('rcChamp');
+    case 'sbLoss': return t('rcConfChamp', conf);
+    case 'confChamp': return t('rcSBBound', conf);
+    case 'outPO': return t('rcOutIn', roundNm(s[1]).toUpperCase());
+    case 'alivePO': return t('rcAlive', roundNm(s[1]).toUpperCase());
+    case 'bye': return t('rcBye');
+    case 'inPO': return t('rcInPO', s[1]);
+    case 'done': return t('rcDone');
+    case 'elim': return t('rcElim');
+    case 'seed': return s[2] === 'div' ? t('rcDivClinch', s[1]) : s[2] === 'in' ? t('rcBerth', s[1]) : t('rcSeed', s[1], conf);
+    default: return s[1] === '—' ? t('rcHunt') : t('rcHuntGB', s[1]);
+  }
+}
+// a club's brighter brand colour, lifted toward white when both are too dark for the navy card
+function wrapAccent(c) {
+  const rgb = h => { const n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  const lum = h => rgb(h).map(v => v / 255).reduce((s, v, i) => s + v * [.2126, .7152, .0722][i], 0);
+  const sat = h => { const v = rgb(h), mx = Math.max(...v), mn = Math.min(...v); return mx ? (mx - mn) / mx : 0; };
+  const T = TEAMS[c], cand = [T.color, T.alt].filter(h => /^[0-9a-f]{6}$/i.test(h || ''));
+  if (!cand.length) return '#4cc9f0';
+  let h = cand.find(x => sat(x) > 0.3) || cand.sort((a, b) => lum(b) - lum(a))[0];
+  if (lum(h) < 0.18) { const n = parseInt(h, 16), mix = v => Math.round(v + (255 - v) * 0.45);
+    h = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(mix).map(v => v.toString(16).padStart(2, '0')).join(''); }
+  return '#' + h;
+}
+function wrapStats() {
+  const c = follow && TEAMS[follow] ? follow : null;
+  const fin = MATCHES.filter(m => played(m, null));
+  let team = null;
+  if (c) {
+    const gm = teamGames(c).filter(m => played(m, null));
+    const reg = m => m.st === 2;
+    team = { code: c, r: recordOf(c, reg), home: recordOf(c, m => reg(m) && m.b === c), road: recordOf(c, m => reg(m) && m.a === c),
+      games: gm.length, stadiums: new Set(gm.map(m => m.v)).size,
+      mi: Math.round(legMiles(travelLegs(c, gm.filter(m => m.v)))), status: recapStatus(c), accent: wrapAccent(c) };
+  }
+  // how far the season has got: the latest week with a final, and whether it is complete
+  const lastW = fin.reduce((w, m) => Math.max(w, m.w), 0);
+  const wkDone = lastW && MATCHES.filter(m => m.w === lastW && m.a && m.b).every(m => played(m, null));
+  const sbg = matchByN(META.final), champ = played(sbg, null) ? winnerOf(sbg) : null;
+  const P = playoffPicture();
+  const sc = predScore(), pick = TEAMS[PRED.win.SB] ? PRED.win.SB : null;
+  // fantasy: the followed club's leader (or the league's) in the reader's chosen format
+  let ff = null;
+  if (FF) {
+    const f = ffFmt, by = (a, b) => b.pts[f] - a.pts[f];
+    const pool = c ? (FF.teamTop && FF.teamTop[c]) || FF.seasonTop.filter(r => r.tm === c) : FF.seasonTop;
+    const row = pool.slice().sort(by)[0];
+    if (row) {
+      const rk = FF.seasonTop.slice().sort(by).findIndex(r => r.id === row.id);
+      ff = { row, f, rank: rk >= 0 && rk < 60 ? rk + 1 : null, best: Array.isArray(row.best) ? row.best[f] : null };
+    }
+  }
+  const pts = fin.reduce((s, m) => s + m.s1 + m.s2, 0);
+  return { team, lastW, wkDone, sbg, champ, top: [P.AFC.order[0], P.NFC.order[0]],
+    sb: TEAMS[sbg.a] && TEAMS[sbg.b] ? [sbg.a, sbg.b] : null,
+    sc, picks: Object.keys(PRED.win).length, pick, pickDate: (pick && PRED.t && PRED.t.SB) || null, ff,
+    pts, games: fin.length, ot: fin.filter(m => m.ot).length };
+}
+// The clubs whose lines the card draws: the followed club (playoff + title odds),
+// or the four best current title favourites.
+function wrapLines(st, H) {
+  const n = H.cuts.length;
+  if (st.team) return [{ c: st.team.code, m: 'play', col: '#4cc9f0', lab: t('rcPlayoffs') }, { c: st.team.code, m: 'sb', col: '#ffd166', lab: t('rcTitle') }];
+  const S = H.series.sb;
+  return Object.keys(S).sort((a, b) => (S[b][n - 1] || 0) - (S[a][n - 1] || 0)).slice(0, 4)
+    .map((c, i) => ({ c, m: 'sb', col: HIST_COLORS[i], lab: c }));
+}
+// Odds series: the odds-history cache when it is current; otherwise replay each
+// completed week at WRAP_SIMS — plenty for a trend line, and never written back
+// over the panel's fuller cache.
+function wrapSeries(onDone, onProg) {
+  cancelAnimationFrame(_wrapRAF);
+  const cached = (HIST && HIST.done && HIST.sig === oddsSig()) ? HIST : histLoad();
+  if (cached) { onDone({ cuts: cached.cuts, series: cached.series }); return; }
+  const cuts = histCuts(), series = { play: {}, sb: {} };
+  let k = 0, run = null;
+  const step = () => {
+    if (!wrapOn) return;
+    if (!run) run = newRun(cuts[k], WRAP_SIMS);
+    const t0 = performance.now();
+    do { simSeason(run); } while (run.n < WRAP_SIMS && performance.now() - t0 < 12);
+    if (run.n >= WRAP_SIMS) {
+      for (const m of ['play', 'sb']) SIMT.forEach((c, i) => (series[m][c] = series[m][c] || [])[k] = run[m][i] / WRAP_SIMS);
+      run = null; k++;
+      if (onProg) onProg(k, cuts.length);
+      if (k >= cuts.length) { onDone({ cuts, series }); return; }
+    }
+    _wrapRAF = requestAnimationFrame(step);
+  };
+  _wrapRAF = requestAnimationFrame(step);
+}
+function wrapOpen() {
+  wrapOn = true;
+  $id('wrap').firstElementChild.innerHTML = `
+    <div class="wh"><h2>📸 <span class="pc">${t('wrapTitle')}</span></h2><button class="wx" onclick="wrapClose()" aria-label="${t('tClose')}">✕</button></div>
+    <div class="wrapBody"><canvas id="wrapCanvas" width="1080" height="1920"></canvas></div>
+    <div class="wrapStat" id="wrapStat"></div>
+    <div class="wrapFoot">
+      <button id="wrapShareBtn" onclick="wrapShare()">${t('wrapShare')}</button>
+      <button id="wrapSaveBtn" onclick="wrapSave()">${t('wrapSave')}</button>
+    </div>`;
+  $id('wrap').classList.add('open');
+  $id('wrapBtn').classList.add('on');
+  wrapBuild();
+}
+function wrapClose() { wrapOn = false; _wrapTok = null; cancelAnimationFrame(_wrapRAF); $id('wrap').classList.remove('open'); $id('wrapBtn').classList.remove('on'); }
+async function wrapBuild() {
+  const tok = _wrapTok = {};
+  const st = wrapStats();
+  _wrapData = { st, img: {}, hist: null };
+  try { if (document.fonts && document.fonts.load) await Promise.all(['900 100px Outfit', '800 44px Outfit', '600 34px Outfit'].map(f => document.fonts.load(f))); } catch (e) {}
+  if (_wrapTok !== tok) return;
+  drawWrap();
+  const clubs = new Set([st.team && st.team.code, st.pick, st.champ, ...(st.sb || []), ...st.top, st.ff && st.ff.row.tm].filter(c => c && TEAMS[c]));
+  const urls = [...clubs].map(logoURL);
+  if (st.ff) urls.push(ffHead(st.ff.row.id));
+  const paint = () => { if (_wrapTok === tok && wrapOn) drawWrap(); };
+  urls.forEach(u => wrapImg(u).then(im => { if (im && _wrapData) { _wrapData.img[u] = im; paint(); } }));
+  const stat = $id('wrapStat');
+  wrapSeries(out => {
+    if (_wrapTok !== tok || !wrapOn) return;
+    _wrapData.hist = out;
+    // the neutral chart's clubs are only known now — fetch their logos too
+    wrapLines(st, out).forEach(l => wrapImg(logoURL(l.c)).then(im => { if (im) { _wrapData.img[logoURL(l.c)] = im; paint(); } }));
+    paint();
+    if (stat) stat.textContent = t('wrapReady');
+  }, (k, n) => { if (stat && _wrapTok === tok) stat.textContent = t('wrapCrunch', k, n); });
+}
+// ── canvas painting ──
+const _wf = (wt, px) => `${wt} ${px}px Outfit,system-ui,sans-serif`;
+function _rr(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function _fit(ctx, txt, wt, px, maxW) {          // shrink a line until it fits
+  ctx.font = _wf(wt, px);
+  while (px > 20 && ctx.measureText(txt).width > maxW) ctx.font = _wf(wt, px -= 2);
+}
+function _panel(ctx, x, y, w, h) {
+  _rr(ctx, x, y, w, h, 26);
+  ctx.fillStyle = 'rgba(13,20,37,.9)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.09)'; ctx.lineWidth = 2; ctx.stroke();
+}
+function _label(ctx, txt, x, y, align) {
+  ctx.textAlign = align || 'left'; ctx.fillStyle = '#94a3c4'; ctx.font = _wf(800, 26); ctx.letterSpacing = '3px';
+  ctx.fillText(txt, x, y); ctx.letterSpacing = '0px';
+}
+// a club's mark on a light badge ringed in its colour (ESPN's logos are drawn for white
+// backgrounds — the Jets' green or the Raiders' black vanish straight on navy); the
+// abbreviation stands in while, or if, the image fails to load
+function _logo(ctx, c, x, y, s) {
+  const im = c && TEAMS[c] ? _wrapData.img[logoURL(c)] : null;
+  const cx = x + s / 2, cy = y + s / 2, r = s / 2, ring = Math.max(2, Math.round(s * 0.03));
+  ctx.fillStyle = '#f2f5fb'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fill();
+  ctx.strokeStyle = c && TEAMS[c] ? wrapAccent(c) : 'rgba(255,255,255,.3)'; ctx.lineWidth = ring;
+  ctx.beginPath(); ctx.arc(cx, cy, r - ring / 2, 0, 7); ctx.stroke();
+  if (im) { const k = s * 0.74; ctx.drawImage(im, cx - k / 2, cy - k / 2, k, k); return; }
+  ctx.fillStyle = '#0b1120'; ctx.font = _wf(900, Math.round(s * 0.3)); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(c || '?', cx, cy); ctx.textBaseline = 'alphabetic';
+}
+function drawWrap() {
+  const cv = $id('wrapCanvas'); if (!cv || !_wrapData) return;
+  const { st, img, hist } = _wrapData;
+  const ctx = cv.getContext('2d'), W = 1080, H = 1920, tm = st.team;
+  // backdrop
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#111b38'); bg.addColorStop(.45, '#0b1120'); bg.addColorStop(1, '#0a0f1e');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(76,201,240,.06)'; ctx.lineWidth = 3;
+  for (const [cx, cy, r] of [[W / 2, -280, 520], [W / 2, H + 320, 580], [-200, 760, 440]]) { ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.stroke(); }
+  // yard-line hash marks down both edges
+  ctx.fillStyle = 'rgba(255,255,255,.05)';
+  for (let y = 60; y < H; y += 48) { ctx.fillRect(28, y, 26, 4); ctx.fillRect(W - 54, y, 26, 4); }
+  // team-colour aura behind the hero
+  const aura = tm ? tm.accent : st.champ ? '#ffd166' : '#4cc9f0';
+  const au = ctx.createRadialGradient(W / 2, 520, 30, W / 2, 520, 470);
+  au.addColorStop(0, aura + '55'); au.addColorStop(1, aura + '00');
+  ctx.fillStyle = au; ctx.fillRect(0, 60, W, 920);
+  // header
+  ctx.textAlign = 'center'; ctx.letterSpacing = '10px';
+  ctx.fillStyle = '#4cc9f0'; ctx.font = _wf(800, 38);
+  ctx.fillText(`NFL ${META.season}`, W / 2, 132);
+  ctx.letterSpacing = '2px';
+  const tg = ctx.createLinearGradient(W * .2, 0, W * .8, 0);
+  tg.addColorStop(0, '#22e07c'); tg.addColorStop(.55, '#4cc9f0'); tg.addColorStop(1, '#ff5d8f');
+  ctx.fillStyle = tg; ctx.font = _wf(900, 100);
+  ctx.fillText(tm || st.picks ? t('rcMine') : t('rcLeague'), W / 2, 240);
+  ctx.letterSpacing = '0px';
+  const asOf = new Date().toLocaleDateString(LANG === 'es' ? 'es-MX' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const wk = st.lastW ? weekName(WEEKS[st.lastW - 1]) : null;
+  ctx.fillStyle = '#94a3c4'; ctx.font = _wf(600, 32);
+  ctx.fillText(st.champ ? `${META.superBowl} · ${asOf}` : wk ? `${st.wkDone ? t('rcThru', wk) : t('rcDuring', wk)} · ${asOf}` : t('rcPre'), W / 2, 296);
+  // hero
+  if (tm) {
+    _logo(ctx, tm.code, W / 2 - 140, 340, 280);
+    ctx.textAlign = 'center'; ctx.fillStyle = '#eef2ff';
+    _fit(ctx, teamName(tm.code).toUpperCase(), 900, 70, 940);
+    ctx.fillText(teamName(tm.code).toUpperCase(), W / 2, 712);
+    ctx.fillStyle = WRAP_STATUS_COL[tm.status[0]] || '#94a3c4'; ctx.letterSpacing = '4px';
+    const sl = wrapStatusText(tm.code, tm.status);
+    _fit(ctx, sl, 800, 44, 940); ctx.fillText(sl, W / 2, 782);
+    ctx.letterSpacing = '0px';
+    ctx.fillStyle = '#94a3c4'; ctx.font = _wf(600, 36);
+    ctx.fillText(`${t('rec', tm.r.w, tm.r.l, tm.r.t)}   ·   PF ${tm.r.pf} · ${t('thPA')} ${tm.r.pa}`, W / 2, 846);
+    ctx.fillText(t('rcJourney', tm.games, tm.stadiums, nfmt(tm.mi)), W / 2, 898);
+  } else {
+    // league hero: the champion once crowned, else the Super Bowl matchup, else the two #1 seeds
+    const pair = st.champ ? null : st.sb || st.top;
+    ctx.textAlign = 'center'; ctx.fillStyle = '#ffd166'; ctx.font = _wf(800, 44); ctx.letterSpacing = '5px';
+    ctx.fillText(st.champ ? t('rcChamp') : st.sb ? META.superBowl.toUpperCase() : t('rcTopSeeds'), W / 2, 400);
+    ctx.letterSpacing = '0px';
+    if (st.champ) {
+      _logo(ctx, st.champ, W / 2 - 150, 440, 300);
+      ctx.fillStyle = '#eef2ff'; _fit(ctx, teamName(st.champ).toUpperCase(), 900, 70, 940);
+      ctx.fillText(teamName(st.champ).toUpperCase(), W / 2, 830);
+      ctx.fillStyle = '#94a3c4'; ctx.font = _wf(600, 36);
+      ctx.fillText(`${st.sbg.a} ${st.sbg.s1} – ${st.sbg.s2} ${st.sbg.b}${st.sbg.ot ? ' ' + t('ot') : ''}`, W / 2, 892);
+    } else {
+      pair.forEach((c, i) => {
+        const cx = i ? W - 280 : 280, R = TB().R[c];
+        _logo(ctx, c, cx - 120, 450, 240);
+        ctx.fillStyle = '#eef2ff'; ctx.font = _wf(900, 48); ctx.textAlign = 'center';
+        ctx.fillText(teamNick(c).toUpperCase(), cx, 762);
+        ctx.fillStyle = '#94a3c4'; ctx.font = _wf(600, 34);
+        ctx.fillText(`${TEAMS[c].conf} · ${t('rec', R.w, R.l, R.t)}`, cx, 814);
+      });
+      ctx.fillStyle = '#94a3c4'; ctx.font = _wf(800, 46); ctx.textAlign = 'center';
+      ctx.fillText(t('rcVs'), W / 2, 588);
+      if (!st.sb) { ctx.font = _wf(600, 30); ctx.fillText(t('rcTopSeedsSub'), W / 2, 892); }
+    }
+  }
+  // stacked panels between the hero and the tiles
+  let y = 950;
+  const hasPred = st.sc.n > 0 || st.picks > 0;
+  const fy = 1520;                                   // fantasy panel top; the chart fills what's left above it
+  if (hasPred) {
+    _panel(ctx, 70, y, 940, 170);
+    ctx.strokeStyle = 'rgba(255,255,255,.08)';
+    ctx.beginPath(); ctx.moveTo(W / 2, y + 28); ctx.lineTo(W / 2, y + 142); ctx.stroke();
+    _label(ctx, t('rcBracket'), 305, y + 52, 'center');
+    _label(ctx, t('rcPick'), 775, y + 52, 'center');
+    ctx.textAlign = 'center'; ctx.fillStyle = '#22e07c'; ctx.font = _wf(900, 58);
+    ctx.fillText(st.sc.n ? `${st.sc.ok}/${st.sc.n} ✓` : `${st.picks}/13`, 305, y + 124);
+    ctx.fillStyle = '#94a3c4'; ctx.font = _wf(600, 24);
+    ctx.fillText(st.sc.n ? t('rcGraded') : t('rcPicked'), 305, y + 156);
+    if (st.pick) {
+      _logo(ctx, st.pick, 640, y + 70, 66);
+      ctx.textAlign = 'left'; ctx.fillStyle = '#eef2ff'; ctx.font = _wf(900, 52);
+      ctx.fillText(st.pick, 724, y + 122);
+      // title odds as they stood when the pick was made (the last week finished before that date)
+      if (hist && hist.series.sb[st.pick]) {
+        const end = w => MATCHES.reduce((d, m) => m.w === w && m.de > d ? m.de : d, '');
+        let idx = 0;
+        if (st.pickDate) hist.cuts.forEach((w, i) => { if (w && end(w) < st.pickDate) idx = i; });
+        ctx.textAlign = 'center'; ctx.fillStyle = '#ffd166'; ctx.font = _wf(600, 24);
+        ctx.fillText(t('rcPickedAt', fmtPct1(hist.series.sb[st.pick][idx] || 0), idx === 0), 775, y + 156);
+      }
+    } else { ctx.textAlign = 'center'; ctx.fillStyle = '#94a3c4'; ctx.font = _wf(900, 58); ctx.fillText('—', 775, y + 124); }
+    y += 194;
+  }
+  // odds story
+  const ch = (st.ff ? fy - 24 : 1690) - y;
+  _panel(ctx, 70, y, 940, ch);
+  _label(ctx, tm ? t('rcOddsTeam') : t('rcOddsLeague'), 110, y + 54);
+  if (hist && hist.cuts.length) {
+    const lines = wrapLines(st, hist), n = hist.cuts.length;
+    const out = tm && ['elim', 'outPO', 'done', 'sbLoss'].includes(tm.status[0]);
+    const px0 = 150, px1 = tm ? 840 : 800, py0 = y + (tm ? 136 : 112), py1 = y + ch - 66;
+    if (tm) {                                        // legend for the two metrics
+      ctx.textAlign = 'left'; ctx.font = _wf(800, 26);
+      let lx = 110;
+      lines.forEach(l => { ctx.fillStyle = l.col; ctx.beginPath(); ctx.arc(lx + 9, y + 85, 9, 0, 7); ctx.fill();
+        ctx.fillStyle = '#eef2ff'; ctx.fillText(l.lab, lx + 26, y + 94); lx += 52 + ctx.measureText(l.lab).width; });
+    }
+    let mx = 0.02;
+    lines.forEach(l => { const s = hist.series[l.m][l.c] || []; for (let i = 0; i < n; i++) mx = Math.max(mx, s[i] || 0); });
+    const ymax = Math.min(1, Math.max(0.2, Math.ceil(mx * 1.12 * 10) / 10));
+    const X = i => px0 + (n === 1 ? (px1 - px0) / 2 : (px1 - px0) * i / (n - 1));
+    const Y = v => py1 - (py1 - py0) * v / ymax;
+    const gstep = ymax > .5 ? .25 : ymax > .25 ? .1 : .05;
+    ctx.font = _wf(600, 24); ctx.textAlign = 'right';
+    for (let v = gstep; v <= ymax + 1e-9; v += gstep) {
+      ctx.strokeStyle = 'rgba(255,255,255,.06)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(px0, Y(v)); ctx.lineTo(px1, Y(v)); ctx.stroke();
+      ctx.fillStyle = '#94a3c4'; ctx.fillText(Math.round(v * 100) + '%', px0 - 14, Y(v) + 8);
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.14)';
+    ctx.beginPath(); ctx.moveTo(px0, py1); ctx.lineTo(px1, py1); ctx.stroke();
+    // x labels, thinned so they never collide
+    ctx.textAlign = 'center'; ctx.fillStyle = '#94a3c4';
+    const kept = [];
+    for (let i = 0; i < n; i++) if (!kept.length || X(i) - X(kept[kept.length - 1]) >= 90) kept.push(i);
+    if (kept[kept.length - 1] !== n - 1) { while (kept.length > 1 && X(n - 1) - X(kept[kept.length - 1]) < 90) kept.pop(); kept.push(n - 1); }
+    kept.forEach(i => ctx.fillText(histLab(hist.cuts[i]), X(i), py1 + 40));
+    const ends = [];
+    lines.forEach(l => {
+      const s = hist.series[l.m][l.c] || [];
+      ctx.strokeStyle = l.col; ctx.lineWidth = 6; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath();
+      for (let i = 0; i < n; i++) { const yy = Y(s[i] || 0); i ? ctx.lineTo(X(i), yy) : ctx.moveTo(X(i), yy); }
+      ctx.stroke();
+      if (n === 1) { ctx.fillStyle = l.col; ctx.beginPath(); ctx.arc(X(0), Y(s[0] || 0), 8, 0, 7); ctx.fill(); }
+      // elimination: the line hit zero and stayed there, for a club that really is out
+      let ei = -1;
+      if (out && !(s[n - 1] > 0)) { let i = n - 1; while (i > 0 && !(s[i - 1] > 0)) i--; if (i > 0) ei = i; }
+      if (ei > 0) {
+        ctx.lineWidth = 7; const ex = X(ei), ey = py1 - 16;
+        ctx.beginPath(); ctx.moveTo(ex - 13, ey - 13); ctx.lineTo(ex + 13, ey + 13);
+        ctx.moveTo(ex + 13, ey - 13); ctx.lineTo(ex - 13, ey + 13); ctx.stroke();
+      }
+      ends.push({ l, v: s[n - 1] || 0, y: Y(s[n - 1] || 0) });
+    });
+    ends.sort((a, b) => a.y - b.y);                  // de-collide the end labels, then keep them above the axis
+    for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 48) ends[i].y = ends[i - 1].y + 48;
+    for (let i = ends.length - 1, lim = py1 - 14; i >= 0; i--) { ends[i].y = Math.min(ends[i].y, lim); lim = ends[i].y - 48; }
+    ctx.textAlign = 'left';
+    for (const e of ends) {
+      let lx = px1 + 18;
+      if (!tm) { _logo(ctx, e.l.c, lx, e.y - 22, 44); lx += 52; }
+      ctx.fillStyle = e.l.col; ctx.font = _wf(800, 30);
+      ctx.fillText(e.v > 0 || out ? fmtPct1(e.v) : '≈0%', lx, e.y + 10);   // alive but too rare to show in the sample
+    }
+  } else {
+    ctx.fillStyle = '#94a3c4'; ctx.font = _wf(600, 30); ctx.textAlign = 'center';
+    ctx.fillText(t('odSimming'), W / 2, y + ch / 2);
+  }
+  // fantasy leader
+  if (st.ff) {
+    const { row, f, rank, best } = st.ff, fmts = [t('ffStd'), t('ffHalf'), t('ffPpr')];
+    _panel(ctx, 70, fy, 940, 170);
+    _label(ctx, tm ? t('rcFfTeam', fmts[f]) : t('rcFfLeague', fmts[f]), 110, fy + 48);
+    // headshot in a circle, cover-fitted from the top
+    const r = 52, cx = 110 + r, cy = fy + 108, hs = img[ffHead(row.id)];
+    ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fillStyle = '#1c2947'; ctx.fill(); ctx.clip();
+    if (hs) { const sc = Math.max(2 * r / hs.width, 2 * r / hs.height); ctx.drawImage(hs, cx - hs.width * sc / 2, cy - r, hs.width * sc, hs.height * sc); }
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.stroke();
+    ctx.textAlign = 'left'; ctx.fillStyle = '#eef2ff';
+    _fit(ctx, row.n, 900, 44, 470); ctx.fillText(row.n, 244, fy + 104);
+    ctx.fillStyle = '#94a3c4'; ctx.font = _wf(600, 26);
+    const sub = [row.pos, tm ? null : row.tm, rank ? t('rcRank', rank) : null,
+      best && best.w ? t('rcBest', histLab(best.w), best.pts.toFixed(1)) : null].filter(Boolean).join(' · ');
+    _fit(ctx, sub, 600, 26, 500); ctx.fillText(sub, 244, fy + 146);
+    ctx.textAlign = 'right'; ctx.fillStyle = '#ffd166'; ctx.font = _wf(900, 60);
+    ctx.fillText(row.pts[f].toFixed(1), 970, fy + 110);
+    ctx.fillStyle = '#94a3c4'; ctx.font = _wf(600, 24);
+    ctx.fillText(row.g ? t('ffAvg', (row.pts[f] / row.g).toFixed(1)) : t('ffPts'), 970, fy + 146);
+  }
+  // tiles: the club's splits, or league totals
+  const sgn = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v);
+  const tiles = tm
+    ? [[sgn(tm.r.pf - tm.r.pa), t('rcDiff')], [t('rec', tm.home.w, tm.home.l, tm.home.t), t('rcHome')], [t('rec', tm.road.w, tm.road.l, tm.road.t), t('rcRoad')]]
+    : [[nfmt(st.pts), t('rcPts')], [st.games ? (st.pts / st.games).toFixed(1) : '—', t('rcPerGame')], [String(st.ot), t('rcOT')]];
+  ctx.textAlign = 'center';
+  tiles.forEach(([v, lb], i) => {
+    const tx = 70 + i * 323, sy = 1714;
+    _rr(ctx, tx, sy, 294, 140, 22);
+    ctx.fillStyle = 'rgba(13,20,37,.9)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.09)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#eef2ff'; _fit(ctx, v, 900, 58, 260);
+    ctx.fillText(v, tx + 147, sy + 78);
+    ctx.fillStyle = '#94a3c4'; ctx.font = _wf(800, 22); ctx.letterSpacing = '2px';
+    ctx.fillText(lb, tx + 147, sy + 118);
+    ctx.letterSpacing = '0px';
+  });
+  // footer
+  ctx.fillStyle = '#4cc9f0'; ctx.font = _wf(600, 30); ctx.textAlign = 'center';
+  ctx.fillText('viewsonic-max.github.io/fractura7-links/nfl', W / 2, 1896);
+}
+const wrapFile = () => `my-nfl-season-${META.season}${follow ? '-' + follow.toLowerCase() : ''}.png`;
+function wrapShare() {
+  const cv = $id('wrapCanvas'); if (!cv) return;
+  cv.toBlob(async b => {
+    if (!b) return wrapSave();
+    const f = new File([b], wrapFile(), { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) {
+      try { await navigator.share({ files: [f], text: `${t('wrapShareText')} ${WRAP_URL}` }); return; }
+      catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    wrapSave();                                        // desktop / no share sheet — download instead
+  }, 'image/png');
+}
+function wrapSave() {
+  const cv = $id('wrapCanvas'); if (!cv) return;
+  const a = document.createElement('a');
+  a.download = wrapFile();
+  a.href = cv.toDataURL('image/png');
+  a.click();
+}
+$id('wrapBtn').onclick = () => wrapOn ? wrapClose() : wrapOpen();
+
 // ── help / tutorial ────────────────────────────────────────────────────────
 let helpOn = false;
 const HELP_KEY = 'nflviz.seenHelp.v1';
@@ -3217,7 +3743,7 @@ function applyStaticText() {
   hdr.querySelector('.sub').innerHTML = t('sub');
   const lbl = $id('follow').querySelector('label'); if (lbl) lbl.textContent = t('followLabel');
   $id('prevBtn').title = t('tPrev'); $id('playBtn').title = t('tPlay'); $id('nextBtn').title = t('tNext');
-  $id('helpBtn').title = t('tHelp'); $id('ffBtn').title = t('tFf'); $id('poBtn').title = t('tPo');
+  $id('helpBtn').title = t('tHelp'); $id('ffBtn').title = t('tFf'); $id('poBtn').title = t('tPo'); $id('wrapBtn').title = t('tWrap');
   [$id('followClear'), $id('teamFabClear')].forEach(el => { if (el) { el.title = t('clearTeam'); el.setAttribute('aria-label', t('clearTeam')); } });
 }
 function applyLanguage() {
@@ -3234,6 +3760,7 @@ function applyLanguage() {
   if (helpOn) renderHelp();
   if (ffOn) renderFF();
   if (poOn) renderPO();
+  if (wrapOn) wrapOpen();
 }
 function setLang(l) {
   if (l === LANG || (l !== 'en' && l !== 'es')) return;
@@ -3259,12 +3786,13 @@ const _qdiv = _params.get('div');
 if (_qdiv && DIVISIONS[_qdiv]) openDivision(_qdiv);
 if (_params.get('play') === '1') startPlay();
 if (_params.get('ff') === '1') ffOpen();
+if (_params.get('recap') === '1') wrapOpen();
 const _qpo = _params.get('po');
 if (_qpo === 'bracket' || _params.get('b')) { poTab = 'bracket'; poOpen(); }
 else if (_qpo === 'odds') { poTab = 'odds'; poOpen(); }
 else if (_qpo === '1') poOpen();
 let _seenHelp = true; try { _seenHelp = !!localStorage.getItem(HELP_KEY); } catch (e) {}
-if (!_seenHelp && !_params.get('div') && !_params.get('play') && !_params.get('ff') && !_qpo && !_params.get('b')) helpOpen();
+if (!_seenHelp && !_params.get('div') && !_params.get('play') && !_params.get('ff') && !_params.get('recap') && !_qpo && !_params.get('b')) helpOpen();
 
 // ── easter eggs ───────────────────────────────────────────────────────────────
 (() => {
