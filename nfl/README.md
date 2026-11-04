@@ -4,12 +4,12 @@ NFL retarget of the World Cup 26 "Match Day Map" (`../wcviz`). Same idea: an
 interactive map of every game of the 2026 NFL season (Sept 10, 2026 – Super Bowl LXI,
 Feb 14, 2027) across the 30 NFL stadiums plus the International Series venues.
 
-Status: **data layer, core app, fantasy leaders, tiebreakers, bracket predictor and the
-odds model are all done** (map, week timeline, game cards, follow-a-team travel route,
-division standings drawer, live ESPN polling, PWA, en/es). The season-recap share card is
-the one thing left on the plan (see below).
+Status: **everything on the plan is done** — data layer, core app, fantasy leaders,
+tiebreakers, bracket predictor, odds model and the season-recap share card (map, week
+timeline, game cards, follow-a-team travel route, division standings drawer, live ESPN
+polling, PWA, en/es). Data refreshes itself weekly (see the end of this file).
 
-**To use: open `index.html` in a browser.** `node verify.js [desk|team|div|mobile|es|ff|layout|seeds|bracket|odds]`
+**To use: open `index.html` in a browser.** `node verify.js [desk|team|div|mobile|es|ff|layout|seeds|bracket|odds|recap]`
 runs a headless-Edge smoke test (uses `../wcviz/node_modules/playwright-core`) and
 writes `_shot-<scenario>.png`. The `layout` scenario asserts phone geometry — nothing
 floating over the timeline bar, one row of header chips, no colliding stadium labels or
@@ -81,9 +81,11 @@ the map reduced to a blob of overlapping pins. The fixes worth knowing before ed
   any completed week or the season, expandable to 25, in Standard / Half-PPR / PPR (choice
   persists), with headshot, team, position, stat line, and per-game average on the season
   tab. Players only (QB/RB/WR/TE/K) — no team defenses.
+- **📸 Season recap** (timeline button, `?recap=1`) — a 1080×1920 story-format share card
+  painted on a canvas. See below.
 - **PWA** (`manifest.json`, `sw.js` cache `nflviz-v1`, generated 🏈 icons), **en/es**
   toggle in the help overlay, deep links `?w=7`, `?d=2026-10-25`, `?team=KC`,
-  `?div=AFC West`, `?play=1`, `?sheet=1`, `?ff=1`, `?po=1|odds|bracket`.
+  `?div=AFC West`, `?play=1`, `?sheet=1`, `?ff=1`, `?po=1|odds|bracket`, `?recap=1`.
 
 ## Tiebreakers and seeding
 
@@ -211,8 +213,11 @@ three formats and writes `fantasy-data.js` (`window.NFLF`, ~80 KB):
 ```
 weeksDone  [1,2,…]                                  weeks with at least one final
 weeks      { "6": [ {id,n,tm,pos,pts:[std,half,ppr],st:{py,ptd,int,ry,rtd,rec,recy,rectd,fl,tp,fgm,fga,xpm,xpa}} … ] }
-seasonTop  [ same rows + g (games) + best {w,pts} ]  union of each format's top 60
+seasonTop  [ same rows + g (games) + best [{w,pts}×3] ]  union of each format's top 60
+teamTop    { "KC": [ season rows ] }                each club's leader under each format (1–3 rows)
+tds        { "KC": {f,a} }                          touchdowns for/against (last tiebreaker step)
 ```
+`best[f]` is the player's best single game under format `f` (same order as `pts`).
 
 Scoring = ESPN defaults: pass yds 0.04, pass TD 4, INT −2, rush/rec yds 0.1, TD 6, two-point
 conversion 2 (each player named in the play), fumble lost −2, reception 0 / 0.5 / 1; kickers
@@ -282,6 +287,36 @@ Game fields follow `wcviz`'s match shape so the map/timeline/card code ports ove
 coordinates and a timezone, scores only on games that have kicked off, Super Bowl at
 SoFi on 2027-02-14.
 
+## 📸 Season recap card
+
+`wrapOpen()` paints a 1080×1920 canvas (the wcviz "My World Cup" card, retargeted):
+
+- **Hero** — the followed club's logo on a light badge ringed in its colour, over a
+  team-colour aura; where it stands (`recapStatus()`: seed / clinched / in the hunt with
+  games back / eliminated during the season, then January's results: alive in a round,
+  out in a round, conference or Super Bowl champions); regular-season record, PF/PA;
+  games, stadiums and miles travelled so far (the same `travelLegs()` model as the map).
+  With no club followed it shows the two #1 seeds, then the Super Bowl matchup, then the
+  champion.
+- **My bracket / My Super Bowl pick** — only when the reader has picks: graded `ok/n`
+  (or picks made), the Super Bowl pick and its title odds as of the last finished week
+  before the pick date (`PRED.t.SB`).
+- **Odds story** — the followed club's playoff and title odds week by week (the league
+  view: the four current title favourites). Uses the odds-history cache when current,
+  else replays each finished week at 600 sims (never written back over the 2,500-sim
+  cache). The ✕ is drawn only when the club really is out; an alive club whose title odds
+  round to zero in that sample reads "≈0%".
+- **Fantasy** — the club's leader (`NFLF.teamTop`) in the reader's chosen format, with
+  league rank (exact within the top 60) and best single game.
+- **Tiles** — point differential, home and road record (league view: total points, per
+  game, overtimes).
+
+ESPN's logo and headshot CDN sends `Access-Control-Allow-Origin: *`, so images load with
+`crossOrigin` and the canvas never taints; a failed image falls back to a drawn chip.
+**Share** uses the Web Share API with the PNG as a file, falling back to a download.
+`node verify.js recap` paints four personas (KC with a chalk bracket, neutral, Spanish
+NYJ, TEN), saves each as `_card-<name>.png`, and fails if the canvas cannot export.
+
 ## Next (per the plan)
 
 1. ~~Retarget `index.html`~~ — done 2026-10-21.
@@ -289,9 +324,11 @@ SoFi on 2027-02-14.
 3. ~~Reseeding bracket predictor~~ — done 2026-10-24. (The road-to-the-Super-Bowl tracer on
    the journey card was dropped; the bracket highlights the followed team instead.)
 4. ~~Points-margin odds model + the week-by-week "how the odds moved" chart~~ —
-   done 2026-10-24. Still to come: the **season-recap share card**.
+   done 2026-10-24.
+5. ~~Season-recap share card~~ — done 2026-10-27.
 
 Keeping it fresh: standings, fantasy leaders and odds are only as current as the last
-`node refresh.js`. After a game day, run it and push `data.js` + `fantasy-data.js` (both
-network-first in the service worker, so no `nflviz-vN` bump). A scheduled refresh is the
-obvious follow-up.
+`node refresh.js`. A Windows scheduled task (**nflviz weekly refresh**, Tuesdays 07:00)
+runs `scheduled-refresh.sh`: `refresh.js` (no deploy if its checks fail), `verify.js seeds`
+(logged only), then pushes `nfl/data.js` + `nfl/fantasy-data.js` to Pages. Both files are
+network-first in the service worker, so no `nflviz-vN` bump. Log: `logs/refresh.log`.
